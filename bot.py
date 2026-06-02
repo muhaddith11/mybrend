@@ -115,7 +115,14 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             caption=(message.caption or "") + footer
         )
 
-    await query.edit_message_reply_markup(reply_markup=None)
+    # Boshliq botidagi xabarga status qo'shish
+    original_text = query.message.text or query.message.caption or ""
+    new_text = original_text + f"\n\n{status}"
+
+    if query.message.text:
+        await query.edit_message_text(text=new_text)
+    elif query.message.caption is not None:
+        await query.edit_message_caption(caption=new_text)
 
 
 def main():
