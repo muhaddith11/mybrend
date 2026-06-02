@@ -10,9 +10,17 @@ logging.basicConfig(level=logging.INFO)
 pending = {}
 
 
+ALLOWED_COMMANDS = ['/kirim', '/chiqim']
+
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
     if not message or message.chat.type not in ['group', 'supergroup']:
+        return
+
+    # Faqat /kirim yoki /chiqim bilan boshlanganlarni qabul qilish
+    text = message.text or message.caption or ""
+    if not any(text.startswith(cmd) for cmd in ALLOWED_COMMANDS):
         return
 
     sender = message.from_user
@@ -113,7 +121,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(MessageHandler(
-        filters.ChatType.GROUPS & ~filters.COMMAND,
+        filters.ChatType.GROUPS,
         handle_message
     ))
     app.add_handler(CallbackQueryHandler(handle_callback))
