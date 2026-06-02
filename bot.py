@@ -4,11 +4,10 @@ import openpyxl
 import io
 import json
 import os
-from datetime import datetime
+import datetime
 import pytz
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import Application, MessageHandler, CallbackQueryHandler, CommandHandler, filters, ContextTypes
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 BOT_TOKEN = "8847266024:AAGA00Bqrw3ekbo5TCSmusK3Yd0FU2exTsM"
 ADMIN_ID = 8042807902
@@ -50,17 +49,14 @@ def get_kunlik_tushum():
         wb = openpyxl.load_workbook(io.BytesIO(r.content), data_only=True)
         ws = wb.worksheets[0]  # Реестр varag'i
 
-        # Jadval: 6-12 qatorlar, E-F ustunlar (5-6)
         rows = list(ws.iter_rows(min_row=6, max_row=12, min_col=5, max_col=6, values_only=True))
 
-        # Sana (7-qator, F ustun)
         sana = rows[1][1]
-        if isinstance(sana, datetime):
+        if isinstance(sana, datetime.datetime):
             sana_str = sana.strftime("%d.%m.%Y")
         else:
             sana_str = str(sana) if sana else "—"
 
-        # 4 ta qator: салом сити-1, салом сити-2, мжк-1, мжк-2
         items = []
         for row in rows[2:6]:
             name = str(row[0] or "").capitalize()
@@ -69,7 +65,6 @@ def get_kunlik_tushum():
 
         jami = rows[6][1] or 0
 
-        # Chiroyli matn
         text = (
             f"📊 Кунлик тушум\n"
             f"📅 Сана: {sana_str}\n"
@@ -85,7 +80,7 @@ def get_kunlik_tushum():
 
     except Exception as e:
         logging.error(f"Excel xatosi: {e}")
-        return f"❌ Ma'lumot olishda xatolik yuz berdi."
+        return "❌ Ma'lumot olishda xatolik yuz berdi."
 
 
 # ─── Xabar moderatsiyasi ──────────────────────────────────────────────────────
@@ -95,7 +90,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not message or message.chat.type not in ['group', 'supergroup']:
         return
 
-    # Guruh ID ni saqlash (hisobot uchun kerak)
     set_group_chat_id(message.chat_id)
 
     text = message.text or message.caption or ""
@@ -123,32 +117,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     footer = f"\n\n👤 Yuboruvchi: {sender_name}\n📱 Username: {username}"
 
     if message.text:
-        await context.bot.send_message(
-            chat_id=ADMIN_ID,
-            text=message.text + footer,
-            reply_markup=reply_markup
-        )
+        await context.bot.send_message(chat_id=ADMIN_ID, text=message.text + footer, reply_markup=reply_markup)
     elif message.photo:
-        await context.bot.send_photo(
-            chat_id=ADMIN_ID,
-            photo=message.photo[-1].file_id,
-            caption=(message.caption or "") + footer,
-            reply_markup=reply_markup
-        )
+        await context.bot.send_photo(chat_id=ADMIN_ID, photo=message.photo[-1].file_id, caption=(message.caption or "") + footer, reply_markup=reply_markup)
     elif message.video:
-        await context.bot.send_video(
-            chat_id=ADMIN_ID,
-            video=message.video.file_id,
-            caption=(message.caption or "") + footer,
-            reply_markup=reply_markup
-        )
+        await context.bot.send_video(chat_id=ADMIN_ID, video=message.video.file_id, caption=(message.caption or "") + footer, reply_markup=reply_markup)
     elif message.document:
-        await context.bot.send_document(
-            chat_id=ADMIN_ID,
-            document=message.document.file_id,
-            caption=(message.caption or "") + footer,
-            reply_markup=reply_markup
-        )
+        await context.bot.send_document(chat_id=ADMIN_ID, document=message.document.file_id, caption=(message.caption or "") + footer, reply_markup=reply_markup)
 
 
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -173,25 +148,12 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if message.text:
         await context.bot.send_message(chat_id=chat_id, text=message.text + footer)
     elif message.photo:
-        await context.bot.send_photo(
-            chat_id=chat_id,
-            photo=message.photo[-1].file_id,
-            caption=(message.caption or "") + footer
-        )
+        await context.bot.send_photo(chat_id=chat_id, photo=message.photo[-1].file_id, caption=(message.caption or "") + footer)
     elif message.video:
-        await context.bot.send_video(
-            chat_id=chat_id,
-            video=message.video.file_id,
-            caption=(message.caption or "") + footer
-        )
+        await context.bot.send_video(chat_id=chat_id, video=message.video.file_id, caption=(message.caption or "") + footer)
     elif message.document:
-        await context.bot.send_document(
-            chat_id=chat_id,
-            document=message.document.file_id,
-            caption=(message.caption or "") + footer
-        )
+        await context.bot.send_document(chat_id=chat_id, document=message.document.file_id, caption=(message.caption or "") + footer)
 
-    # Boshliq botida statusni yangilash
     original_text = query.message.text or query.message.caption or ""
     new_text = original_text + f"\n\n{status}"
     if query.message.text:
@@ -200,34 +162,33 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_caption(caption=new_text)
 
 
-# ─── Hisobot buyrug'i ─────────────────────────────────────────────────────────
+# ─── Hisobot ─────────────────────────────────────────────────────────────────
 
 async def hisobot_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = get_kunlik_tushum()
     await update.message.reply_text(text)
 
 
-# ─── Har kuni 21:00 da avtomatik yuborish ─────────────────────────────────────
-
-async def send_daily_report(app):
+async def send_daily_report(context: ContextTypes.DEFAULT_TYPE):
     group_chat_id = get_group_chat_id()
     if not group_chat_id:
         logging.warning("Guruh ID topilmadi!")
         return
     text = get_kunlik_tushum()
-    await app.bot.send_message(chat_id=group_chat_id, text=text)
+    await context.bot.send_message(chat_id=group_chat_id, text=text)
 
 
 # ─── Asosiy ──────────────────────────────────────────────────────────────────
 
 async def post_init(app):
     await app.bot.set_my_commands([
-        BotCommand("hisobot", "📊 Kunlik hisobot"),
+        BotCommand("hisobot", "Kunlik hisobot"),
     ])
-    # Scheduler event loop ichida ishga tushiriladi
-    scheduler = AsyncIOScheduler(timezone=TASHKENT_TZ)
-    scheduler.add_job(send_daily_report, trigger='cron', hour=21, minute=0, args=[app])
-    scheduler.start()
+    # Har kuni soat 21:00 Toshkent vaqtida (JobQueue - ichki, xatosiz)
+    app.job_queue.run_daily(
+        send_daily_report,
+        time=datetime.time(hour=21, minute=0, tzinfo=TASHKENT_TZ)
+    )
 
 
 def main():
