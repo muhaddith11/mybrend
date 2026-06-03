@@ -169,6 +169,10 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ─── Hisobot ─────────────────────────────────────────────────────────────────
 
+async def chatid_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(f"Chat ID: `{update.message.chat_id}`", parse_mode='Markdown')
+
+
 async def hisobot_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = await update.message.reply_text("⏳ Yuklanmoqda...")
     text = get_kunlik_tushum()
@@ -203,6 +207,7 @@ def main():
     app.add_handler(MessageHandler(filters.ChatType.GROUPS & ~filters.COMMAND, handle_message))
     app.add_handler(CallbackQueryHandler(handle_callback))
     app.add_handler(CommandHandler("hisobot", hisobot_command))
+    app.add_handler(CommandHandler("chatid", chatid_command))
 
     app.run_polling()
 
