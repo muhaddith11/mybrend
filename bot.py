@@ -48,7 +48,7 @@ def get_kunlik_tushum():
     try:
         url = ONEDRIVE_URL + f"&nocache={int(time.time())}"
         r = requests.get(url, timeout=30)
-        wb = openpyxl.load_workbook(io.BytesIO(r.content), data_only=True)
+        wb = openpyxl.load_workbook(io.BytesIO(r.content), data_only=True, read_only=True)
 
         # Bugungi sana (Toshkent vaqti)
         today = datetime.datetime.now(TASHKENT_TZ).date()
@@ -170,8 +170,9 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ─── Hisobot ─────────────────────────────────────────────────────────────────
 
 async def hisobot_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    msg = await update.message.reply_text("⏳ Yuklanmoqda...")
     text = get_kunlik_tushum()
-    await update.message.reply_text(text)
+    await msg.edit_text(text)
 
 
 async def send_daily_report(context: ContextTypes.DEFAULT_TYPE):
