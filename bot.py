@@ -85,12 +85,12 @@ def get_kunlik_tushum():
 
 
 def get_bugungi_tulumlar():
+    """Har bir varaq uchun alohida xabar ro'yxatini qaytaradi"""
     try:
         wb = excel_yukla()
         today = datetime.datetime.now(TASHKENT_TZ).date()
         sheets = ['Салом сити-1', 'Салом сити-2', 'МЖК-1', 'МЖК-2']
-        result_text = f"💳 Bugungi to'lovlar ({today.strftime('%d.%m.%Y')})\n"
-        found_any = False
+        messages = []  # Har bir varaq uchun alohida xabar
 
         for sheet_name in sheets:
             ws = wb[sheet_name]
@@ -100,8 +100,6 @@ def get_bugungi_tulumlar():
             for row in ws.iter_rows(min_row=7, values_only=True):
                 if len(row) < 11:
                     continue
-
-                # Asosiy kvartira qatori: index 5 da FIO bor
                 fio = row[5]
                 if fio and isinstance(fio, str) and fio.strip() and fio.strip() != 'фио':
                     foiz_val = row[12] if len(row) > 12 else None
@@ -113,8 +111,6 @@ def get_bugungi_tulumlar():
                         'qarz': row[11],
                         'foiz': foiz_val
                     }
-
-                # To'lov qatori: index 9 da bugungi sana
                 if current_apt:
                     date_val = row[9]
                     amount = row[10]
@@ -122,30 +118,28 @@ def get_bugungi_tulumlar():
                         sheet_payments.append({**current_apt, 'berdi': amount})
 
             if sheet_payments:
-                found_any = True
-                result_text += f"\n🏢 {sheet_name}\n{'─' * 28}\n"
-                for p in sheet_payments:
+                text = f"🏢 {sheet_name} — {today.strftime('%d.%m.%Y')}\n{'─' * 30}\n\n"
+                for i, p in enumerate(sheet_payments, 1):
                     foiz = p['foiz']
-                    if isinstance(foiz, float):
-                        foiz_str = f"{foiz * 100:.0f}%"
-                    else:
-                        foiz_str = "—"
-                    result_text += (
-                        f"👤 {p['fio']}\n"
-                        f"🏠 {p['dom']}-дом, {p['etaj']}-этаж\n"
-                        f"💵 Bugun berdi:    ${p['berdi']:>10,.0f}\n"
-                        f"✅ Jami to'lagan:  ${p['tulangan']:>10,.0f}\n"
-                        f"❌ Qolgan qarz:    ${p['qarz']:>10,.0f}\n"
-                        f"📊 Foizda: {foiz_str}\n\n"
+                    foiz_str = f"{foiz * 100:.0f}%" if isinstance(foiz, float) else "—"
+                    text += (
+                        f"{i}. 👤 {p['fio']}\n"
+                        f"   🏠 {p['dom']}-дом, {p['etaj']}-этаж\n"
+                        f"   💵 Bugun berdi:   ${p['berdi']:>10,.0f}\n"
+                        f"   ✅ Jami to'lagan: ${p['tulangan']:>10,.0f}\n"
+                        f"   ❌ Qolgan qarz:   ${p['qarz']:>10,.0f}\n"
+                        f"   📊 Foizda: {foiz_str}\n\n"
                     )
+                text += f"{'─' * 30}\nJami: {len(sheet_payments)} ta to'lov"
+                messages.append(text)
 
-        if not found_any:
-            return "📭 Bugun hech qanday to'lov kiritilmagan"
-        return result_text.strip()
+        if not messages:
+            return ["📭 Bugun hech qanday to'lov kiritilmagan"]
+        return messages
 
     except Exception as e:
         logging.error(f"Bugungi to'lov xatosi: {e}")
-        return "❌ Ma'lumot olishda xatolik yuz berdi."
+        return ["❌ Ma'lumot olishda xatolik yuz berdi."]
 
 
 # ─── Xabar moderatsiyasi ──────────────────────────────────────────────────────
@@ -235,17 +229,17 @@ async def chatid_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def hisobot_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = await update.message.reply_text("⏳ Yuklanmoqda...")
-    text = get_kunlik_tushum()
-    await msg.edit_text(text)
+    await msg.edit_text(get_kunlik_tushum())
+    for m in get_bugungi_tulumlar():
+        await update.message.reply_text(m)
 
 
 async def send_daily_report(context: ContextTypes.DEFAULT_TYPE):
     # 1. Kunlik tushum jadvali
-    text1 = get_kunlik_tushum()
-    await context.bot.send_message(chat_id=ADMIN_ID, text=text1)
-    # 2. Bugungi to'lovlar (kim, qancha berdi)
-    text2 = get_bugungi_tulumlar()
-    await context.bot.send_message(chat_id=ADMIN_ID, text=text2)
+    await context.bot.send_message(chat_id=ADMIN_ID, text=get_kunlik_tushum())
+    # 2. Bugungi to'lovlar - har bir varaq alohida xabar
+    for msg in get_bugungi_tulumlar():
+        await context.bot.send_message(chat_id=ADMIN_ID, text=msg)
 
 
 # ─── Asosiy ──────────────────────────────────────────────────────────────────
