@@ -107,6 +107,7 @@ def get_bugungi_tulumlar():
                     foiz_val = row[12] if len(row) > 12 else None
                     current_apt = {
                         'fio': fio.strip(),
+                        'kv': row[2],
                         'dom': row[3],
                         'etaj': row[4],
                         'tulangan': row[10],
@@ -134,7 +135,7 @@ def get_bugungi_tulumlar():
                     foiz_str = f"{foiz * 100:.0f}%" if isinstance(foiz, float) else "—"
                     text += (
                         f"{i}. 👤 {p['fio']}\n"
-                        f"   🏠 {p['dom']}-дом, {p['etaj']}-этаж\n"
+                        f"   🏠 {p['dom']}-дом, {p['etaj']}-этаж, {p['kv']}-кв\n"
                         f"   🔢 {p['toliq_son']}-chi to'lov\n"
                         f"   💵 Bugun berdi:   ${p['berdi']:>10,.0f}\n"
                         f"   ✅ Jami to'lagan: ${p['tulangan']:>10,.0f}\n"
