@@ -42,18 +42,18 @@ def set_group_chat_id(chat_id):
     save_data(data)
 
 
-# ─── Excel dan kunlik tushum ──────────────────────────────────────────────────
+# ─── Excel funksiyalari ───────────────────────────────────────────────────────
+
+def excel_yukla():
+    url = ONEDRIVE_URL + f"&nocache={int(time.time())}"
+    r = requests.get(url, timeout=30, headers={"Cache-Control": "no-cache"})
+    return openpyxl.load_workbook(io.BytesIO(r.content), data_only=True, read_only=True)
+
 
 def get_kunlik_tushum():
     try:
-        url = ONEDRIVE_URL + f"&nocache={int(time.time())}"
-        r = requests.get(url, timeout=30)
-        wb = openpyxl.load_workbook(io.BytesIO(r.content), data_only=True, read_only=True)
-
-        # Bugungi sana (Toshkent vaqti)
+        wb = excel_yukla()
         today = datetime.datetime.now(TASHKENT_TZ).date()
-
-        # Har bir varaqdan bugungi to'lovlarni yig'amiz
         sheets = ['Салом сити-1', 'Салом сити-2', 'МЖК-1', 'МЖК-2']
         results = {}
 
@@ -61,15 +61,14 @@ def get_kunlik_tushum():
             ws = wb[sheet_name]
             total = 0
             for row in ws.iter_rows(values_only=True):
-                date_cell = row[8] if len(row) > 8 else None   # I ustun - sana
-                amount_cell = row[9] if len(row) > 9 else None  # J ustun - summa
+                date_cell = row[9] if len(row) > 9 else None    # J ustun - sana
+                amount_cell = row[10] if len(row) > 10 else None # K ustun - summa
                 if isinstance(date_cell, datetime.datetime) and date_cell.date() == today:
                     total += (amount_cell or 0)
             results[sheet_name] = total
 
         jami = sum(results.values())
         today_str = today.strftime("%d.%m.%Y")
-
         text = (
             f"📊 Кунлик тушум\n"
             f"📅 Сана: {today_str}\n"
@@ -77,14 +76,75 @@ def get_kunlik_tushum():
         )
         for name, val in results.items():
             text += f"▪️ {name:<18} {val:>10,.0f}\n"
-        text += (
-            f"{'─' * 30}\n"
-            f"💰 Жами:               {jami:>10,.0f}"
-        )
+        text += f"{'─' * 30}\n💰 Жами:               {jami:>10,.0f}"
         return text
 
     except Exception as e:
-        logging.error(f"Excel xatosi: {e}")
+        logging.error(f"Kunlik tushum xatosi: {e}")
+        return "❌ Ma'lumot olishda xatolik yuz berdi."
+
+
+def get_bugungi_tulumlar():
+    try:
+        wb = excel_yukla()
+        today = datetime.datetime.now(TASHKENT_TZ).date()
+        sheets = ['Салом сити-1', 'Салом сити-2', 'МЖК-1', 'МЖК-2']
+        result_text = f"💳 Bugungi to'lovlar ({today.strftime('%d.%m.%Y')})\n"
+        found_any = False
+
+        for sheet_name in sheets:
+            ws = wb[sheet_name]
+            current_apt = None
+            sheet_payments = []
+
+            for row in ws.iter_rows(min_row=7, values_only=True):
+                if len(row) < 11:
+                    continue
+
+                # Asosiy kvartira qatori: index 5 da FIO bor
+                fio = row[5]
+                if fio and isinstance(fio, str) and fio.strip() and fio.strip() != 'фио':
+                    foiz_val = row[12] if len(row) > 12 else None
+                    current_apt = {
+                        'fio': fio.strip(),
+                        'dom': row[3],
+                        'etaj': row[4],
+                        'tulangan': row[10],
+                        'qarz': row[11],
+                        'foiz': foiz_val
+                    }
+
+                # To'lov qatori: index 9 da bugungi sana
+                if current_apt:
+                    date_val = row[9]
+                    amount = row[10]
+                    if isinstance(date_val, datetime.datetime) and date_val.date() == today and amount:
+                        sheet_payments.append({**current_apt, 'berdi': amount})
+
+            if sheet_payments:
+                found_any = True
+                result_text += f"\n🏢 {sheet_name}\n{'─' * 28}\n"
+                for p in sheet_payments:
+                    foiz = p['foiz']
+                    if isinstance(foiz, float):
+                        foiz_str = f"{foiz * 100:.0f}%"
+                    else:
+                        foiz_str = "—"
+                    result_text += (
+                        f"👤 {p['fio']}\n"
+                        f"🏠 {p['dom']}-дом, {p['etaj']}-этаж\n"
+                        f"💵 Bugun berdi:    ${p['berdi']:>10,.0f}\n"
+                        f"✅ Jami to'lagan:  ${p['tulangan']:>10,.0f}\n"
+                        f"❌ Qolgan qarz:    ${p['qarz']:>10,.0f}\n"
+                        f"📊 Foizda: {foiz_str}\n\n"
+                    )
+
+        if not found_any:
+            return "📭 Bugun hech qanday to'lov kiritilmagan"
+        return result_text.strip()
+
+    except Exception as e:
+        logging.error(f"Bugungi to'lov xatosi: {e}")
         return "❌ Ma'lumot olishda xatolik yuz berdi."
 
 
@@ -180,8 +240,12 @@ async def hisobot_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def send_daily_report(context: ContextTypes.DEFAULT_TYPE):
-    text = get_kunlik_tushum()
-    await context.bot.send_message(chat_id=ADMIN_ID, text=text)
+    # 1. Kunlik tushum jadvali
+    text1 = get_kunlik_tushum()
+    await context.bot.send_message(chat_id=ADMIN_ID, text=text1)
+    # 2. Bugungi to'lovlar (kim, qancha berdi)
+    text2 = get_bugungi_tulumlar()
+    await context.bot.send_message(chat_id=ADMIN_ID, text=text2)
 
 
 # ─── Asosiy ──────────────────────────────────────────────────────────────────
