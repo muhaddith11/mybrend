@@ -12,6 +12,7 @@ from telegram.ext import Application, MessageHandler, CallbackQueryHandler, Comm
 
 BOT_TOKEN = "8847266024:AAGA00Bqrw3ekbo5TCSmusK3Yd0FU2exTsM"
 ADMIN_ID = 807823872
+GROUP_ID = -1002449545348
 ONEDRIVE_URL = "https://1drv.ms/x/c/0434e9c0edef097b/IQASHiM8IYUQSZNJNl0nojFBAcv7R4dXvdm4vdX1NQN-AJw?e=38Ffl7&download=1"
 TASHKENT_TZ = pytz.timezone('Asia/Tashkent')
 DATA_FILE = "data.json"
@@ -251,11 +252,18 @@ async def hisobot_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def send_daily_report(context: ContextTypes.DEFAULT_TYPE):
-    # 1. Bugungi to'lovlar - har bir varaq alohida xabar
-    for msg in get_bugungi_tulumlar():
+    tulumlar = get_bugungi_tulumlar()
+    tushum = get_kunlik_tushum()
+
+    # Adminga yuborish
+    for msg in tulumlar:
         await context.bot.send_message(chat_id=ADMIN_ID, text=msg)
-    # 2. Kunlik tushum jadvali
-    await context.bot.send_message(chat_id=ADMIN_ID, text=get_kunlik_tushum())
+    await context.bot.send_message(chat_id=ADMIN_ID, text=tushum)
+
+    # Guruhga yuborish
+    for msg in tulumlar:
+        await context.bot.send_message(chat_id=GROUP_ID, text=msg)
+    await context.bot.send_message(chat_id=GROUP_ID, text=tushum)
 
 
 # ─── Asosiy ──────────────────────────────────────────────────────────────────
