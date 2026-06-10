@@ -146,9 +146,9 @@ def get_bugungi_tulumlar():
                         f"   🏠 {p['dom']}-дом, {p['etaj']}-этаж, {p['kv']}-кв\n"
                         f"   🔢 {p['toliq_son']}-chi to'lov\n"
                         f"   📅 Oldingi to'lov: {oldingi_str}\n"
-                        f"   💵 Bugun berdi:   ${p['berdi']:>10,.0f}\n"
-                        f"   ✅ Jami to'lagan: ${p['tulangan']:>10,.0f}\n"
-                        f"   ❌ Qolgan qarz:   ${p['qarz']:>10,.0f}\n"
+                        f"   💵 <b>Bugun berdi:   ${p['berdi']:,.0f}</b>\n"
+                        f"   ✅ Jami to'lagan: ${p['tulangan']:,.0f}\n"
+                        f"   ❌ Qolgan qarz:   ${p['qarz']:,.0f}\n"
                         f"   📊 Foizda: {foiz_str}\n\n"
                     )
                 text += f"{'─' * 30}\nJami: {len(sheet_payments)} ta to'lov"
@@ -252,9 +252,9 @@ async def hisobot_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = await update.message.reply_text("⏳ Yuklanmoqda...")
     # 1. Bugungi to'lovlar
     messages = get_bugungi_tulumlar()
-    await msg.edit_text(messages[0])
+    await msg.edit_text(messages[0], parse_mode='HTML')
     for m in messages[1:]:
-        await update.message.reply_text(m)
+        await update.message.reply_text(m, parse_mode='HTML')
     # 2. Kunlik tushum
     await update.message.reply_text(get_kunlik_tushum())
 
@@ -265,12 +265,12 @@ async def send_daily_report(context: ContextTypes.DEFAULT_TYPE):
 
     # Adminga yuborish
     for msg in tulumlar:
-        await context.bot.send_message(chat_id=ADMIN_ID, text=msg)
+        await context.bot.send_message(chat_id=ADMIN_ID, text=msg, parse_mode='HTML')
     await context.bot.send_message(chat_id=ADMIN_ID, text=tushum)
 
     # Guruhga yuborish
     for msg in tulumlar:
-        await context.bot.send_message(chat_id=GROUP_ID, text=msg)
+        await context.bot.send_message(chat_id=GROUP_ID, text=msg, parse_mode='HTML')
     await context.bot.send_message(chat_id=GROUP_ID, text=tushum)
 
 
