@@ -1,6 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { api } from '@libos/shared'
@@ -9,13 +10,6 @@ import styles from './page.module.css'
 
 type Gender = 'ALL' | 'MEN' | 'WOMEN' | 'KIDS'
 
-const TABS: { id: Gender; label: string; emoji: string }[] = [
-  { id: 'ALL', label: 'Hammasi', emoji: '🏪' },
-  { id: 'MEN', label: 'Erkaklar', emoji: '👔' },
-  { id: 'WOMEN', label: 'Ayollar', emoji: '👗' },
-  { id: 'KIDS', label: 'Bolalar', emoji: '🧒' },
-]
-
 const CITIES = [
   { id: "Qo'qon", label: "Qo'qon", active: true },
   { id: 'Toshkent', label: 'Toshkent', active: false },
@@ -23,8 +17,9 @@ const CITIES = [
   { id: 'Samarqand', label: 'Samarqand', active: false },
 ]
 
-export default function HomePage() {
-  const [gender, setGender] = useState<Gender>('ALL')
+function HomePageInner() {
+  const searchParams = useSearchParams()
+  const gender = (searchParams.get('gender') as Gender) || 'ALL'
   const [search, setSearch] = useState('')
   const [city, setCity] = useState("Qo'qon")
 
@@ -81,21 +76,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Tabs */}
-      <div className={styles.tabsBar}>
-        <div className={`container ${styles.tabs}`}>
-          {TABS.map(t => (
-            <button
-              key={t.id}
-              className={`${styles.tab} ${gender === t.id ? styles.tabActive : ''}`}
-              onClick={() => setGender(t.id)}
-            >
-              <span>{t.emoji}</span> {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Store grid */}
       <div className="container">
         <div className={styles.grid}>
@@ -111,6 +91,14 @@ export default function HomePage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function HomePage() {
+  return (
+    <Suspense>
+      <HomePageInner />
+    </Suspense>
   )
 }
 
