@@ -1,5 +1,5 @@
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
-const CHAT_ID = process.env.TELEGRAM_CHAT_ID
+const DEFAULT_CHAT_ID = process.env.TELEGRAM_CHAT_ID
 
 const DELIVERY_LABELS: Record<string, string> = {
   DELIVERY: '🚚 Yetkazib berish',
@@ -8,6 +8,7 @@ const DELIVERY_LABELS: Record<string, string> = {
 }
 
 export async function sendOrderNotification(order: {
+  chatId?: string | null
   id: string
   totalPrice: number
   deliveryType: string
@@ -23,7 +24,8 @@ export async function sendOrderNotification(order: {
     product: { name: string }
   }>
 }) {
-  if (!BOT_TOKEN || !CHAT_ID) return
+  const chatId = order.chatId || DEFAULT_CHAT_ID
+  if (!BOT_TOKEN || !chatId) return
 
   const itemLines = order.items
     .map(i => `  • ${i.product.name} x${i.quantity}${i.size ? ` (${i.size})` : ''}${i.color ? ` [${i.color}]` : ''} — ${i.price.toLocaleString()} so'm`)
@@ -50,11 +52,7 @@ export async function sendOrderNotification(order: {
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: CHAT_ID,
-        text,
-        parse_mode: 'Markdown',
-      }),
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
     })
   } catch (err) {
     console.error('Telegram notification failed:', err)

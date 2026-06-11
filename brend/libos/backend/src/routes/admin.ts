@@ -32,6 +32,7 @@ const storeUpdateSchema = z.object({
   deliveryTime: z.number().optional(),
   themeColor: z.string().optional(),
   themeBg: z.string().optional(),
+  telegramChatId: z.string().optional(),
 })
 
 export default async function adminRoutes(app: FastifyInstance) {
