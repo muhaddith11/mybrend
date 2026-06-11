@@ -16,12 +16,20 @@ const TABS: { id: Gender; label: string; emoji: string }[] = [
   { id: 'KIDS', label: 'Bolalar', emoji: '🧒' },
 ]
 
+const CITIES = [
+  { id: "Qo'qon", label: "Qo'qon", active: true },
+  { id: 'Toshkent', label: 'Toshkent', active: false },
+  { id: "Farg'ona", label: "Farg'ona", active: false },
+  { id: 'Samarqand', label: 'Samarqand', active: false },
+]
+
 export default function HomePage() {
   const [gender, setGender] = useState<Gender>('ALL')
   const [search, setSearch] = useState('')
+  const [city, setCity] = useState("Qo'qon")
 
   const { data, isLoading } = useQuery({
-    queryKey: ['stores', gender, search],
+    queryKey: ['stores', gender, search, city],
     queryFn: () => api.stores.list({
       gender: gender === 'ALL' ? undefined : gender,
       search: search || undefined,
@@ -37,12 +45,27 @@ export default function HomePage() {
       {/* Hero */}
       <section className={styles.hero}>
         <div className="container">
+          {/* City selector */}
+          <div className={styles.cityRow}>
+            {CITIES.map(c => (
+              <button
+                key={c.id}
+                className={`${styles.cityBtn} ${city === c.id ? styles.cityActive : ''} ${!c.active ? styles.cityDisabled : ''}`}
+                onClick={() => c.active && setCity(c.id)}
+                disabled={!c.active}
+              >
+                📍 {c.label}
+                {!c.active && <span className={styles.citySoon}>Tez kunda</span>}
+              </button>
+            ))}
+          </div>
+
           <h1 className={styles.heroTitle}>
-            Qo&apos;qondagi barcha<br />
+            {city}dagi barcha<br />
             <span>kiyim do&apos;konlari</span> bir joyda
           </h1>
           <p className={styles.heroSub}>
-            Erkaklar, ayollar va bolalar kiyimlarini toping. Online buyurtma bering yoki eshikda to'lang.
+            Erkaklar, ayollar va bolalar kiyimlarini toping. Online buyurtma bering yoki eshikda to&apos;lang.
           </p>
           <div className={styles.searchWrap}>
             <svg className={styles.searchIcon} width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -80,7 +103,7 @@ export default function HomePage() {
             Array.from({ length: 6 }).map((_, i) => <StoreSkeleton key={i} />)
           ) : stores.length === 0 ? (
             <div className={styles.empty}>
-              <p>Do'kon topilmadi</p>
+              <p>Do&apos;kon topilmadi</p>
             </div>
           ) : (
             stores.map(store => <StoreCard key={store.id} store={store} />)
@@ -97,7 +120,6 @@ function StoreCard({ store }: { store: Store }) {
 
   return (
     <Link href={`/store/${store.slug}`} className={styles.card}>
-      {/* Cover */}
       <div className={styles.cardCover} style={{ background: bg }}>
         {store.banner ? (
           <Image src={store.banner!} alt={store.name} fill className={styles.coverImg} />
@@ -106,7 +128,6 @@ function StoreCard({ store }: { store: Store }) {
             {store.name.charAt(0)}
           </div>
         )}
-        {/* Gender badges */}
         <div className={styles.genders}>
           {(store.genders ?? []).map((g: string) => (
             <span key={g} className={styles.genderBadge}>
@@ -116,7 +137,6 @@ function StoreCard({ store }: { store: Store }) {
         </div>
       </div>
 
-      {/* Info */}
       <div className={styles.cardBody}>
         {store.logo && (
           <Image src={store.logo} alt="" width={36} height={36} className={styles.storeLogo} />
