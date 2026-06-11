@@ -7,7 +7,7 @@ import { LoginModal } from '../components/LoginModal'
 import { BodyPadding } from '../components/BodyPadding'
 
 export const metadata: Metadata = {
-  title: 'Libos — Shahardagi barcha kiyim do\'konlari',
+  title: 'ZYFF — Shahardagi barcha kiyim do\'konlari',
   description: "Qo'qondagi barcha kiyim do'konlari bir joyda. Erkaklar, ayollar va bolalar kiyimlari.",
   other: { viewport: 'width=device-width, initial-scale=1, maximum-scale=1' },
 }

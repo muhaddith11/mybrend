@@ -19,8 +19,8 @@ export function Navbar() {
         <div className={`container ${styles.inner}`}>
           {/* Logo */}
           <Link href="/" className={styles.logo}>
-            <span className={styles.logoMark}>L</span>
-            <span className={styles.logoText}>Li<em>bos</em></span>
+            <span className={styles.logoMark}>Z</span>
+            <span className={styles.logoText}>ZY<em>FF</em></span>
           </Link>
 
           {/* Desktop nav */}
