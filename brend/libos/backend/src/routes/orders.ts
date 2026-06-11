@@ -58,12 +58,13 @@ export default async function ordersRoutes(app: FastifyInstance) {
       },
       include: {
         items: { include: { product: true } },
-        store: storeInclude,
+        store: { select: { id: true, name: true, slug: true, logo: true, themeColor: true, telegramChatId: true } },
       },
     })
 
     sendOrderNotification({
       ...order,
+      chatId: order.store.telegramChatId,
       user: user ?? { phone: 'Noma\'lum', name: null },
     }).catch(() => {})
 

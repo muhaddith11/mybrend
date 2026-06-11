@@ -149,7 +149,7 @@ async function main() {
 
   const asmaStore = await prisma.store.upsert({
     where: { slug: 'asma' },
-    update: { city: "Qo'qon", address: "Istiqbol ko'chasi, 42, Qo'qon" },
+    update: { city: "Qo'qon", address: "Istiqbol ko'chasi, 42, Qo'qon", telegramChatId: "8042807902" },
     create: {
       name: 'Asma Design',
       slug: 'asma',
