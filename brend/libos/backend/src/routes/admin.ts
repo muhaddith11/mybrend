@@ -8,6 +8,7 @@ function hash(p: string) { return createHash('sha256').update(p).digest('hex') }
 const loginSchema = z.object({ email: z.string().email(), password: z.string().min(6) })
 
 const productSchema = z.object({
+  sku: z.string().optional(),
   name: z.string().min(1),
   description: z.string().optional(),
   price: z.number().positive(),
