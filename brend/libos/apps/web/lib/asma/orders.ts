@@ -64,6 +64,12 @@ export async function createOrder(order: OrderInput): Promise<void> {
   })
 
   if (error) throw error
+
+  fetch('/api/notify-order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...order, items: itemsJson }),
+  }).catch(() => {})
 }
 
 type DBOrder = {
