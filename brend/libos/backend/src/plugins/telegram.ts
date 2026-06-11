@@ -21,14 +21,14 @@ export async function sendOrderNotification(order: {
     size?: string | null
     color?: string | null
     price: number
-    product: { name: string }
+    product: { name: string; sku?: string | null }
   }>
 }) {
   const chatId = order.chatId || DEFAULT_CHAT_ID
   if (!BOT_TOKEN || !chatId) return
 
   const itemLines = order.items
-    .map(i => `  • ${i.product.name} x${i.quantity}${i.size ? ` (${i.size})` : ''}${i.color ? ` [${i.color}]` : ''} — ${i.price.toLocaleString()} so'm`)
+    .map(i => `  • ${i.product.sku ? `[${i.product.sku}] ` : ''}${i.product.name} x${i.quantity}${i.size ? ` (${i.size})` : ''}${i.color ? ` [${i.color}]` : ''} — ${i.price.toLocaleString()} so'm`)
     .join('\n')
 
   const text = [

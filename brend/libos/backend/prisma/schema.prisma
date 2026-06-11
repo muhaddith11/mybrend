@@ -118,6 +118,7 @@ model Category {
 
 model Product {
   id          String   @id @default(cuid())
+  sku         String?  @unique
   name        String
   description String?
   price       Int      // so'mda
