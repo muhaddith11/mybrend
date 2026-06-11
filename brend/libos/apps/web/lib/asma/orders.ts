@@ -40,6 +40,8 @@ export interface OrderInput {
   items: CartItem[]
   total: number
   paymentMethod: PaymentMethod
+  lat?: number
+  lng?: number
 }
 
 export async function createOrder(order: OrderInput): Promise<void> {
@@ -68,7 +70,7 @@ export async function createOrder(order: OrderInput): Promise<void> {
   fetch('/api/notify-order', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...order, items: itemsJson }),
+    body: JSON.stringify({ ...order, items: itemsJson, lat: order.lat, lng: order.lng }),
   }).catch(() => {})
 }
 

@@ -20,6 +20,10 @@ export async function POST(req: NextRequest) {
     .map((i: any) => `  • ${i.name} x${i.quantity}${i.size ? ` (${i.size})` : ''}${i.color ? ` [${i.color}]` : ''} — ${Number(i.price).toLocaleString()} so'm`)
     .join('\n')
 
+  const mapsLink = order.lat && order.lng
+    ? `https://maps.google.com/?q=${order.lat},${order.lng}`
+    : null
+
   const text = [
     `🛍 *Yangi buyurtma!* — Asma Design`,
     ``,
@@ -31,6 +35,7 @@ export async function POST(req: NextRequest) {
     ``,
     `${PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod}`,
     order.address ? `📍 *Manzil:* ${order.address}` : null,
+    mapsLink ? `🗺 [Xaritada ko'rish](${mapsLink})` : null,
     order.note ? `📝 *Izoh:* ${order.note}` : null,
     ``,
     `💰 *Jami:* ${Number(order.total).toLocaleString()} so'm`,
