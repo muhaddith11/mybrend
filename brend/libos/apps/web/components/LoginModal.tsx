@@ -91,8 +91,8 @@ export function LoginModal() {
 
         {/* Logo */}
         <div className={styles.logoRow}>
-          <div className={styles.logoMark}>L</div>
-          <span className={styles.logoText}>Libos</span>
+          <div className={styles.logoMark}>Z</div>
+          <span className={styles.logoText}>ZYFF</span>
         </div>
 
         {step === 'phone' ? (
