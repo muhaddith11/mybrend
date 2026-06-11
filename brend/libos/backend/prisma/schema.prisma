@@ -1,0 +1,223 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PaymentProvider {
+  CLICK
+  PAYME
+  CASH
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  CANCELLED
+  FAILED
+}
+
+enum Gender {
+  MEN
+  WOMEN
+  KIDS
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  DELIVERING
+  DELIVERED
+  CANCELLED
+}
+
+enum DeliveryType {
+  DELIVERY
+  PICKUP
+  CASH_ON_DOOR
+}
+
+model User {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  name      String?
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders    Order[]
+  cart      CartItem[]
+  favorites FavoriteStore[]
+}
+
+model Store {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  address     String
+  phone       String
+  logo        String?
+  banner      String?
+  isOpen      Boolean  @default(true)
+  rating      Float    @default(0)
+  reviewCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Har bir do'kon o'z rangini tanlaydi (UI uchun)
+  themeColor  String   @default("#534AB7")
+  themeBg     String   @default("#EEEDFE")
+
+  // Qaysi bo'limlarda ko'rinadi
+  genders   Gender[]
+
+  // Xizmatlar
+  hasDelivery Boolean @default(false)
+  hasPickup   Boolean @default(false)
+  hasCashOnDoor Boolean @default(true)
+  deliveryTime  Int?    // daqiqalarda
+
+  ownerId   String
+  owner     StoreOwner @relation(fields: [ownerId], references: [id])
+
+  products  Product[]
+  orders    Order[]
+  favorites FavoriteStore[]
+
+  @@index([genders])
+}
+
+model StoreOwner {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  phone     String   @unique
+  name      String
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stores    Store[]
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String
+  slug     String    @unique
+  gender   Gender
+  products Product[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       Int      // so'mda
+  images      String[]
+  inStock     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  storeId    String
+  store      Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  variants   ProductVariant[]
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@index([storeId])
+  @@index([categoryId])
+}
+
+model ProductVariant {
+  id        String  @id @default(cuid())
+  size      String?
+  color     String?
+  quantity  Int     @default(0)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model CartItem {
+  id        String         @id @default(cuid())
+  quantity  Int            @default(1)
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId String?
+
+  @@unique([userId, productId, variantId])
+}
+
+model Order {
+  id           String       @id @default(cuid())
+  totalPrice   Int
+  status       OrderStatus  @default(PENDING)
+  deliveryType DeliveryType
+  address      String?
+  note         String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  userId  String
+  user    User    @relation(fields: [userId], references: [id])
+  storeId String
+  store   Store   @relation(fields: [storeId], references: [id])
+
+  items   OrderItem[]
+  payment Payment?
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  quantity  Int
+  price     Int
+  size      String?
+  color     String?
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Payment {
+  id         String          @id @default(cuid())
+  provider   PaymentProvider
+  status     PaymentStatus   @default(PENDING)
+  amount     Int             // tiyin (so'm × 100)
+
+  // Click uchun
+  clickTransId   String? @unique
+  clickPaydocId  String?
+
+  // Payme uchun
+  paymeTransId   String? @unique
+  paymeTime      BigInt?
+  paymeCreateTime BigInt?
+  paymePerformTime BigInt?
+  paymeCancelTime  BigInt?
+  paymeCancelReason Int?
+
+  orderId    String  @unique
+  order      Order   @relation(fields: [orderId], references: [id])
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model FavoriteStore {
+  userId    String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeId   String
+  store     Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, storeId])
+}

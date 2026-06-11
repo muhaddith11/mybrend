@@ -1,0 +1,164 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  animation: fadeIn .2s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+.modal {
+  background: #fff;
+  border-radius: 20px;
+  padding: 2rem 2rem 2.5rem;
+  width: 100%;
+  max-width: 380px;
+  position: relative;
+  animation: slideUp .25s ease;
+}
+
+@keyframes slideUp { from { opacity: 0; transform: translateY(16px) } to { opacity: 1; transform: translateY(0) } }
+
+.closeBtn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--brand-light);
+  color: var(--brand);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.logoRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+}
+.logoMark {
+  width: 32px; height: 32px;
+  background: var(--brand);
+  color: #fff;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 16px;
+}
+.logoText {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.heading {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: .4rem;
+}
+.sub {
+  font-size: 14px;
+  color: #777;
+  margin-bottom: 1.25rem;
+}
+
+.inputWrap {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: .75rem;
+  transition: border-color .15s;
+}
+.inputWrap:focus-within { border-color: var(--brand); }
+
+.prefix {
+  padding: 0 12px;
+  font-size: 15px;
+  color: #555;
+  border-right: 1.5px solid var(--border);
+  height: 48px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  background: var(--brand-light);
+}
+
+.input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 0 14px;
+  height: 48px;
+  font-size: 16px;
+  background: transparent;
+}
+
+.error {
+  color: #ef4444;
+  font-size: 13px;
+  margin-bottom: .5rem;
+}
+
+.primaryBtn {
+  width: 100%;
+  height: 50px;
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: .5rem;
+  transition: background .15s;
+}
+.primaryBtn:hover:not(:disabled) { background: var(--brand-dark); }
+.primaryBtn:disabled { opacity: .6; cursor: not-allowed; }
+
+/* OTP */
+.back {
+  background: none;
+  border: none;
+  color: var(--brand);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+}
+.back:hover { text-decoration: underline; }
+
+.otpRow {
+  display: flex;
+  gap: .5rem;
+  justify-content: center;
+  margin-bottom: .75rem;
+}
+.otpInput {
+  width: 46px;
+  height: 54px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  outline: none;
+  transition: border-color .15s;
+}
+.otpInput:focus { border-color: var(--brand); }
+
+.hint {
+  font-size: 12px;
+  color: #aaa;
+  text-align: center;
+  margin-bottom: .5rem;
+}
+.hint strong { color: var(--brand); }
