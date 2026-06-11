@@ -79,12 +79,9 @@ export function ProductCard({ product, className }: ProductCardProps) {
             )}
           </div>
 
-          {/* Quick Actions */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 20 }}
-            transition={{ duration: 0.3 }}
-            className="absolute bottom-3 left-3 right-3 flex items-center gap-2"
+          {/* Quick Actions — always visible on mobile, hover-only on desktop */}
+          <div
+            className="absolute bottom-3 left-3 right-3 flex items-center gap-2 transition-all duration-300 lg:opacity-0 lg:translate-y-5 lg:group-hover:opacity-100 lg:group-hover:translate-y-0"
           >
             <button
               onClick={handleQuickAdd}
@@ -100,7 +97,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
             >
               <Eye className="w-4 h-4" />
             </Link>
-          </motion.div>
+          </div>
 
           {/* Wishlist Button */}
           <button

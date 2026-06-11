@@ -19,21 +19,17 @@ export function Hero() {
 
   return (
     <section ref={containerRef} className="relative h-screen overflow-hidden">
-      {/* Video Background */}
+      {/* Background */}
       <motion.div style={{ scale }} className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/20 to-background z-10" />
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          poster="/asma/hero-poster.jpg"
-          className="w-full h-full object-cover"
-        >
-          <source src="/hero-video.mp4" type="video/mp4" />
-        </video>
-        {/* Fallback gradient for when video is not available */}
-        <div className="absolute inset-0 bg-gradient-to-br from-charcoal via-background to-charcoal-light -z-10" />
+        {/* Poster image */}
+        <img
+          src="/asma/hero-poster.jpg"
+          alt=""
+          className="w-full h-full object-cover object-center"
+          style={{ position: 'absolute', inset: 0 }}
+        />
+        {/* Dark overlay for luxury feel */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/80 z-10" />
       </motion.div>
 
       {/* Content */}

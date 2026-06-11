@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, ShoppingBag, Heart, Search, User, ArrowRight, LogIn } from 'lucide-react'
 import { useStore, formatPrice } from '@/lib/asma/store'
@@ -19,6 +20,8 @@ const navLinks = [
 ]
 
 export function Navigation() {
+  const pathname = usePathname()
+  const isHomePage = pathname === '/store/asma'
   const [scrolled, setScrolled] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -64,7 +67,9 @@ export function Navigation() {
           'fixed left-0 right-0 z-50 transition-all duration-300',
           scrolled
             ? 'top-0 bg-background/95 backdrop-blur-md border-b border-border'
-            : 'top-10 bg-transparent'
+            : isHomePage
+              ? 'top-10 bg-transparent'
+              : 'top-10 bg-background/95 backdrop-blur-md border-b border-border'
         )}
       >
         <nav className="container mx-auto px-4 lg:px-8">

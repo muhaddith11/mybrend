@@ -1,10 +1,11 @@
 import type { Store, Product, Order, User, Gender } from './types'
 
-// Support both Expo and Next.js env vars
-const BASE_URL =
+// Support both Expo and Next.js env vars; strip BOM that Windows tools can inject
+const _rawUrl =
   (typeof process !== 'undefined' &&
     (process.env.NEXT_PUBLIC_API_URL || process.env.EXPO_PUBLIC_API_URL)) ||
   'http://localhost:3001/api'
+const BASE_URL = _rawUrl.replace(/^﻿/, '')
 
 let authToken: string | null = null
 

@@ -25,12 +25,12 @@ export function BrandStorySection() {
             style={{ y }}
             className="relative aspect-[3/4] lg:aspect-[4/5]"
           >
-            <div className="absolute inset-0 bg-muted">
+            <div className="absolute inset-0 bg-muted overflow-hidden">
               <Image
-                src="/brand/atelier.jpg"
+                src="/asma/hero-poster.jpg"
                 alt="Asma Design Atelier"
                 fill
-                className="object-cover"
+                className="object-cover object-top"
               />
             </div>
             {/* Decorative Frame */}
