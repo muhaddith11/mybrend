@@ -20,6 +20,13 @@ async function main() {
     prisma.category.upsert({ where: { slug: 'bola-kurtka' }, update: {}, create: { name: 'Kurtka', slug: 'bola-kurtka', gender: 'KIDS' } }),
     prisma.category.upsert({ where: { slug: 'bola-sport' }, update: {}, create: { name: 'Sport kiyim', slug: 'bola-sport', gender: 'KIDS' } }),
     prisma.category.upsert({ where: { slug: 'erkak-kostyum' }, update: {}, create: { name: 'Kostyum', slug: 'erkak-kostyum', gender: 'MEN' } }),
+    // Asma Design kategoriyalari
+    prisma.category.upsert({ where: { slug: 'suits' }, update: {}, create: { name: 'Kostyumlar', slug: 'suits', gender: 'MEN' } }),
+    prisma.category.upsert({ where: { slug: 'coats' }, update: {}, create: { name: 'Paltolar', slug: 'coats', gender: 'MEN' } }),
+    prisma.category.upsert({ where: { slug: 'shirts' }, update: {}, create: { name: "Ko'ylaklar", slug: 'shirts', gender: 'MEN' } }),
+    prisma.category.upsert({ where: { slug: 'knitwear' }, update: {}, create: { name: 'Trikotaj', slug: 'knitwear', gender: 'MEN' } }),
+    prisma.category.upsert({ where: { slug: 'shoes' }, update: {}, create: { name: 'Poyafzallar', slug: 'shoes', gender: 'MEN' } }),
+    prisma.category.upsert({ where: { slug: 'accessories' }, update: {}, create: { name: 'Aksessuarlar', slug: 'accessories', gender: 'MEN' } }),
   ])
 
   console.log(`✅ ${categories.length} ta kategoriya`)

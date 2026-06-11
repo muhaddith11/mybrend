@@ -1,4 +1,9 @@
-﻿import { supabase } from './supabase'
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+
+function getAdminToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem('asma_admin_token')
+}
 
 export interface StoreSettings {
   phone: string
@@ -18,41 +23,43 @@ export const defaultSettings: StoreSettings = {
   deliveryText: "Qo'qon shahri bo'ylab 2 soat ichida bepul yetkazib beramiz",
 }
 
-type DBSettings = {
-  phone: string | null
-  address: string | null
-  telegram: string | null
-  instagram: string | null
-  working_hours: string | null
-  delivery_text: string | null
-}
-
 export async function fetchSettings(): Promise<StoreSettings> {
-  const { data, error } = await supabase.from('settings').select('*').eq('id', 1).single()
-  if (error || !data) return defaultSettings
-  const row = data as DBSettings
-  return {
-    phone: row.phone ?? '',
-    address: row.address ?? '',
-    telegram: row.telegram ?? '',
-    instagram: row.instagram ?? '',
-    workingHours: row.working_hours ?? defaultSettings.workingHours,
-    deliveryText: row.delivery_text ?? defaultSettings.deliveryText,
+  try {
+    const res = await fetch(`${API}/stores/asma`)
+    if (!res.ok) return defaultSettings
+    const store = await res.json()
+    return {
+      phone: store.phone ?? '',
+      address: store.address ?? '',
+      telegram: store.telegramChatId ?? '',
+      instagram: store.instagram ?? '',
+      workingHours: store.workingHours ?? defaultSettings.workingHours,
+      deliveryText: store.deliveryText ?? defaultSettings.deliveryText,
+    }
+  } catch {
+    return defaultSettings
   }
 }
 
 export async function updateSettings(s: StoreSettings): Promise<void> {
-  const { error } = await supabase
-    .from('settings')
-    .update({
+  const token = getAdminToken()
+  const res = await fetch(`${API}/admin/store`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token ?? ''}`,
+    },
+    body: JSON.stringify({
       phone: s.phone,
       address: s.address,
-      telegram: s.telegram,
+      telegramChatId: s.telegram,
       instagram: s.instagram,
-      working_hours: s.workingHours,
-      delivery_text: s.deliveryText,
-    })
-    .eq('id', 1)
-  if (error) throw error
+      workingHours: s.workingHours,
+      deliveryText: s.deliveryText,
+    }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error || 'Settings update failed')
+  }
 }
-

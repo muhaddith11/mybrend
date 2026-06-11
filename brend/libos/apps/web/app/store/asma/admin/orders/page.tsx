@@ -31,8 +31,8 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('all')
-  const [expandedOrder, setExpandedOrder] = useState<number | null>(null)
-  const [updatingId, setUpdatingId] = useState<number | null>(null)
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   useEffect(() => {
     loadOrders()
@@ -49,7 +49,7 @@ export default function AdminOrdersPage() {
     }
   }
 
-  async function changeStatus(id: number, status: OrderStatus) {
+  async function changeStatus(id: string, status: OrderStatus) {
     setUpdatingId(id)
     try {
       await updateOrderStatus(id, status)

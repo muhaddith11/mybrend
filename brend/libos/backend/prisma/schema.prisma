@@ -77,6 +77,11 @@ model Store {
   // Telegram xabarnoma
   telegramChatId String?
 
+  // Do'kon qo'shimcha ma'lumotlari
+  instagram    String?
+  workingHours String?
+  deliveryText String?
+
   // Qaysi bo'limlarda ko'rinadi
   genders   Gender[]
 
@@ -117,21 +122,28 @@ model Category {
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  sku         String?  @unique
-  name        String
-  description String?
-  price       Int      // so'mda
-  images      String[]
-  inStock     Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  sku           String?  @unique
+  name          String
+  nameUz        String?
+  description   String?
+  descriptionUz String?
+  price         Int
+  originalPrice Int?
+  images        String[]
+  sizes         String[]
+  colors        String[]
+  inStock       Boolean  @default(true)
+  featured      Boolean  @default(false)
+  isNew         Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   storeId    String
   store      Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
-  categoryId String
-  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
 
   variants   ProductVariant[]
   cartItems  CartItem[]
@@ -163,14 +175,18 @@ model CartItem {
 }
 
 model Order {
-  id           String       @id @default(cuid())
-  totalPrice   Int
-  status       OrderStatus  @default(PENDING)
-  deliveryType DeliveryType
-  address      String?
-  note         String?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id            String       @id @default(cuid())
+  totalPrice    Int
+  status        OrderStatus  @default(PENDING)
+  deliveryType  DeliveryType @default(DELIVERY)
+  paymentMethod String?
+  address       String?
+  lat           Float?
+  lng           Float?
+  customerName  String?
+  note          String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   userId  String
   user    User    @relation(fields: [userId], references: [id])
