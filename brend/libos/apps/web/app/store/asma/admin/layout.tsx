@@ -7,11 +7,11 @@ import { LayoutDashboard, Package, ShoppingCart, Image, Settings, ArrowLeft, Pan
 import { cn } from '@/lib/asma/utils'
 
 const adminNavItems = [
-  { href: '/admin', icon: LayoutDashboard, label: 'Bosh sahifa' },
-  { href: '/admin/products', icon: Package, label: 'Mahsulotlar' },
-  { href: '/admin/orders', icon: ShoppingCart, label: 'Buyurtmalar' },
-  { href: '/admin/lookbook', icon: Image, label: 'Lookbook' },
-  { href: '/admin/settings', icon: Settings, label: 'Sozlamalar' },
+  { href: '/store/asma/admin', icon: LayoutDashboard, label: 'Bosh sahifa' },
+  { href: '/store/asma/admin/products', icon: Package, label: 'Mahsulotlar' },
+  { href: '/store/asma/admin/orders', icon: ShoppingCart, label: 'Buyurtmalar' },
+  { href: '/store/asma/admin/lookbook', icon: Image, label: 'Lookbook' },
+  { href: '/store/asma/admin/settings', icon: Settings, label: 'Sozlamalar' },
 ]
 
 export default function AdminLayout({
@@ -23,7 +23,7 @@ export default function AdminLayout({
   const [collapsed, setCollapsed] = useState(false)
 
   const isActive = (href: string) =>
-    pathname === href || (href !== '/admin' && pathname.startsWith(href))
+    pathname === href || (href !== '/store/asma/admin' && pathname.startsWith(href))
 
   return (
     <div className="min-h-screen bg-background">
