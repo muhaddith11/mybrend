@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { PrismaClient, DeliveryType } from '@prisma/client'
+import { sendOrderNotification } from '../plugins/telegram'
 
 const createOrderSchema = z.object({
   storeId: z.string(),
@@ -35,6 +36,8 @@ export default async function ordersRoutes(app: FastifyInstance) {
       return sum + (product?.price ?? 0) * item.quantity
     }, 0)
 
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { phone: true, name: true } })
+
     const order = await prisma.order.create({
       data: {
         userId,
@@ -58,6 +61,11 @@ export default async function ordersRoutes(app: FastifyInstance) {
         store: storeInclude,
       },
     })
+
+    sendOrderNotification({
+      ...order,
+      user: user ?? { phone: 'Noma\'lum', name: null },
+    }).catch(() => {})
 
     return reply.status(201).send(order)
   })
