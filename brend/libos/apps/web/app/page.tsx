@@ -38,8 +38,8 @@ export default function HomePage() {
       <section className={styles.hero}>
         <div className="container">
           <h1 className={styles.heroTitle}>
-            Samarqanddagi barcha<br />
-            <span>kiyim do'konlari</span> bir joyda
+            Qo&apos;qondagi barcha<br />
+            <span>kiyim do&apos;konlari</span> bir joyda
           </h1>
           <p className={styles.heroSub}>
             Erkaklar, ayollar va bolalar kiyimlarini toping. Online buyurtma bering yoki eshikda to'lang.
