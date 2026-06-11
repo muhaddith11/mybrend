@@ -121,7 +121,7 @@ export function ProductForm({ initialData, mode }: ProductFormProps) {
       } else if (initialData) {
         await updateProduct(initialData.id, data)
       }
-      router.push('/admin/products')
+      router.push('/store/asma/admin/products')
     } catch (e) {
       console.error(e)
       setSaving(false)
