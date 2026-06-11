@@ -48,19 +48,25 @@ app.get('/health', async () => ({
   timestamp: new Date().toISOString(),
 }))
 
-// Ishga tushirish
-const start = async () => {
-  try {
-    await prisma.$connect()
-    console.log('✅ PostgreSQL ulandi')
-
-    await app.listen({ port: Number(process.env.PORT ?? 3001), host: '0.0.0.0' })
-    console.log(`🚀 Libos backend: http://localhost:${process.env.PORT ?? 3001}`)
-  } catch (err) {
-    app.log.error(err)
-    await prisma.$disconnect()
-    process.exit(1)
-  }
+// Vercel serverless handler
+export default async function handler(req: any, res: any) {
+  await app.ready()
+  app.server.emit('request', req, res)
 }
 
-start()
+// Lokal dev uchun
+if (process.env.NODE_ENV !== 'production' || process.env.LOCAL_SERVER) {
+  const start = async () => {
+    try {
+      await prisma.$connect()
+      console.log('✅ PostgreSQL ulandi')
+      await app.listen({ port: Number(process.env.PORT ?? 3001), host: '0.0.0.0' })
+      console.log(`🚀 Libos backend: http://localhost:${process.env.PORT ?? 3001}`)
+    } catch (err) {
+      app.log.error(err)
+      await prisma.$disconnect()
+      process.exit(1)
+    }
+  }
+  start()
+}
