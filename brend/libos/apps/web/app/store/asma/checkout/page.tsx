@@ -37,6 +37,7 @@ const paymentOptions: {
 export default function CheckoutPage() {
   const { cart, getCartTotal, clearCart, authPhone, authName } = useStore()
   const [form, setForm] = useState({ name: '', phone: '', address: '', note: '' })
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
@@ -56,8 +57,9 @@ export default function CheckoutPage() {
 
   const total = getCartTotal()
 
-  const handleMapSelect = (address: string) => {
+  const handleMapSelect = (address: string, lat: number, lng: number) => {
     setForm((prev) => ({ ...prev, address }))
+    setCoords({ lat, lng })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,6 +75,8 @@ export default function CheckoutPage() {
         items: cart,
         total,
         paymentMethod,
+        lat: coords?.lat,
+        lng: coords?.lng,
       })
       clearCart()
       setDone(true)
