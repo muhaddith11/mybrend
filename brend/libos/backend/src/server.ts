@@ -3,6 +3,11 @@ import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
 import { PrismaClient } from '@prisma/client'
 
+// Strip BOM that Windows/PowerShell can inject into env vars
+if (process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = process.env.DATABASE_URL.replace(/^﻿/, '')
+}
+
 import authRoutes from './routes/auth.js'
 import storesRoutes from './routes/stores.js'
 import productsRoutes from './routes/products.js'
