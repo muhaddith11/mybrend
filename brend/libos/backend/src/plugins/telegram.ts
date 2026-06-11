@@ -7,12 +7,22 @@ const DELIVERY_LABELS: Record<string, string> = {
   CASH_ON_DOOR: '💵 Eshikda to\'lov',
 }
 
+const PAYMENT_LABELS: Record<string, string> = {
+  cash: '💵 Naqd (eshik oldida)',
+  click: '💳 Click',
+  payme: '💳 Payme',
+}
+
 export async function sendOrderNotification(order: {
   chatId?: string | null
   id: string
   totalPrice: number
   deliveryType: string
+  paymentMethod?: string | null
   address?: string | null
+  lat?: number | null
+  lng?: number | null
+  customerName?: string | null
   note?: string | null
   store: { name: string }
   user: { phone: string; name?: string | null }
@@ -21,27 +31,37 @@ export async function sendOrderNotification(order: {
     size?: string | null
     color?: string | null
     price: number
-    product: { name: string; sku?: string | null }
+    product: { name: string; nameUz?: string | null; sku?: string | null }
   }>
 }) {
   const chatId = order.chatId || DEFAULT_CHAT_ID
   if (!BOT_TOKEN || !chatId) return
 
   const itemLines = order.items
-    .map(i => `  • ${i.product.sku ? `[${i.product.sku}] ` : ''}${i.product.name} x${i.quantity}${i.size ? ` (${i.size})` : ''}${i.color ? ` [${i.color}]` : ''} — ${i.price.toLocaleString()} so'm`)
+    .map(i => {
+      const displayName = i.product.nameUz || i.product.name
+      return `  • ${i.product.sku ? `[${i.product.sku}] ` : ''}${displayName} x${i.quantity}${i.size ? ` (${i.size})` : ''}${i.color ? ` [${i.color}]` : ''} — ${i.price.toLocaleString()} so'm`
+    })
     .join('\n')
+
+  const mapsLink = order.lat && order.lng
+    ? `https://maps.google.com/?q=${order.lat},${order.lng}`
+    : null
+
+  const customerName = order.customerName || order.user.name || 'Noma\'lum'
 
   const text = [
     `🛍 *Yangi buyurtma!* — ${order.store.name}`,
     ``,
-    `👤 *Mijoz:* ${order.user.name || 'Noma\'lum'}`,
+    `👤 *Mijoz:* ${customerName}`,
     `📞 *Tel:* ${order.user.phone}`,
     ``,
     `📦 *Mahsulotlar:*`,
     itemLines,
     ``,
-    `${DELIVERY_LABELS[order.deliveryType] || order.deliveryType}`,
+    order.paymentMethod ? (PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod) : (DELIVERY_LABELS[order.deliveryType] || order.deliveryType),
     order.address ? `📍 *Manzil:* ${order.address}` : null,
+    mapsLink ? `🗺 [Xaritada ko'rish](${mapsLink})` : null,
     order.note ? `📝 *Izoh:* ${order.note}` : null,
     ``,
     `💰 *Jami:* ${order.totalPrice.toLocaleString()} so'm`,

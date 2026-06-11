@@ -52,7 +52,8 @@ export default async function storesRoutes(app: FastifyInstance) {
         products: {
           where: { inStock: true },
           include: { category: true, variants: true },
-          take: 50,
+          orderBy: { createdAt: 'desc' },
+          take: 200,
         },
       },
     })

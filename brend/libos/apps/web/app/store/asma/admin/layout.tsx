@@ -1,9 +1,9 @@
 ﻿'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, ShoppingCart, Image, Settings, ArrowLeft, PanelLeftClose, PanelLeft } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { LayoutDashboard, Package, ShoppingCart, Image, Settings, ArrowLeft, PanelLeftClose, PanelLeft, LogOut } from 'lucide-react'
 import { cn } from '@/lib/asma/utils'
 
 const adminNavItems = [
@@ -20,10 +20,33 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
+  const [checked, setChecked] = useState(false)
+
+  useEffect(() => {
+    if (pathname === '/store/asma/admin/login') { setChecked(true); return }
+    const token = localStorage.getItem('asma_admin_token')
+    if (!token) {
+      router.replace('/store/asma/admin/login')
+    } else {
+      setChecked(true)
+    }
+  }, [pathname, router])
+
+  const handleLogout = () => {
+    localStorage.removeItem('asma_admin_token')
+    router.replace('/store/asma/admin/login')
+  }
 
   const isActive = (href: string) =>
     pathname === href || (href !== '/store/asma/admin' && pathname.startsWith(href))
+
+  if (!checked) return null
+
+  if (pathname === '/store/asma/admin/login') {
+    return <>{children}</>
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -47,9 +70,18 @@ export default function AdminLayout({
               <span className="text-sm hidden sm:inline">Do&apos;konga qaytish</span>
             </Link>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-serif tracking-[0.2em] text-foreground">ASMA</span>
-            <span className="text-[10px] tracking-wider text-primary font-sans uppercase">Admin</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xl font-serif tracking-[0.2em] text-foreground">ASMA</span>
+              <span className="text-[10px] tracking-wider text-primary font-sans uppercase">Admin</span>
+            </div>
+            <button
+              onClick={handleLogout}
+              title="Chiqish"
+              className="flex items-center justify-center w-8 h-8 rounded text-muted-foreground hover:text-destructive hover:bg-muted transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </header>

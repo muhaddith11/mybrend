@@ -10,11 +10,19 @@ const loginSchema = z.object({ email: z.string().email(), password: z.string().m
 const productSchema = z.object({
   sku: z.string().optional(),
   name: z.string().min(1),
+  nameUz: z.string().optional(),
   description: z.string().optional(),
+  descriptionUz: z.string().optional(),
   price: z.number().positive(),
+  originalPrice: z.number().optional(),
   images: z.array(z.string()).default([]),
-  categoryId: z.string(),
+  sizes: z.array(z.string()).default([]),
+  colors: z.array(z.string()).default([]),
+  categorySlug: z.string().optional(),
+  categoryId: z.string().optional(),
   inStock: z.boolean().default(true),
+  featured: z.boolean().default(false),
+  isNew: z.boolean().default(false),
   variants: z.array(z.object({
     size: z.string().optional(),
     color: z.string().optional(),
@@ -34,6 +42,9 @@ const storeUpdateSchema = z.object({
   themeColor: z.string().optional(),
   themeBg: z.string().optional(),
   telegramChatId: z.string().optional(),
+  instagram: z.string().optional(),
+  workingHours: z.string().optional(),
+  deliveryText: z.string().optional(),
 })
 
 export default async function adminRoutes(app: FastifyInstance) {
@@ -98,9 +109,14 @@ export default async function adminRoutes(app: FastifyInstance) {
     const { ownerId } = req.user as { ownerId: string }
     const store = await prisma.store.findFirst({ where: { ownerId } })
     if (!store) return reply.status(404).send({ error: 'Do\'kon topilmadi' })
-    const { variants, ...data } = productSchema.parse(req.body)
+    const { variants, categorySlug, categoryId: catId, ...data } = productSchema.parse(req.body)
+    let resolvedCategoryId = catId
+    if (!resolvedCategoryId && categorySlug) {
+      const cat = await prisma.category.findUnique({ where: { slug: categorySlug } })
+      resolvedCategoryId = cat?.id
+    }
     const product = await prisma.product.create({
-      data: { ...data, storeId: store.id, variants: { create: variants } },
+      data: { ...data, storeId: store.id, categoryId: resolvedCategoryId, variants: { create: variants } },
       include: { category: true, variants: true },
     })
     return reply.status(201).send(product)
@@ -110,15 +126,20 @@ export default async function adminRoutes(app: FastifyInstance) {
   app.put('/products/:id', { preHandler: [adminAuth] }, async (req, reply) => {
     const { ownerId } = req.user as { ownerId: string }
     const { id } = req.params as { id: string }
-    const { variants, ...data } = productSchema.parse(req.body)
+    const { variants, categorySlug, categoryId: catId, ...data } = productSchema.parse(req.body)
     const product = await prisma.product.findFirst({
       where: { id, store: { ownerId } },
     })
     if (!product) return reply.status(404).send({ error: 'Mahsulot topilmadi' })
+    let resolvedCategoryId = catId
+    if (!resolvedCategoryId && categorySlug) {
+      const cat = await prisma.category.findUnique({ where: { slug: categorySlug } })
+      resolvedCategoryId = cat?.id
+    }
     await prisma.productVariant.deleteMany({ where: { productId: id } })
     const updated = await prisma.product.update({
       where: { id },
-      data: { ...data, variants: { create: variants } },
+      data: { ...data, categoryId: resolvedCategoryId, variants: { create: variants } },
       include: { category: true, variants: true },
     })
     return reply.send(updated)
@@ -142,7 +163,7 @@ export default async function adminRoutes(app: FastifyInstance) {
     const orders = await prisma.order.findMany({
       where: { storeId: store.id },
       include: {
-        items: { include: { product: { select: { name: true } } } },
+        items: { include: { product: { select: { id: true, name: true, nameUz: true, sku: true, price: true } } } },
         user: { select: { phone: true, name: true } },
       },
       orderBy: { createdAt: 'desc' },

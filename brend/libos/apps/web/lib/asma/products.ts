@@ -1,23 +1,36 @@
-﻿import { supabase } from './supabase'
 import { Product } from './store'
+
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+
+function getAdminToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem('asma_admin_token')
+}
+
+function adminHeaders(): Record<string, string> {
+  const token = getAdminToken()
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+}
 
 type DBProduct = {
   id: string
   sku: string | null
   name: string
-  name_uz: string
+  nameUz: string | null
   price: number
-  original_price: number | null
+  originalPrice: number | null
   images: string[]
-  category: string
   sizes: string[]
   colors: string[]
-  description: string
-  description_uz: string
-  in_stock: boolean
+  description: string | null
+  descriptionUz: string | null
+  inStock: boolean
   featured: boolean
-  is_new: boolean
-  created_at: string
+  isNew: boolean
+  category: { slug: string } | null
 }
 
 function toProduct(row: DBProduct): Product {
@@ -25,91 +38,88 @@ function toProduct(row: DBProduct): Product {
     id: row.id,
     sku: row.sku ?? undefined,
     name: row.name,
-    nameUz: row.name_uz,
+    nameUz: row.nameUz ?? row.name,
     price: row.price,
-    originalPrice: row.original_price ?? undefined,
+    originalPrice: row.originalPrice ?? undefined,
     images: row.images ?? [],
-    category: row.category,
+    category: row.category?.slug ?? 'suits',
     sizes: row.sizes ?? [],
     colors: row.colors ?? [],
-    description: row.description,
-    descriptionUz: row.description_uz,
-    inStock: row.in_stock,
+    description: row.description ?? '',
+    descriptionUz: row.descriptionUz ?? '',
+    inStock: row.inStock,
     featured: row.featured,
-    new: row.is_new,
-  }
-}
-
-function toDB(product: Omit<Product, 'id'>): Omit<DBProduct, 'id' | 'created_at'> {
-  return {
-    sku: product.sku || null,
-    name: product.name,
-    name_uz: product.nameUz,
-    price: product.price,
-    original_price: product.originalPrice ?? null,
-    images: product.images,
-    category: product.category,
-    sizes: product.sizes,
-    colors: product.colors,
-    description: product.description,
-    description_uz: product.descriptionUz,
-    in_stock: product.inStock,
-    featured: product.featured,
-    is_new: product.new,
+    new: row.isNew,
   }
 }
 
 export async function fetchProducts(): Promise<Product[]> {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .order('created_at', { ascending: false })
-
-  if (error) throw error
-  return (data as DBProduct[]).map(toProduct)
+  const res = await fetch(`${API}/stores/asma`)
+  if (!res.ok) throw new Error('Products fetch failed')
+  const data = await res.json()
+  return ((data.products ?? []) as DBProduct[]).map(toProduct)
 }
 
 export async function createProduct(product: Omit<Product, 'id'>): Promise<Product> {
-  const { data, error } = await supabase
-    .from('products')
-    .insert(toDB(product))
-    .select()
-    .single()
-
-  if (error) throw error
-  return toProduct(data as DBProduct)
+  const res = await fetch(`${API}/admin/products`, {
+    method: 'POST',
+    headers: adminHeaders(),
+    body: JSON.stringify({
+      sku: product.sku,
+      name: product.name,
+      nameUz: product.nameUz,
+      description: product.description,
+      descriptionUz: product.descriptionUz,
+      price: product.price,
+      originalPrice: product.originalPrice,
+      images: product.images,
+      sizes: product.sizes,
+      colors: product.colors,
+      categorySlug: product.category,
+      inStock: product.inStock,
+      featured: product.featured,
+      isNew: product.new,
+    }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error || 'Create failed')
+  }
+  return toProduct(await res.json())
 }
 
 export async function updateProduct(id: string, updates: Partial<Omit<Product, 'id'>>): Promise<Product> {
-  const dbUpdates: Partial<Omit<DBProduct, 'id' | 'created_at'>> = {}
-  if (updates.name !== undefined) dbUpdates.name = updates.name
-  if (updates.nameUz !== undefined) dbUpdates.name_uz = updates.nameUz
-  if (updates.price !== undefined) dbUpdates.price = updates.price
-  if (updates.originalPrice !== undefined) dbUpdates.original_price = updates.originalPrice ?? null
-  if (updates.images !== undefined) dbUpdates.images = updates.images
-  if (updates.category !== undefined) dbUpdates.category = updates.category
-  if (updates.sizes !== undefined) dbUpdates.sizes = updates.sizes
-  if (updates.colors !== undefined) dbUpdates.colors = updates.colors
-  if (updates.description !== undefined) dbUpdates.description = updates.description
-  if (updates.descriptionUz !== undefined) dbUpdates.description_uz = updates.descriptionUz
-  if (updates.sku !== undefined) dbUpdates.sku = updates.sku || null
-  if (updates.inStock !== undefined) dbUpdates.in_stock = updates.inStock
-  if (updates.featured !== undefined) dbUpdates.featured = updates.featured
-  if (updates.new !== undefined) dbUpdates.is_new = updates.new
-
-  const { data, error } = await supabase
-    .from('products')
-    .update(dbUpdates)
-    .eq('id', id)
-    .select()
-    .single()
-
-  if (error) throw error
-  return toProduct(data as DBProduct)
+  const res = await fetch(`${API}/admin/products/${id}`, {
+    method: 'PUT',
+    headers: adminHeaders(),
+    body: JSON.stringify({
+      sku: updates.sku,
+      name: updates.name ?? '',
+      nameUz: updates.nameUz,
+      description: updates.description,
+      descriptionUz: updates.descriptionUz,
+      price: updates.price ?? 0,
+      originalPrice: updates.originalPrice,
+      images: updates.images ?? [],
+      sizes: updates.sizes ?? [],
+      colors: updates.colors ?? [],
+      categorySlug: updates.category,
+      inStock: updates.inStock ?? true,
+      featured: updates.featured ?? false,
+      isNew: updates.new ?? false,
+    }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error || 'Update failed')
+  }
+  return toProduct(await res.json())
 }
 
 export async function deleteProduct(id: string): Promise<void> {
-  const { error } = await supabase.from('products').delete().eq('id', id)
-  if (error) throw error
+  const res = await fetch(`${API}/admin/products/${id}`, {
+    method: 'DELETE',
+    headers: adminHeaders(),
+  })
+  if (!res.ok) throw new Error('Delete failed')
 }
-

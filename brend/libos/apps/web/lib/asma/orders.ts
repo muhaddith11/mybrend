@@ -1,5 +1,19 @@
-﻿import { supabase } from './supabase'
 import { CartItem } from './store'
+
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+
+function getAdminToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem('asma_admin_token')
+}
+
+function adminHeaders(): Record<string, string> {
+  const token = getAdminToken()
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+}
 
 export type OrderStatus = 'pending' | 'processing' | 'completed' | 'cancelled'
 export type PaymentMethod = 'cash' | 'click' | 'payme'
@@ -20,7 +34,7 @@ export interface OrderItem {
 }
 
 export interface Order {
-  id: number
+  id: string
   customerName: string
   phone: string
   address: string
@@ -44,89 +58,123 @@ export interface OrderInput {
   lng?: number
 }
 
-export async function createOrder(order: OrderInput): Promise<void> {
-  const itemsJson = order.items.map((i) => ({
-    id: i.product.id,
-    sku: i.product.sku,
-    name: i.product.nameUz,
-    price: i.product.price,
-    quantity: i.quantity,
-    size: i.size,
-    color: i.color,
-  }))
+// DB status → frontend status
+const statusMap: Record<string, OrderStatus> = {
+  PENDING: 'pending',
+  CONFIRMED: 'processing',
+  PREPARING: 'processing',
+  DELIVERING: 'processing',
+  DELIVERED: 'completed',
+  CANCELLED: 'cancelled',
+}
 
-  const { error } = await supabase.from('orders').insert({
-    customer_name: order.customerName,
-    phone: order.phone,
-    address: order.address,
-    note: order.note ?? '',
-    items: itemsJson,
-    total: order.total,
-    status: 'pending',
-    payment_method: order.paymentMethod,
-  })
-
-  if (error) throw error
-
-  fetch('/api/notify-order', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...order, items: itemsJson, lat: order.lat, lng: order.lng }),
-  }).catch(() => {})
+// frontend status → DB status
+const statusToDb: Record<OrderStatus, string> = {
+  pending: 'PENDING',
+  processing: 'CONFIRMED',
+  completed: 'DELIVERED',
+  cancelled: 'CANCELLED',
 }
 
 type DBOrder = {
-  id: number
-  customer_name: string
-  phone: string
-  address: string
+  id: string
+  customerName: string | null
+  totalPrice: number
+  status: string
+  paymentMethod: string | null
+  address: string | null
   note: string | null
-  items: OrderItem[] | null
-  total: number
-  status: OrderStatus
-  payment_method: PaymentMethod | null
-  created_at: string
+  createdAt: string
+  user: { phone: string; name: string | null }
+  items: Array<{
+    id: string
+    quantity: number
+    price: number
+    size: string | null
+    color: string | null
+    product: { name: string; nameUz: string | null }
+  }>
 }
 
 function toOrder(row: DBOrder): Order {
   return {
     id: row.id,
-    customerName: row.customer_name,
-    phone: row.phone,
-    address: row.address,
+    customerName: row.customerName || row.user?.name || 'Noma\'lum',
+    phone: row.user?.phone ?? '',
+    address: row.address ?? '',
     note: row.note ?? '',
-    items: row.items ?? [],
-    total: row.total,
-    status: row.status,
-    paymentMethod: row.payment_method ?? 'cash',
-    createdAt: row.created_at,
+    items: (row.items ?? []).map(i => ({
+      id: i.id,
+      name: i.product.nameUz || i.product.name,
+      price: i.price,
+      quantity: i.quantity,
+      size: i.size ?? '',
+      color: i.color ?? '',
+    })),
+    total: row.totalPrice,
+    status: statusMap[row.status] ?? 'pending',
+    paymentMethod: (row.paymentMethod as PaymentMethod) ?? 'cash',
+    createdAt: row.createdAt,
+  }
+}
+
+export async function createOrder(order: OrderInput): Promise<void> {
+  const itemsPayload = order.items.map(i => ({
+    productId: i.product.id,
+    quantity: i.quantity,
+    size: i.size,
+    color: i.color,
+  }))
+
+  const res = await fetch(`${API}/orders/guest`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      storeSlug: 'asma',
+      customerName: order.customerName,
+      phone: order.phone.replace(/\s/g, ''),
+      address: order.address,
+      lat: order.lat,
+      lng: order.lng,
+      note: order.note,
+      paymentMethod: order.paymentMethod,
+      items: itemsPayload,
+    }),
+  })
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error || 'Order creation failed')
   }
 }
 
 export async function fetchOrders(): Promise<Order[]> {
-  const { data, error } = await supabase
-    .from('orders')
-    .select('*')
-    .order('created_at', { ascending: false })
-
-  if (error) throw error
+  const res = await fetch(`${API}/admin/orders`, {
+    headers: adminHeaders(),
+  })
+  if (!res.ok) throw new Error('Orders fetch failed')
+  const data = await res.json()
   return (data as DBOrder[]).map(toOrder)
 }
 
-export async function updateOrderStatus(id: number, status: OrderStatus): Promise<void> {
-  const { error } = await supabase.from('orders').update({ status }).eq('id', id)
-  if (error) throw error
+export async function updateOrderStatus(id: string, status: OrderStatus): Promise<void> {
+  const dbStatus = statusToDb[status]
+  const res = await fetch(`${API}/admin/orders/${id}/status`, {
+    method: 'PATCH',
+    headers: adminHeaders(),
+    body: JSON.stringify({ status: dbStatus }),
+  })
+  if (!res.ok) throw new Error('Status update failed')
 }
 
 export async function fetchOrdersByPhone(phone: string): Promise<Order[]> {
   const clean = phone.replace(/\s/g, '')
-  const { data, error } = await supabase
-    .from('orders')
-    .select('*')
-    .eq('phone', clean)
-    .order('created_at', { ascending: false })
-
-  if (error) throw error
-  return (data as DBOrder[]).map(toOrder)
+  const res = await fetch(`${API}/orders/my`, {
+    headers: adminHeaders(),
+  })
+  if (!res.ok) return []
+  const data = await res.json()
+  return ((data.orders ?? []) as DBOrder[])
+    .filter(o => o.user?.phone === clean)
+    .map(toOrder)
 }
-
