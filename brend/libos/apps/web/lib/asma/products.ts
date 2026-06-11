@@ -3,6 +3,7 @@ import { Product } from './store'
 
 type DBProduct = {
   id: string
+  sku: string | null
   name: string
   name_uz: string
   price: number
@@ -22,6 +23,7 @@ type DBProduct = {
 function toProduct(row: DBProduct): Product {
   return {
     id: row.id,
+    sku: row.sku ?? undefined,
     name: row.name,
     nameUz: row.name_uz,
     price: row.price,
@@ -40,6 +42,7 @@ function toProduct(row: DBProduct): Product {
 
 function toDB(product: Omit<Product, 'id'>): Omit<DBProduct, 'id' | 'created_at'> {
   return {
+    sku: product.sku || null,
     name: product.name,
     name_uz: product.nameUz,
     price: product.price,
@@ -89,6 +92,7 @@ export async function updateProduct(id: string, updates: Partial<Omit<Product, '
   if (updates.colors !== undefined) dbUpdates.colors = updates.colors
   if (updates.description !== undefined) dbUpdates.description = updates.description
   if (updates.descriptionUz !== undefined) dbUpdates.description_uz = updates.descriptionUz
+  if (updates.sku !== undefined) dbUpdates.sku = updates.sku || null
   if (updates.inStock !== undefined) dbUpdates.in_stock = updates.inStock
   if (updates.featured !== undefined) dbUpdates.featured = updates.featured
   if (updates.new !== undefined) dbUpdates.is_new = updates.new

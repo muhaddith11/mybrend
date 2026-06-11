@@ -47,6 +47,7 @@ export interface OrderInput {
 export async function createOrder(order: OrderInput): Promise<void> {
   const itemsJson = order.items.map((i) => ({
     id: i.product.id,
+    sku: i.product.sku,
     name: i.product.nameUz,
     price: i.product.price,
     quantity: i.quantity,

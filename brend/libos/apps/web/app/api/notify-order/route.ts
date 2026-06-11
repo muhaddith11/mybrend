@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   const order = await req.json()
 
   const itemLines = (order.items ?? [])
-    .map((i: any) => `  • ${i.name} x${i.quantity}${i.size ? ` (${i.size})` : ''}${i.color ? ` [${i.color}]` : ''} — ${Number(i.price).toLocaleString()} so'm`)
+    .map((i: any) => `  • ${i.sku ? `[${i.sku}] ` : ''}${i.name} x${i.quantity}${i.size ? ` (${i.size})` : ''}${i.color ? ` [${i.color}]` : ''} — ${Number(i.price).toLocaleString()} so'm`)
     .join('\n')
 
   const mapsLink = order.lat && order.lng

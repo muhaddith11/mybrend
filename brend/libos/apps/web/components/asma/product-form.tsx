@@ -15,6 +15,7 @@ import Link from 'next/link'
 type ProductFormData = Omit<Product, 'id'>
 
 const defaultForm: ProductFormData = {
+  sku: '',
   name: '',
   nameUz: '',
   price: 0,
@@ -153,6 +154,21 @@ export function ProductForm({ initialData, mode }: ProductFormProps) {
           <h2 className="text-sm tracking-wider uppercase text-muted-foreground mb-4">
             Asosiy ma&apos;lumotlar
           </h2>
+
+          <div className="mb-4">
+            <label className="block text-sm text-foreground mb-2">
+              Mahsulot kodi (SKU) <span className="text-destructive">*</span>
+              <span className="ml-2 text-xs text-muted-foreground font-normal">— mijozga ko&apos;rinmaydi</span>
+            </label>
+            <Input
+              required
+              value={form.sku || ''}
+              onChange={(e) => set('sku', e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ''))}
+              placeholder="ASM-001"
+              className="bg-background border-border font-mono tracking-wider"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Faqat harflar, raqamlar va chiziqcha. Masalan: ASM-001, PALTO-05</p>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
