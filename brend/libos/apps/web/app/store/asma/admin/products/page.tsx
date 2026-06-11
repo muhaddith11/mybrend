@@ -203,7 +203,7 @@ export default function AdminProductsPage() {
                     <td className="p-4">
                       <div className="flex items-center justify-end gap-2">
                         <Link
-                          href={`/admin/products/${product.id}/edit`}
+                          href={`/store/asma/admin/products/${product.id}/edit`}
                           className="p-2 text-muted-foreground hover:text-foreground transition-colors"
                           title="Tahrirlash"
                         >
