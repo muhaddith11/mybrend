@@ -59,6 +59,7 @@ model Store {
   name        String
   slug        String   @unique
   description String?
+  city        String   @default("Qo'qon")
   address     String
   phone       String
   logo        String?

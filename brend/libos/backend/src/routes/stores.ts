@@ -4,6 +4,7 @@ import { PrismaClient, Gender } from '@prisma/client'
 
 const genderQuery = z.object({
   gender: z.enum(['MEN', 'WOMEN', 'KIDS']).optional(),
+  city: z.string().optional(),
   search: z.string().optional(),
   page: z.coerce.number().default(1),
   limit: z.coerce.number().default(20),
@@ -14,11 +15,12 @@ export default async function storesRoutes(app: FastifyInstance) {
 
   // Barcha do'konlar (gender bo'yicha filter)
   app.get('/', async (req, reply) => {
-    const { gender, search, page, limit } = genderQuery.parse(req.query)
+    const { gender, city, search, page, limit } = genderQuery.parse(req.query)
     const skip = (page - 1) * limit
 
     const where: any = {}
     if (gender) where.genders = { has: gender as Gender }
+    if (city) where.city = { equals: city, mode: 'insensitive' }
     if (search) where.name = { contains: search, mode: 'insensitive' }
 
     const [stores, total] = await Promise.all([
@@ -29,7 +31,7 @@ export default async function storesRoutes(app: FastifyInstance) {
         orderBy: { rating: 'desc' },
         select: {
           id: true, name: true, slug: true, logo: true, banner: true,
-          address: true, isOpen: true, rating: true, reviewCount: true,
+          city: true, address: true, isOpen: true, rating: true, reviewCount: true,
           genders: true, hasDelivery: true, hasPickup: true, hasCashOnDoor: true,
           deliveryTime: true, themeColor: true, themeBg: true,
           _count: { select: { products: true } },
