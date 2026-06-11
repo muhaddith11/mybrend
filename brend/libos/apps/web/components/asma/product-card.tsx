@@ -54,7 +54,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
       transition={{ duration: 0.3 }}
     >
       {/* Image Container */}
-      <div className="relative aspect-[3/4] bg-muted overflow-hidden mb-4">
+      <div className="relative aspect-[3/4] bg-muted overflow-hidden mb-2 lg:mb-4">
         {/* Product Image (clickable) */}
         <Link href={`/store/asma/product/${product.id}`} className="absolute inset-0" aria-label={product.nameUz}>
           <Image
