@@ -73,6 +73,24 @@ function HomePageInner() {
               onChange={e => setSearch(e.target.value)}
             />
           </div>
+
+          {/* Gender filter — faqat mobilda (sm: desktopda header nav bor) */}
+          <div className={styles.genderRow}>
+            {[
+              { id: 'ALL', label: 'Hammasi', emoji: '🏪' },
+              { id: 'MEN', label: 'Erkaklar', emoji: '👔' },
+              { id: 'WOMEN', label: 'Ayollar', emoji: '👗' },
+              { id: 'KIDS', label: 'Bolalar', emoji: '🧒' },
+            ].map(t => (
+              <Link
+                key={t.id}
+                href={t.id === 'ALL' ? '/' : `/?gender=${t.id}`}
+                className={`${styles.genderBtn} ${gender === t.id ? styles.genderActive : ''}`}
+              >
+                {t.emoji} {t.label}
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
