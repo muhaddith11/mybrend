@@ -1,8 +1,10 @@
 'use client'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useAuthStore } from '../store/auth'
 import { useThemeStore } from '../store/theme'
 import { useLangStore, type Lang } from '../store/lang'
+import { useAvatarStore } from '../store/avatar'
 import { useT } from '../lib/i18n'
 import styles from './ProfileDrawer.module.css'
 
@@ -12,15 +14,19 @@ const LANGS: { code: Lang; flag: string; label: string }[] = [
   { code: 'en', flag: '🇬🇧', label: 'English' },
 ]
 
+const PERSON_EMOJIS = [
+  '👤','👦','👧','👨','👩','🧑','👴','👵','🧔','👱','🧕','🦸',
+]
+
 export function ProfileDrawer() {
   const { isLoggedIn, user, logout, openLogin, showProfileDrawer, closeProfile } = useAuthStore()
   const { dark, toggle } = useThemeStore()
   const { lang, setLang } = useLangStore()
+  const { emoji, setEmoji } = useAvatarStore()
   const tr = useT(lang)
+  const [showPicker, setShowPicker] = useState(false)
 
   if (!showProfileDrawer) return null
-
-  const initial = (user?.name ?? user?.phone ?? 'U').charAt(0).toUpperCase()
 
   function handleLogout() {
     logout()
@@ -40,7 +46,7 @@ export function ProfileDrawer() {
         {/* Header */}
         <div className={styles.head}>
           <span className={styles.headTitle}>{tr.profile}</span>
-          <button className={styles.closeBtn} onClick={closeProfile} aria-label="close">
+          <button className={styles.closeBtn} onClick={closeProfile}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -52,12 +58,37 @@ export function ProfileDrawer() {
             <>
               {/* User card */}
               <div className={styles.userCard}>
-                <div className={styles.avatar}>{initial}</div>
+                <div className={styles.avatarWrap}>
+                  <button className={styles.avatarBtn} onClick={() => setShowPicker(true)}>
+                    <span className={styles.avatarEmoji}>{emoji}</span>
+                    <span className={styles.avatarEdit}>✏️</span>
+                  </button>
+                </div>
                 <div>
                   <div className={styles.userName}>{user?.name ?? tr.user}</div>
                   <div className={styles.userPhone}>{user?.phone}</div>
                 </div>
               </div>
+
+              {/* Avatar picker */}
+              {showPicker && (
+                <div className={styles.pickerCard}>
+                  <div className={styles.pickerTitle}>
+                    {lang === 'ru' ? 'Выберите аватар' : lang === 'en' ? 'Choose avatar' : 'Avatar tanlang'}
+                  </div>
+                  <div className={styles.emojiGrid}>
+                    {PERSON_EMOJIS.map(e => (
+                      <button
+                        key={e}
+                        className={`${styles.emojiBtn} ${emoji === e ? styles.emojiActive : ''}`}
+                        onClick={() => { setEmoji(e); setShowPicker(false) }}
+                      >
+                        {e}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Menu */}
               <div className={styles.section}>
@@ -81,20 +112,14 @@ export function ProfileDrawer() {
               <div className={styles.section}>
                 <div className={styles.sectionTitle}>{tr.settings}</div>
 
-                {/* Dark mode */}
                 <div className={styles.menuItem}>
                   <span className={styles.menuIcon}>{dark ? '🌙' : '☀️'}</span>
                   <span className={styles.menuLabel}>{dark ? tr.darkMode : tr.lightMode}</span>
-                  <button
-                    className={`${styles.toggle} ${dark ? styles.toggleOn : ''}`}
-                    onClick={toggle}
-                    aria-label="toggle dark mode"
-                  >
+                  <button className={`${styles.toggle} ${dark ? styles.toggleOn : ''}`} onClick={toggle}>
                     <span className={styles.toggleThumb} />
                   </button>
                 </div>
 
-                {/* Language */}
                 <div className={styles.langRow}>
                   <span className={styles.menuIcon}>🌐</span>
                   <span className={styles.menuLabel}>{tr.language}</span>
@@ -113,19 +138,15 @@ export function ProfileDrawer() {
                 </div>
               </div>
 
-              {/* Logout */}
               <button className={styles.logoutBtn} onClick={handleLogout}>
                 <span>🚪</span> {tr.logout}
               </button>
             </>
           ) : (
-            /* Guest state */
             <div className={styles.guest}>
               <div className={styles.guestIcon}>👤</div>
               <p className={styles.guestText}>{tr.loginToProfile}</p>
               <button className={styles.loginBtn} onClick={handleLoginClick}>{tr.login}</button>
-
-              {/* Language even for guests */}
               <div className={styles.guestLang}>
                 <div className={styles.langPills}>
                   {LANGS.map(l => (
