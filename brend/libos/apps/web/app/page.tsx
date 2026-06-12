@@ -1,113 +1,222 @@
 'use client'
-import { useState, Suspense } from 'react'
+import { Suspense } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { api } from '@libos/shared'
-import type { Store } from '@libos/shared'
+import type { Store, Product } from '@libos/shared'
+import { useCartStore } from '../store/cart'
+import { useLangStore } from '../store/lang'
+import { useT } from '../lib/i18n'
 import styles from './page.module.css'
 
-type Gender = 'ALL' | 'MEN' | 'WOMEN' | 'KIDS'
-
-const CITIES = [
-  { id: "Qo'qon", label: "Qo'qon", active: true },
-  { id: 'Toshkent', label: 'Toshkent', active: false },
-  { id: "Farg'ona", label: "Farg'ona", active: false },
-  { id: 'Samarqand', label: 'Samarqand', active: false },
+const CARD_COLORS = [
+  '#EEF2FF', '#FFE4E8', '#E0F2FE', '#FEF9C3', '#DCFCE7',
+  '#FDF4FF', '#FFF7ED', '#F0FDFA', '#FEE2E2', '#F3E8FF',
 ]
 
-function HomePageInner() {
-  const searchParams = useSearchParams()
-  const gender = (searchParams.get('gender') as Gender) || 'ALL'
-  const [search, setSearch] = useState('')
-  const [city, setCity] = useState("Qo'qon")
+function getDiscount(price: number, original?: number) {
+  if (!original || original <= price) return null
+  return Math.round((1 - price / original) * 100)
+}
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['stores', gender, search, city],
-    queryFn: () => api.stores.list({
-      gender: gender === 'ALL' ? undefined : gender,
-      search: search || undefined,
-      limit: 50,
-    }),
-    staleTime: 30_000,
+function formatPrice(n: number) {
+  return n.toLocaleString('ru-RU')
+}
+
+function HomePageInner() {
+  const lang = useLangStore(s => s.lang)
+  const tr = useT(lang)
+
+  const CAT_CIRCLES = [
+    { label: tr.men,         emoji: '👔', bg: '#EEF2FF', href: '/?gender=MEN' },
+    { label: tr.women,       emoji: '👗', bg: '#FFF0F3', href: '/?gender=WOMEN' },
+    { label: tr.kids,        emoji: '🧸', bg: '#ECFDF5', href: '/?gender=KIDS' },
+    { label: tr.shoes,       emoji: '👟', bg: '#FFF7ED', href: '/?category=shoes' },
+    { label: tr.accessories, emoji: '👜', bg: '#F5F3FF', href: '/?category=accessories' },
+    { label: tr.sport,       emoji: '🏃', bg: '#F0FDFA', href: '/?category=sport' },
+    { label: lang === 'en' ? 'Outerwear' : lang === 'ru' ? 'Верхняя одежда' : 'Ustki kiyim', emoji: '🧥', bg: '#FFFBEB', href: '/?category=outerwear' },
+    { label: lang === 'en' ? 'New' : lang === 'ru' ? 'Новинки' : 'Yangi', emoji: '✨', bg: '#EFF6FF', href: '/?new=true' },
+  ]
+
+  const { data: featuredData, isLoading: featLoading } = useQuery({
+    queryKey: ['products-featured'],
+    queryFn: () => api.products.featured(),
+    staleTime: 60_000,
   })
 
-  const stores: Store[] = data?.stores ?? []
+  const { data: discountedData, isLoading: discLoading } = useQuery({
+    queryKey: ['products-discounted'],
+    queryFn: () => api.products.discounted(),
+    staleTime: 60_000,
+  })
+
+  const { data: storesData, isLoading: storesLoading } = useQuery({
+    queryKey: ['stores-home'],
+    queryFn: () => api.stores.list({ limit: 8 }),
+    staleTime: 60_000,
+  })
+
+  const featured = featuredData?.products ?? []
+  const discounted = discountedData?.products ?? []
+  const stores = storesData?.stores ?? []
+
+  // Currency label per lang
+  const cur = lang === 'ru' ? 'сум' : lang === 'en' ? 'UZS' : "so'm"
 
   return (
-    <div>
-      {/* Hero */}
-      <section className={styles.hero}>
+    <div className={styles.page}>
+      {/* ── Hero section ── */}
+      <section className={styles.heroSection}>
+        <div className={`container ${styles.heroGrid}`}>
+          <div className={styles.heroBanner}>
+            <div className={styles.heroBadge}>{tr.heroBadge}</div>
+            <h1 className={styles.heroTitle}>{tr.heroTitle}</h1>
+            <p className={styles.heroSub}>{tr.heroSub}</p>
+            <Link href="/?sale=true" className={styles.heroBtn}>{tr.heroBtn}</Link>
+            <div className={styles.heroBg}>%</div>
+          </div>
+          <div className={styles.heroCards}>
+            <div className={styles.infoCard} style={{ background: '#ECFDF5' }}>
+              <div>
+                <div className={styles.infoTitle}>{tr.freeDelivery}</div>
+                <div className={styles.infoSub}>{tr.freeDeliverySub}</div>
+              </div>
+              <span className={styles.infoEmoji}>🚚</span>
+            </div>
+            <div className={styles.infoCard} style={{ background: '#FFF7ED' }}>
+              <div>
+                <div className={styles.infoTitle}>{stores.length > 0 ? `${stores.length}+` : '5+'} {tr.storeCount}</div>
+                <div className={styles.infoSub}>{tr.topStores}</div>
+              </div>
+              <span className={styles.infoEmoji}>🏬</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Category circles ── */}
+      <section className={styles.catSection}>
         <div className="container">
-          {/* City selector */}
-          <div className={styles.cityRow}>
-            {CITIES.map(c => (
-              <button
-                key={c.id}
-                className={`${styles.cityBtn} ${city === c.id ? styles.cityActive : ''} ${!c.active ? styles.cityDisabled : ''}`}
-                onClick={() => c.active && setCity(c.id)}
-                disabled={!c.active}
-              >
-                📍 {c.label}
-                {!c.active && <span className={styles.citySoon}>Tez kunda</span>}
-              </button>
-            ))}
-          </div>
-
-          <h1 className={styles.heroTitle}>
-            {city}dagi barcha<br />
-            <span>kiyim do&apos;konlari</span> bir joyda
-          </h1>
-          <p className={styles.heroSub}>
-            Erkaklar, ayollar va bolalar kiyimlarini toping. Online buyurtma bering yoki eshikda to&apos;lang.
-          </p>
-          <div className={styles.searchWrap}>
-            <svg className={styles.searchIcon} width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 105 11a6 6 0 0012 0z" />
-            </svg>
-            <input
-              className={styles.searchInput}
-              placeholder="Do'kon yoki mahsulot qidirish..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
-
-          {/* Gender filter — faqat mobilda (sm: desktopda header nav bor) */}
-          <div className={styles.genderRow}>
-            {[
-              { id: 'ALL', label: 'Hammasi', emoji: '🏪' },
-              { id: 'MEN', label: 'Erkaklar', emoji: '👔' },
-              { id: 'WOMEN', label: 'Ayollar', emoji: '👗' },
-              { id: 'KIDS', label: 'Bolalar', emoji: '🧒' },
-            ].map(t => (
-              <Link
-                key={t.id}
-                href={t.id === 'ALL' ? '/' : `/?gender=${t.id}`}
-                className={`${styles.genderBtn} ${gender === t.id ? styles.genderActive : ''}`}
-              >
-                {t.emoji} {t.label}
+          <div className={styles.catRow}>
+            {CAT_CIRCLES.map(c => (
+              <Link key={c.label} href={c.href} className={styles.catCircleWrap}>
+                <div className={styles.catCircle} style={{ background: c.bg }}>
+                  <span className={styles.catEmoji}>{c.emoji}</span>
+                </div>
+                <span className={styles.catLabel}>{c.label}</span>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Store grid */}
-      <div className="container">
-        <div className={styles.grid}>
-          {isLoading ? (
-            Array.from({ length: 6 }).map((_, i) => <StoreSkeleton key={i} />)
-          ) : stores.length === 0 ? (
-            <div className={styles.empty}>
-              <p>Do&apos;kon topilmadi</p>
-            </div>
-          ) : (
-            stores.map(store => <StoreCard key={store.id} store={store} />)
-          )}
+      {/* ── Popular products ── */}
+      <section className={styles.productsSection}>
+        <div className="container">
+          <div className={styles.sectionHead}>
+            <h2 className={styles.sectionTitle}>{tr.popularProducts}</h2>
+            <Link href="/stores" className={styles.sectionAll}>{tr.seeAll}</Link>
+          </div>
+          <div className={styles.productsGrid}>
+            {featLoading || storesLoading
+              ? Array.from({ length: 5 }).map((_, i) => <CardSkeleton key={i} />)
+              : featured.length > 0
+                ? featured.slice(0, 5).map((p, i) => <ProductCard key={p.id} product={p} colorIdx={i} tr={tr} cur={cur} />)
+                : stores.slice(0, 5).map((s, i) => <StoreCard key={s.id} store={s} colorIdx={i} tr={tr} />)
+            }
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* ── Promo banner ── */}
+      <section className={styles.promoBanner}>
+        <div className="container">
+          <div className={styles.promoInner}>
+            <div className={styles.promoLeft}>
+              <span className={styles.promoIcon}>🔥</span>
+              <div>
+                <div className={styles.promoTitle}>{tr.weeklyDeals}</div>
+                <div className={styles.promoSub}>{tr.weeklyDealsSub}</div>
+              </div>
+            </div>
+            <Link href="/?sale=true" className={styles.promoBtn}>{tr.seeDeals}</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Discounted products ── */}
+      <section className={styles.productsSection}>
+        <div className="container">
+          <div className={styles.sectionHead}>
+            <h2 className={styles.sectionTitle}>{tr.discountedProducts}</h2>
+            <Link href="/?sale=true" className={styles.sectionAll}>{tr.seeAll}</Link>
+          </div>
+          <div className={styles.productsGrid}>
+            {discLoading || storesLoading
+              ? Array.from({ length: 5 }).map((_, i) => <CardSkeleton key={i} />)
+              : discounted.length > 0
+                ? discounted.slice(0, 5).map((p, i) => <ProductCard key={p.id} product={p} colorIdx={i + 5} tr={tr} cur={cur} />)
+                : stores.slice(0, 5).map((s, i) => <StoreCard key={s.id} store={s} colorIdx={i + 5} tr={tr} />)
+            }
+          </div>
+        </div>
+      </section>
+
+      {/* ── Stores ── */}
+      <section className={styles.productsSection}>
+        <div className="container">
+          <div className={styles.sectionHead}>
+            <h2 className={styles.sectionTitle}>{tr.storesSection}</h2>
+            <Link href="/stores" className={styles.sectionAll}>{tr.seeAll}</Link>
+          </div>
+          <div className={styles.storesGrid}>
+            {storesLoading
+              ? Array.from({ length: 6 }).map((_, i) => <StoreSkeleton key={i} />)
+              : stores.map(s => <StoreListCard key={s.id} store={s} tr={tr} />)
+            }
+          </div>
+        </div>
+      </section>
+
+      {/* ── Footer ── */}
+      <footer className={styles.footer}>
+        <div className="container">
+          <div className={styles.footerGrid}>
+            <div className={styles.footerBrand}>
+              <Link href="/" className={styles.footerLogo}>
+                <div className={styles.footerLogoMark}>Z</div>
+                <span className={styles.footerLogoText}>ZYFF</span>
+              </Link>
+              <p className={styles.footerDesc}>{tr.footerDesc}</p>
+            </div>
+            <div className={styles.footerCol}>
+              <div className={styles.footerColTitle}>{tr.catalog}</div>
+              <Link href="/?gender=MEN" className={styles.footerLink}>{tr.men}</Link>
+              <Link href="/?gender=WOMEN" className={styles.footerLink}>{tr.women}</Link>
+              <Link href="/?gender=KIDS" className={styles.footerLink}>{tr.kids}</Link>
+              <Link href="/?category=accessories" className={styles.footerLink}>{tr.accessories}</Link>
+            </div>
+            <div className={styles.footerCol}>
+              <div className={styles.footerColTitle}>{tr.company}</div>
+              <Link href="/about" className={styles.footerLink}>{tr.aboutUs}</Link>
+              <Link href="/open-store" className={styles.footerLink}>{tr.openStore}</Link>
+              <Link href="/delivery" className={styles.footerLink}>{tr.delivery}</Link>
+              <Link href="/help" className={styles.footerLink}>{tr.help}</Link>
+            </div>
+            <div className={styles.footerCol}>
+              <div className={styles.footerColTitle}>{tr.contact}</div>
+              <span className={styles.footerText}>+998 90 123 45 67</span>
+              <a href="mailto:info@zyff.uz" className={styles.footerLink}>info@zyff.uz</a>
+              <span className={styles.footerText}>Telegram · Instagram</span>
+            </div>
+          </div>
+          <div className={styles.footerBottom}>
+            <span>{tr.copyright}</span>
+            <span>{tr.city}</span>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
@@ -120,55 +229,121 @@ export default function HomePage() {
   )
 }
 
-function StoreCard({ store }: { store: Store }) {
-  const theme = store.themeColor ?? '#534AB7'
-  const bg = store.themeBg ?? '#EEEDFE'
+// ── Product Card ──────────────────────────────
+function ProductCard({ product, colorIdx, tr, cur }: { product: Product; colorIdx: number; tr: Record<string, string>; cur: string }) {
+  const addItem = useCartStore(s => s.addItem)
+  const discount = getDiscount(product.price, product.originalPrice)
+  const bg = product.store?.themeBg ?? CARD_COLORS[colorIdx % CARD_COLORS.length]
+  const initial = (product.store?.name ?? product.name).charAt(0).toUpperCase()
+
+  function handleAdd(e: React.MouseEvent) {
+    e.preventDefault()
+    addItem({
+      productId: product.id,
+      name: product.nameUz || product.name,
+      price: product.price,
+      image: product.images?.[0],
+      storeId: product.storeId ?? product.store?.id ?? '',
+      storeName: product.store?.name ?? '',
+      storeSlug: product.store?.slug ?? '',
+    })
+  }
 
   return (
-    <Link href={`/store/${store.slug}`} className={styles.card}>
-      <div className={styles.cardCover} style={{ background: bg }}>
-        {store.banner ? (
-          <Image src={store.banner!} alt={store.name} fill className={styles.coverImg} />
+    <Link href={product.store ? `/store/${product.store.slug}` : '#'} className={styles.productCard}>
+      <div className={styles.cardImg} style={{ background: bg }}>
+        {product.images?.[0] ? (
+          <Image src={product.images[0]} alt={product.name} fill className={styles.cardImgEl} />
         ) : (
-          <div className={styles.coverPlaceholder} style={{ color: theme }}>
-            {store.name.charAt(0)}
-          </div>
+          <div className={styles.cardInitial}>{initial}</div>
         )}
-        <div className={styles.genders}>
-          {(store.genders ?? []).map((g: string) => (
-            <span key={g} className={styles.genderBadge}>
-              {g === 'MEN' ? '👔' : g === 'WOMEN' ? '👗' : '🧒'}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <div className={styles.cardBody}>
-        {store.logo && (
-          <Image src={store.logo} alt="" width={36} height={36} className={styles.storeLogo} />
-        )}
-        <div className={styles.cardInfo}>
-          <h3 className={styles.cardName}>{store.name}</h3>
-          {store.address && <p className={styles.cardAddr}>📍 {store.address}</p>}
-        </div>
-        <div className={styles.cardArrow} style={{ background: theme }}>
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#fff" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        {discount && <span className={styles.discountBadge}>-{discount}%</span>}
+        <button className={styles.heartBtn} onClick={e => e.preventDefault()}>
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
+        </button>
+      </div>
+      <div className={styles.cardBody}>
+        <div className={styles.priceRow}>
+          <span className={styles.priceMain}>{formatPrice(product.price)} <span className={styles.priceCur}>{cur}</span></span>
+          {product.originalPrice && <span className={styles.priceOld}>{formatPrice(product.originalPrice)} {cur}</span>}
         </div>
+        <p className={styles.productName}>{product.nameUz || product.name}</p>
+        <div className={styles.metaRow}>
+          <span className={styles.rating}>★ 4.8</span>
+          <span className={styles.storeName}>{product.store?.name ?? ''}</span>
+        </div>
+        <button className={styles.addBtn} onClick={handleAdd}>{tr.addToCart}</button>
       </div>
     </Link>
   )
 }
 
-function StoreSkeleton() {
+// ── Store Card ────────────────────────────────
+function StoreCard({ store, colorIdx, tr }: { store: Store; colorIdx: number; tr: Record<string, string> }) {
+  const bg = store.themeBg ?? CARD_COLORS[colorIdx % CARD_COLORS.length]
+  const initial = store.name.charAt(0).toUpperCase()
+  const color = store.themeColor ?? '#2563EB'
+
   return (
-    <div className={styles.skeleton}>
-      <div className={styles.skCover} />
-      <div className={styles.skBody}>
-        <div className={styles.skLine} />
-        <div className={styles.skShort} />
+    <Link href={`/store/${store.slug}`} className={styles.productCard}>
+      <div className={styles.cardImg} style={{ background: bg }}>
+        {store.banner ? (
+          <Image src={store.banner} alt={store.name} fill className={styles.cardImgEl} />
+        ) : (
+          <div className={styles.cardInitial} style={{ color }}>{initial}</div>
+        )}
+        {store.isOpen !== undefined && (
+          <span className={store.isOpen ? styles.openBadge : styles.closedBadge}>
+            {store.isOpen ? tr.open : tr.closed}
+          </span>
+        )}
       </div>
-    </div>
+      <div className={styles.cardBody}>
+        <p className={styles.productName} style={{ fontWeight: 700 }}>{store.name}</p>
+        {store.address && <p className={styles.metaRow} style={{ fontSize: 12, color: 'var(--text-3)' }}>📍 {store.address}</p>}
+        <div className={styles.metaRow}>
+          {store.rating && <span className={styles.rating}>★ {store.rating.toFixed(1)}</span>}
+          {store._count && <span className={styles.storeName}>{store._count.products} {tr.products}</span>}
+        </div>
+        <button className={styles.addBtn} style={{ color, borderColor: color }}>{tr.view}</button>
+      </div>
+    </Link>
   )
+}
+
+// ── Store List Card ───────────────────────────
+function StoreListCard({ store, tr }: { store: Store; tr: Record<string, string> }) {
+  const bg = store.themeBg ?? '#EEF2FF'
+  const color = store.themeColor ?? '#2563EB'
+
+  return (
+    <Link href={`/store/${store.slug}`} className={styles.storeListCard}>
+      <div className={styles.storeListCover} style={{ background: bg }}>
+        {store.logo ? (
+          <Image src={store.logo} alt={store.name} fill className={styles.cardImgEl} />
+        ) : (
+          <div className={styles.storeListInitial} style={{ color }}>{store.name.charAt(0)}</div>
+        )}
+      </div>
+      <div className={styles.storeListBody}>
+        <span className={styles.storeListName}>{store.name}</span>
+        {store.isOpen !== undefined && (
+          <span className={store.isOpen ? styles.openBadge : styles.closedBadge}>
+            {store.isOpen ? tr.open : tr.closed}
+          </span>
+        )}
+      </div>
+    </Link>
+  )
+}
+
+// ── Skeletons ─────────────────────────────────
+function CardSkeleton() {
+  return <div className={styles.cardSkeleton}><div className={styles.skImg} /><div className={styles.skBody}><div className={styles.skLine} /><div className={styles.skShort} /><div className={styles.skBtn} /></div></div>
+}
+
+function StoreSkeleton() {
+  return <div className={styles.storeSkeleton}><div className={styles.skStoreCover} /><div className={styles.skStoreName} /></div>
 }

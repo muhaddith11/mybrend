@@ -27,10 +27,15 @@ export interface Store {
 export interface Product {
   id: string
   name: string
+  nameUz?: string
   description?: string
   price: number
+  originalPrice?: number
   images?: string[]
-  inStock?: boolean      // Prisma field nomi
+  inStock?: boolean
+  featured?: boolean
+  isNew?: boolean
+  sku?: string
   storeId?: string
   categoryId?: string
   category?: Category

@@ -5,6 +5,34 @@ import { PrismaClient } from '@prisma/client'
 export default async function productsRoutes(app: FastifyInstance) {
   const prisma: PrismaClient = (app as any).prisma
 
+  // Ommabop mahsulotlar (homepage uchun)
+  app.get('/featured', async (req, reply) => {
+    const products = await prisma.product.findMany({
+      where: { inStock: true },
+      include: {
+        store: { select: { name: true, slug: true, themeColor: true, themeBg: true } },
+        category: { select: { name: true, slug: true } },
+      },
+      orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
+      take: 10,
+    })
+    return reply.send({ products })
+  })
+
+  // Chegirmadagi mahsulotlar (homepage uchun)
+  app.get('/discounted', async (req, reply) => {
+    const products = await prisma.product.findMany({
+      where: { inStock: true, originalPrice: { gt: 0 } },
+      include: {
+        store: { select: { name: true, slug: true, themeColor: true, themeBg: true } },
+        category: { select: { name: true, slug: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    })
+    return reply.send({ products })
+  })
+
   // Do'kon mahsulotlari (kategoriya bo'yicha filter)
   app.get('/store/:storeId', async (req, reply) => {
     const { storeId } = req.params as { storeId: string }

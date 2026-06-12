@@ -5,6 +5,7 @@ import { Navbar } from '../components/Navbar'
 import { CartDrawer } from '../components/CartDrawer'
 import { LoginModal } from '../components/LoginModal'
 import { BodyPadding } from '../components/BodyPadding'
+import { ThemeProvider } from '../components/ThemeProvider'
 
 export const metadata: Metadata = {
   title: 'ZYFF — Shahardagi barcha kiyim do\'konlari',
@@ -14,9 +15,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="uz">
+    <html lang="uz" suppressHydrationWarning>
       <body>
+        {/* No-flash: apply saved theme before React hydrates */}
+        <script dangerouslySetInnerHTML={{ __html: `try{var t=JSON.parse(localStorage.getItem('zyff-theme')||'{}');if(t&&t.state&&t.state.dark)document.documentElement.setAttribute('data-theme','dark')}catch(e){}` }} />
         <Providers>
+          <ThemeProvider />
           <BodyPadding />
           <Navbar />
           <main>{children}</main>

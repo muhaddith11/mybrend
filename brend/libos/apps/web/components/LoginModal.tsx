@@ -138,7 +138,6 @@ export function LoginModal() {
                 />
               ))}
             </div>
-            <p className={styles.hint}>Test rejimida: <strong>000000</strong></p>
             {error && <p className={styles.error}>{error}</p>}
             <button className={styles.primaryBtn} onClick={verifyOtp} disabled={loading}>
               {loading ? 'Tekshirilmoqda...' : 'Kirish'}
