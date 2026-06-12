@@ -76,6 +76,10 @@ model Store {
   themeColor  String   @default("#534AB7")
   themeBg     String   @default("#EEEDFE")
 
+  // Xaritadagi joylashuv
+  lat           Float?
+  lng           Float?
+
   // Telegram xabarnoma
   telegramChatId String?
 

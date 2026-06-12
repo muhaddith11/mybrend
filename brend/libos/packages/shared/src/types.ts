@@ -21,6 +21,8 @@ export interface Store {
   deliveryTime?: number
   themeColor?: string
   themeBg?: string
+  lat?: number
+  lng?: number
   _count?: { products: number }
 }
 

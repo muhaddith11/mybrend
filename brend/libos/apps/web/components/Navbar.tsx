@@ -18,6 +18,7 @@ function NavInner() {
   const lang = useLangStore(s => s.lang)
   const tr = useT(lang)
   const [search, setSearch] = useState('')
+  const [cityOpen, setCityOpen] = useState(false)
 
   if (pathname?.startsWith('/store/asma')) return null
 
@@ -74,15 +75,37 @@ function NavInner() {
             <span className={styles.logoText}>ZYFF</span>
           </Link>
 
-          <button className={styles.katalogBtn}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="2" y="2" width="9" height="9" rx="2" />
-              <rect x="13" y="2" width="9" height="9" rx="2" />
-              <rect x="2" y="13" width="9" height="9" rx="2" />
-              <rect x="13" y="13" width="9" height="9" rx="2" />
-            </svg>
-            {tr.katalog}
-          </button>
+          <div className={styles.cityWrap}>
+            <button className={styles.cityBtn} onClick={() => setCityOpen(o => !o)}>
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>Qo'qon</span>
+              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {cityOpen && (
+              <>
+                <div className={styles.cityOverlay} onClick={() => setCityOpen(false)} />
+                <div className={styles.cityDropdown}>
+                  <div className={styles.cityItem} onClick={() => setCityOpen(false)}>
+                    <span className={styles.cityCheck}>✓</span> Qo'qon
+                  </div>
+                  <div className={`${styles.cityItem} ${styles.citySoon}`}>
+                    <span className={styles.citySoonBadge}>Tez kunda</span> Toshkent
+                  </div>
+                  <div className={`${styles.cityItem} ${styles.citySoon}`}>
+                    <span className={styles.citySoonBadge}>Tez kunda</span> Farg'ona
+                  </div>
+                  <div className={`${styles.cityItem} ${styles.citySoon}`}>
+                    <span className={styles.citySoonBadge}>Tez kunda</span> Samarqand
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
 
           <form className={styles.searchForm} onSubmit={handleSearch}>
             <div className={styles.searchWrap}>
