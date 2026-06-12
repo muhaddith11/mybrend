@@ -4,6 +4,7 @@ import { Providers } from '../components/Providers'
 import { Navbar } from '../components/Navbar'
 import { CartDrawer } from '../components/CartDrawer'
 import { LoginModal } from '../components/LoginModal'
+import { ProfileDrawer } from '../components/ProfileDrawer'
 import { BodyPadding } from '../components/BodyPadding'
 import { ThemeProvider } from '../components/ThemeProvider'
 
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main>{children}</main>
           <CartDrawer />
           <LoginModal />
+          <ProfileDrawer />
         </Providers>
       </body>
     </html>
