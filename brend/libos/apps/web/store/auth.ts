@@ -9,8 +9,11 @@ interface AuthStore {
   token: string | null
   isLoggedIn: boolean
   showLoginModal: boolean
+  showProfileDrawer: boolean
   openLogin: () => void
   closeLogin: () => void
+  openProfile: () => void
+  closeProfile: () => void
   login: (token: string, user: User) => void
   logout: () => void
   init: () => Promise<void>
@@ -23,9 +26,12 @@ export const useAuthStore = create<AuthStore>()(
       token: null,
       isLoggedIn: false,
       showLoginModal: false,
+      showProfileDrawer: false,
 
       openLogin: () => set({ showLoginModal: true }),
       closeLogin: () => set({ showLoginModal: false }),
+      openProfile: () => set({ showProfileDrawer: true }),
+      closeProfile: () => set({ showProfileDrawer: false }),
 
       login: (token, user) => {
         setToken(token)

@@ -14,7 +14,7 @@ function NavInner() {
   const router = useRouter()
   const count = useCartStore(s => s.totalCount())
   const openCart = useCartStore(s => s.openCart)
-  const { isLoggedIn, user, logout, openLogin } = useAuthStore()
+  const { isLoggedIn, user, logout, openLogin, openProfile } = useAuthStore()
   const lang = useLangStore(s => s.lang)
   const tr = useT(lang)
   const [search, setSearch] = useState('')
@@ -118,17 +118,10 @@ function NavInner() {
             </button>
 
             {isLoggedIn ? (
-              <div className={styles.userMenu}>
-                <button className={styles.iconBtn}>
-                  <div className={styles.avatar}>{(user?.name ?? user?.phone ?? 'U').charAt(0).toUpperCase()}</div>
-                  <span className={styles.iconLabel}>{tr.profile}</span>
-                </button>
-                <div className={styles.dropdown}>
-                  <Link href="/orders" className={styles.dropItem}>📦 {tr.myOrders}</Link>
-                  <Link href="/profile" className={styles.dropItem}>⚙️ {tr.settings}</Link>
-                  <button className={styles.dropItem} onClick={logout}>🚪 {tr.logout}</button>
-                </div>
-              </div>
+              <button className={styles.iconBtn} onClick={openProfile}>
+                <div className={styles.avatar}>{(user?.name ?? user?.phone ?? 'U').charAt(0).toUpperCase()}</div>
+                <span className={styles.iconLabel}>{tr.profile}</span>
+              </button>
             ) : (
               <button className={styles.iconBtn} onClick={openLogin}>
                 <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -180,12 +173,12 @@ function NavInner() {
           <span>{tr.cart}</span>
         </button>
         {isLoggedIn ? (
-          <Link href="/profile" className={`${styles.mobileItem} ${pathname === '/profile' ? styles.mobileActive : ''}`}>
+          <button className={styles.mobileItem} onClick={openProfile}>
             <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
             <span>{tr.profile}</span>
-          </Link>
+          </button>
         ) : (
           <button className={styles.mobileItem} onClick={openLogin}>
             <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
