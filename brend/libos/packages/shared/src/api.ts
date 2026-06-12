@@ -57,6 +57,8 @@ export const api = {
   },
 
   products: {
+    featured: () => request<{ products: Product[] }>('/products/featured'),
+    discounted: () => request<{ products: Product[] }>('/products/discounted'),
     byStore: (storeId: string, categoryId?: string) => {
       const q = categoryId ? `?categoryId=${categoryId}` : ''
       return request<Product[]>(`/products/store/${storeId}${q}`)

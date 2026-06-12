@@ -16,7 +16,7 @@ export default async function authRoutes(app: FastifyInstance) {
     const { phone } = sendOtpSchema.parse(req.body)
     const code = Math.floor(100000 + Math.random() * 900000).toString()
     otpStore.set(phone, code)
-    await sendSms(phone, `Libos tasdiqlash kodi: ${code}`)
+    await sendSms(phone, `ZYFF tasdiqlash kodi: ${code}`)
     console.log(`OTP ${phone} uchun: ${code}`)
     return reply.send({ success: true, message: 'Kod yuborildi' })
   })
