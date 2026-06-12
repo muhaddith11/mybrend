@@ -8,6 +8,7 @@ import type { Store, Product } from '@libos/shared'
 import { useCartStore } from '../store/cart'
 import { useLangStore } from '../store/lang'
 import { useT } from '../lib/i18n'
+import { MapSection } from '../components/MapSection'
 import styles from './page.module.css'
 
 const CARD_COLORS = [
@@ -111,6 +112,22 @@ function HomePageInner() {
         </div>
       </section>
 
+      {/* ── Stores ── (kategoriyadan keyin) */}
+      <section className={styles.productsSection}>
+        <div className="container">
+          <div className={styles.sectionHead}>
+            <h2 className={styles.sectionTitle}>{tr.storesSection}</h2>
+            <Link href="/stores" className={styles.sectionAll}>{tr.seeAll}</Link>
+          </div>
+          <div className={styles.storesGrid}>
+            {storesLoading
+              ? Array.from({ length: 6 }).map((_, i) => <StoreSkeleton key={i} />)
+              : stores.map(s => <StoreListCard key={s.id} store={s} tr={tr} />)
+            }
+          </div>
+        </div>
+      </section>
+
       {/* ── Popular products ── */}
       <section className={styles.productsSection}>
         <div className="container">
@@ -163,21 +180,14 @@ function HomePageInner() {
         </div>
       </section>
 
-      {/* ── Stores ── */}
-      <section className={styles.productsSection}>
-        <div className="container">
-          <div className={styles.sectionHead}>
-            <h2 className={styles.sectionTitle}>{tr.storesSection}</h2>
-            <Link href="/stores" className={styles.sectionAll}>{tr.seeAll}</Link>
-          </div>
-          <div className={styles.storesGrid}>
-            {storesLoading
-              ? Array.from({ length: 6 }).map((_, i) => <StoreSkeleton key={i} />)
-              : stores.map(s => <StoreListCard key={s.id} store={s} tr={tr} />)
-            }
-          </div>
-        </div>
-      </section>
+      {/* ── Xarita ── */}
+      {!storesLoading && (
+        <MapSection
+          stores={stores}
+          lang={lang}
+          title={lang === 'ru' ? 'Магазины на карте' : lang === 'en' ? 'Stores on map' : "Do'konlar xaritada"}
+        />
+      )}
 
       {/* ── Footer ── */}
       <footer className={styles.footer}>
@@ -206,9 +216,9 @@ function HomePageInner() {
             </div>
             <div className={styles.footerCol}>
               <div className={styles.footerColTitle}>{tr.contact}</div>
-              <span className={styles.footerText}>+998 90 123 45 67</span>
-              <a href="mailto:info@zyff.uz" className={styles.footerLink}>info@zyff.uz</a>
-              <span className={styles.footerText}>Telegram · Instagram</span>
+              <a href="tel:+998502500550" className={styles.footerLink}>+998 50 250 05 50</a>
+              <a href="https://instagram.com/_muhaddith_7" target="_blank" rel="noopener noreferrer" className={styles.footerLink}>Instagram: @_muhaddith_7</a>
+              <a href="https://t.me/muhaddith707" target="_blank" rel="noopener noreferrer" className={styles.footerLink}>Telegram: @muhaddith707</a>
             </div>
           </div>
           <div className={styles.footerBottom}>
