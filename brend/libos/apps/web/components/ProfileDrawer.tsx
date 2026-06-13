@@ -99,7 +99,7 @@ export function ProfileDrawer() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
                 </Link>
-                <Link href="/?sale=true" className={styles.menuItem} onClick={closeProfile}>
+                <Link href="/wishlist" className={styles.menuItem} onClick={closeProfile}>
                   <span className={styles.menuIcon}>❤️</span>
                   <span className={styles.menuLabel}>{tr.wishlist}</span>
                   <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

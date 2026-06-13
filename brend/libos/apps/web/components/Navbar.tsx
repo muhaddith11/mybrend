@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useState, Suspense } from 'react'
 import { useCartStore } from '../store/cart'
 import { useAuthStore } from '../store/auth'
+import { useWishlistStore } from '../store/wishlist'
 import { useLangStore } from '../store/lang'
 import { useT } from '../lib/i18n'
 import styles from './Navbar.module.css'
@@ -14,6 +15,7 @@ function NavInner() {
   const router = useRouter()
   const count = useCartStore(s => s.totalCount())
   const openCart = useCartStore(s => s.openCart)
+  const wishlistCount = useWishlistStore(s => s.items.length)
   const { isLoggedIn, user, logout, openLogin, openProfile } = useAuthStore()
   const lang = useLangStore(s => s.lang)
   const tr = useT(lang)
@@ -123,12 +125,15 @@ function NavInner() {
           </form>
 
           <div className={styles.navRight}>
-            <button className={styles.iconBtn} onClick={isLoggedIn ? openProfile : openLogin}>
-              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
+            <Link href="/wishlist" className={styles.iconBtn}>
+              <div className={styles.iconWrap}>
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                {wishlistCount > 0 && <span className={styles.badge}>{wishlistCount > 99 ? '99+' : wishlistCount}</span>}
+              </div>
               <span className={styles.iconLabel}>{tr.saved}</span>
-            </button>
+            </Link>
 
             <button className={styles.iconBtn} onClick={openCart}>
               <div className={styles.iconWrap}>

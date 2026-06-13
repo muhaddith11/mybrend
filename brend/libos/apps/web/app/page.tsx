@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { api } from '@libos/shared'
 import type { Store, Product } from '@libos/shared'
 import { useCartStore } from '../store/cart'
+import { useWishlistStore } from '../store/wishlist'
 import { useLangStore } from '../store/lang'
 import { useT } from '../lib/i18n'
 import { MapSection } from '../components/MapSection'
@@ -242,6 +243,8 @@ export default function HomePage() {
 // ── Product Card ──────────────────────────────
 function ProductCard({ product, colorIdx, tr, cur }: { product: Product; colorIdx: number; tr: Record<string, string>; cur: string }) {
   const addItem = useCartStore(s => s.addItem)
+  const toggleWishlist = useWishlistStore(s => s.toggle)
+  const inWishlist = useWishlistStore(s => s.has(product.id))
   const discount = getDiscount(product.price, product.originalPrice)
   const bg = product.store?.themeBg ?? CARD_COLORS[colorIdx % CARD_COLORS.length]
   const initial = (product.store?.name ?? product.name).charAt(0).toUpperCase()
@@ -259,6 +262,21 @@ function ProductCard({ product, colorIdx, tr, cur }: { product: Product; colorId
     })
   }
 
+  function handleHeart(e: React.MouseEvent) {
+    e.preventDefault()
+    toggleWishlist({
+      productId: product.id,
+      name: product.nameUz || product.name,
+      price: product.price,
+      originalPrice: product.originalPrice,
+      image: product.images?.[0],
+      storeId: product.storeId ?? product.store?.id ?? '',
+      storeName: product.store?.name ?? '',
+      storeSlug: product.store?.slug ?? '',
+      themeBg: bg,
+    })
+  }
+
   return (
     <Link href={product.store ? `/store/${product.store.slug}` : '#'} className={styles.productCard}>
       <div className={styles.cardImg} style={{ background: bg }}>
@@ -268,8 +286,11 @@ function ProductCard({ product, colorIdx, tr, cur }: { product: Product; colorId
           <div className={styles.cardInitial}>{initial}</div>
         )}
         {discount && <span className={styles.discountBadge}>-{discount}%</span>}
-        <button className={styles.heartBtn} onClick={e => e.preventDefault()}>
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <button
+          className={`${styles.heartBtn} ${inWishlist ? styles.heartActive : ''}`}
+          onClick={handleHeart}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill={inWishlist ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
         </button>
