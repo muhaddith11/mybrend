@@ -17,6 +17,17 @@ const CARD_COLORS = [
   '#FDF4FF', '#FFF7ED', '#F0FDFA', '#FEE2E2', '#F3E8FF',
 ]
 
+const STORE_GRADIENTS = [
+  'linear-gradient(135deg, #F59E0B 0%, #EF4444 100%)',
+  'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
+  'linear-gradient(135deg, #10B981 0%, #3B82F6 100%)',
+  'linear-gradient(135deg, #F97316 0%, #FBBF24 100%)',
+  'linear-gradient(135deg, #6366F1 0%, #A855F7 100%)',
+  'linear-gradient(135deg, #14B8A6 0%, #6366F1 100%)',
+  'linear-gradient(135deg, #EF4444 0%, #8B5CF6 100%)',
+  'linear-gradient(135deg, #3B82F6 0%, #10B981 100%)',
+]
+
 function getDiscount(price: number, original?: number) {
   if (!original || original <= price) return null
   return Math.round((1 - price / original) * 100)
@@ -72,36 +83,45 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
 
             {/* Slide 0: ZYFF app ad */}
             <div className={`${styles.heroSlide} ${slide === 0 ? styles.heroSlideActive : ''}`}
-              style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #6D28D9 100%)' }}>
-              <div className={styles.floatEl} style={{ width: 140, height: 140, background: 'rgba(139,92,246,.18)', top: '-30px', right: '8%', animationDuration: '4s' }} />
-              <div className={styles.floatEl} style={{ width: 90, height: 90, background: 'rgba(245,158,11,.12)', bottom: '12%', right: '22%', animationDuration: '3.2s', animationDelay: '.6s', animationName: styles.floatReverse ?? 'float' }} />
-              <div className={styles.floatEl} style={{ width: 55, height: 55, background: 'rgba(255,255,255,.07)', top: '18%', right: '40%', animationDuration: '5s', animationDelay: '1.2s' }} />
-              <div className={styles.heroBadge} style={{ position: 'relative', zIndex: 2, marginBottom: '1rem' }}>🏪 ZYFF — Qo'qon</div>
+              style={{ background: 'linear-gradient(135deg, #0F0C29 0%, #302B63 50%, #24243e 100%)' }}>
+              {/* Floating glowing orbs */}
+              <div className={styles.floatEl} style={{ width: 200, height: 200, background: 'radial-gradient(circle, rgba(109,40,217,.55) 0%, transparent 70%)', top: '-60px', right: '5%', animationDuration: '5s' }} />
+              <div className={styles.floatEl} style={{ width: 120, height: 120, background: 'radial-gradient(circle, rgba(245,158,11,.4) 0%, transparent 70%)', bottom: '-20px', right: '28%', animationDuration: '3.8s', animationDelay: '.7s' }} />
+              <div className={styles.floatEl} style={{ width: 80, height: 80, background: 'radial-gradient(circle, rgba(236,72,153,.35) 0%, transparent 70%)', top: '30%', right: '18%', animationDuration: '4.5s', animationDelay: '1.4s' }} />
+              <div className={styles.floatEl} style={{ width: 50, height: 50, background: 'radial-gradient(circle, rgba(99,102,241,.45) 0%, transparent 70%)', top: '10%', right: '45%', animationDuration: '6s', animationDelay: '2s' }} />
+              <div className={styles.heroBadge} style={{ position: 'relative', zIndex: 2, marginBottom: '1rem', background: 'rgba(255,255,255,.12)', backdropFilter: 'blur(8px)' }}>✨ ZYFF — Qo'qon</div>
               <h1 className={styles.heroAppTitle}>
                 Shahringizdagi barcha<br />
-                <span style={{ color: '#F59E0B' }}>kiyim do'konlar</span><br />
+                <span style={{ color: '#FBBF24', textShadow: '0 0 30px rgba(251,191,36,.5)' }}>kiyim do'konlar</span><br />
                 bir joyda
               </h1>
               <p className={styles.heroAppSub}>Eng yaxshi do'konlarni toping, narxlarni solishtiring</p>
-              <Link href="/stores" className={styles.heroBtn} style={{ position: 'relative', zIndex: 2 }}>
+              <Link href="/stores" className={styles.heroBtn} style={{ position: 'relative', zIndex: 2, background: 'linear-gradient(135deg,#F59E0B,#EF4444)', color: '#fff', border: 'none', boxShadow: '0 4px 20px rgba(245,158,11,.45)' }}>
                 Do'konlarni ko'rish →
               </Link>
-              <div className={styles.heroBg} style={{ color: 'rgba(255,255,255,.03)' }}>Z</div>
+              <div className={styles.heroBg} style={{ color: 'rgba(255,255,255,.025)' }}>Z</div>
             </div>
 
             {/* Slide 1: store[0] ad */}
             <div className={`${styles.heroSlide} ${slide === 1 ? styles.heroSlideActive : ''}`}
-              style={{ background: stores[0]?.themeBg ?? 'linear-gradient(135deg, #1E293B, #475569)' }}>
+              style={{ background: stores[0]?.banner ? '#000' : (STORE_GRADIENTS[0]) }}>
               {stores[0]?.banner && (
                 <Image src={stores[0].banner} alt={stores[0].name} fill className={styles.heroStoreAdImg} />
               )}
+              {!stores[0]?.banner && (
+                <>
+                  <div className={styles.floatEl} style={{ width: 180, height: 180, background: 'radial-gradient(circle, rgba(255,255,255,.18) 0%, transparent 70%)', top: '-40px', right: '8%', animationDuration: '4s' }} />
+                  <div className={styles.floatEl} style={{ width: 100, height: 100, background: 'radial-gradient(circle, rgba(255,255,255,.12) 0%, transparent 70%)', bottom: '0', right: '30%', animationDuration: '3.5s', animationDelay: '.5s' }} />
+                  <div className={styles.slideInitial}>{stores[0]?.name?.charAt(0) ?? 'Z'}</div>
+                </>
+              )}
               <div className={styles.heroStoreAdOverlay} />
               <div className={styles.heroStoreAdContent}>
-                <div className={styles.heroBadge} style={{ marginBottom: '1rem' }}>🏆 Tavsiya etilgan do'kon</div>
+                <div className={styles.heroBadge} style={{ marginBottom: '1rem', background: 'rgba(255,255,255,.15)', backdropFilter: 'blur(8px)' }}>🏆 Tavsiya etilgan do'kon</div>
                 <h2 className={styles.heroAppTitle}>{stores[0]?.name ?? "Do'konlarimiz"}</h2>
                 {stores[0]?.address && <p className={styles.heroAppSub}>📍 {stores[0].address}</p>}
                 {stores[0] && (
-                  <Link href={`/store/${stores[0].slug}`} className={styles.heroBtn} style={{ position: 'relative', zIndex: 2 }}>
+                  <Link href={`/store/${stores[0].slug}`} className={styles.heroBtn} style={{ position: 'relative', zIndex: 2, background: 'rgba(255,255,255,.95)', color: '#1E1B4B' }}>
                     Hozir tashrif buyuring →
                   </Link>
                 )}
@@ -110,17 +130,24 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
 
             {/* Slide 2: store[1] ad */}
             <div className={`${styles.heroSlide} ${slide === 2 ? styles.heroSlideActive : ''}`}
-              style={{ background: stores[1]?.themeBg ?? 'linear-gradient(135deg, #312E81, #4338CA)' }}>
+              style={{ background: stores[1]?.banner ? '#000' : (STORE_GRADIENTS[1]) }}>
               {stores[1]?.banner && (
                 <Image src={stores[1].banner} alt={stores[1].name} fill className={styles.heroStoreAdImg} />
               )}
+              {!stores[1]?.banner && (
+                <>
+                  <div className={styles.floatEl} style={{ width: 160, height: 160, background: 'radial-gradient(circle, rgba(255,255,255,.2) 0%, transparent 70%)', top: '-30px', right: '12%', animationDuration: '4.5s' }} />
+                  <div className={styles.floatEl} style={{ width: 90, height: 90, background: 'radial-gradient(circle, rgba(255,255,255,.14) 0%, transparent 70%)', bottom: '5%', right: '25%', animationDuration: '3.8s', animationDelay: '.8s' }} />
+                  <div className={styles.slideInitial}>{stores[1]?.name?.charAt(0) ?? 'Z'}</div>
+                </>
+              )}
               <div className={styles.heroStoreAdOverlay} />
               <div className={styles.heroStoreAdContent}>
-                <div className={styles.heroBadge} style={{ marginBottom: '1rem' }}>⭐ Premium do'kon</div>
+                <div className={styles.heroBadge} style={{ marginBottom: '1rem', background: 'rgba(255,255,255,.15)', backdropFilter: 'blur(8px)' }}>⭐ Premium do'kon</div>
                 <h2 className={styles.heroAppTitle}>{stores[1]?.name ?? "Yangi do'konlar"}</h2>
                 {stores[1]?.address && <p className={styles.heroAppSub}>📍 {stores[1].address}</p>}
                 {stores[1] && (
-                  <Link href={`/store/${stores[1].slug}`} className={styles.heroBtn} style={{ position: 'relative', zIndex: 2 }}>
+                  <Link href={`/store/${stores[1].slug}`} className={styles.heroBtn} style={{ position: 'relative', zIndex: 2, background: 'rgba(255,255,255,.95)', color: '#1E1B4B' }}>
                     Hozir tashrif buyuring →
                   </Link>
                 )}
@@ -142,19 +169,22 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
           <div className={styles.heroCards}>
             {stores[2] ? (
               <Link href={`/store/${stores[2].slug}`} className={styles.storeAdCard}
-                style={{ background: stores[2].themeBg ?? '#1E293B' }}>
+                style={{ background: stores[2].banner ? '#000' : STORE_GRADIENTS[2] }}>
                 {stores[2].banner && (
                   <Image src={stores[2].banner} alt={stores[2].name} fill className={styles.storeAdImg} />
+                )}
+                {!stores[2].banner && (
+                  <div className={styles.storeAdDecor}>{stores[2].name.charAt(0)}</div>
                 )}
                 <div className={styles.storeAdOverlay} />
                 <div className={styles.storeAdContent}>
                   <div className={styles.storeAdName}>{stores[2].name}</div>
                   {stores[2].address && <div className={styles.storeAdAddr}>📍 {stores[2].address}</div>}
-                  <div className={styles.storeAdBtn}>Ko'rish</div>
+                  <div className={styles.storeAdBtn}>Ko'rish →</div>
                 </div>
               </Link>
             ) : (
-              <div className={styles.infoCard} style={{ background: '#ECFDF5' }}>
+              <div className={styles.infoCard} style={{ background: 'linear-gradient(135deg,#ECFDF5,#D1FAE5)' }}>
                 <div>
                   <div className={styles.infoTitle}>{tr.freeDelivery}</div>
                   <div className={styles.infoSub}>{tr.freeDeliverySub}</div>
@@ -164,19 +194,22 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
             )}
             {stores[3] ? (
               <Link href={`/store/${stores[3].slug}`} className={styles.storeAdCard}
-                style={{ background: stores[3].themeBg ?? '#312E81' }}>
+                style={{ background: stores[3].banner ? '#000' : STORE_GRADIENTS[3] }}>
                 {stores[3].banner && (
                   <Image src={stores[3].banner} alt={stores[3].name} fill className={styles.storeAdImg} />
+                )}
+                {!stores[3].banner && (
+                  <div className={styles.storeAdDecor}>{stores[3].name.charAt(0)}</div>
                 )}
                 <div className={styles.storeAdOverlay} />
                 <div className={styles.storeAdContent}>
                   <div className={styles.storeAdName}>{stores[3].name}</div>
                   {stores[3].address && <div className={styles.storeAdAddr}>📍 {stores[3].address}</div>}
-                  <div className={styles.storeAdBtn}>Ko'rish</div>
+                  <div className={styles.storeAdBtn}>Ko'rish →</div>
                 </div>
               </Link>
             ) : (
-              <div className={styles.infoCard} style={{ background: '#FFF7ED' }}>
+              <div className={styles.infoCard} style={{ background: 'linear-gradient(135deg,#FFF7ED,#FFEDD5)' }}>
                 <div>
                   <div className={styles.infoTitle}>{stores.length > 0 ? `${stores.length}+` : '5+'} {tr.storeCount}</div>
                   <div className={styles.infoSub}>{tr.topStores}</div>
