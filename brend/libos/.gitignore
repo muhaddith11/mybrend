@@ -13,3 +13,4 @@ build/
 Thumbs.db
 
 .vercel
+package-lock.json
