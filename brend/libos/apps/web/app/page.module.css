@@ -22,64 +22,141 @@
   }
 }
 
-.heroBanner {
+/* ── Hero Slider ──────────────────────────── */
+.heroSlider {
   position: relative;
-  background: linear-gradient(135deg, #2563EB 0%, #4F46E5 100%);
   border-radius: 18px;
-  padding: 2rem 2rem 2.5rem;
-  color: #fff;
   overflow: hidden;
   min-height: 220px;
+}
+@media (min-width: 768px) { .heroSlider { min-height: 300px; } }
+
+.heroSlide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
+  padding: 2rem 2rem 2.5rem;
+  overflow: hidden;
 }
-@media (min-width: 768px) { .heroBanner { min-height: 300px; padding: 2.5rem 3rem; } }
+@media (min-width: 768px) { .heroSlide { padding: 2.5rem 3rem; } }
+
+.heroSlideActive {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.heroSliderDots {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 10;
+}
+.heroDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.35);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background .3s, transform .3s;
+}
+.heroDotActive {
+  background: #fff;
+  transform: scale(1.35);
+}
+
+/* Floating decorative elements for ZYFF slide */
+.floatEl {
+  position: absolute;
+  border-radius: 50%;
+  animation: float 4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-14px) rotate(10deg); }
+}
+
+/* ZYFF App Ad slide text */
+.heroAppTitle {
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.2;
+  color: #fff;
+  margin-bottom: .75rem;
+  position: relative;
+  z-index: 2;
+  animation: slideUpFade 0.7s ease both;
+}
+@media (min-width: 480px) { .heroAppTitle { font-size: 32px; } }
+@media (min-width: 768px) { .heroAppTitle { font-size: 42px; } }
+
+.heroAppSub {
+  font-size: 13px;
+  color: rgba(255,255,255,.8);
+  margin-bottom: 1.5rem;
+  position: relative;
+  z-index: 2;
+  max-width: 320px;
+  line-height: 1.5;
+  animation: slideUpFade 0.7s ease 0.15s both;
+}
+@media (min-width: 768px) { .heroAppSub { font-size: 15px; } }
+
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Store ad slides */
+.heroStoreAdImg { object-fit: cover; }
+.heroStoreAdOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,.25) 100%);
+  z-index: 1;
+}
+.heroStoreAdContent {
+  position: relative;
+  z-index: 2;
+}
 
 .heroBadge {
   display: inline-flex;
   align-items: center;
   padding: 4px 14px;
-  background: rgba(255,255,255,.2);
+  background: rgba(255,255,255,.18);
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.5px;
-  margin-bottom: 1rem;
-}
-
-.heroTitle {
-  font-size: 32px;
-  font-weight: 900;
-  line-height: 1.1;
-  margin-bottom: .75rem;
-}
-@media (min-width: 480px) { .heroTitle { font-size: 40px; } }
-@media (min-width: 768px) { .heroTitle { font-size: 52px; } }
-
-.heroSub {
-  font-size: 14px;
-  opacity: .85;
-  margin-bottom: 1.5rem;
-  max-width: 340px;
-  line-height: 1.5;
+  letter-spacing: 0.4px;
+  color: #fff;
 }
 
 .heroBtn {
   display: inline-flex;
   align-items: center;
-  padding: 12px 28px;
+  padding: 11px 24px;
   background: #fff;
-  color: #2563EB;
+  color: #1E1B4B;
   border-radius: 10px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   text-decoration: none;
   transition: transform .15s, box-shadow .15s;
-  box-shadow: 0 4px 16px rgba(0,0,0,.15);
+  box-shadow: 0 4px 16px rgba(0,0,0,.18);
 }
-.heroBtn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,.2); }
+.heroBtn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,.22); }
 
 .heroBg {
   position: absolute;
@@ -88,12 +165,67 @@
   transform: translateY(-50%);
   font-size: 200px;
   font-weight: 900;
-  color: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.04);
   line-height: 1;
   pointer-events: none;
   user-select: none;
+  z-index: 1;
 }
 @media (min-width: 768px) { .heroBg { font-size: 280px; right: -30px; } }
+
+/* ── Store Ad Cards (right column) ────────── */
+.storeAdCard {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 110px;
+  text-decoration: none;
+  transition: transform .15s;
+}
+.storeAdCard:hover { transform: scale(1.01); }
+
+.storeAdImg { object-fit: cover; }
+
+.storeAdOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.75) 0%, rgba(0,0,0,.08) 60%);
+  z-index: 1;
+}
+.storeAdContent {
+  position: relative;
+  z-index: 2;
+  padding: .75rem 1rem;
+}
+.storeAdName {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.storeAdAddr {
+  font-size: 11px;
+  color: rgba(255,255,255,.75);
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.storeAdBtn {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #F59E0B;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
 
 /* Info cards */
 .heroCards {
@@ -484,19 +616,43 @@
 }
 
 .storeListBody {
-  padding: .625rem .75rem;
+  padding: .6rem .75rem .75rem;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
+  flex-direction: column;
+  gap: 3px;
 }
 .storeListName {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.storeListMeta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.storeListRating {
+  font-size: 12px;
+  font-weight: 600;
+  color: #F59E0B;
+}
+.storeListReviews {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.storeListAddr {
+  font-size: 11px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.storeListHours {
+  font-size: 11px;
+  color: var(--text-3);
 }
 
 /* ── Footer ───────────────────────────────── */
