@@ -123,13 +123,28 @@
 .heroStoreAdOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,.25) 100%);
+  background: linear-gradient(135deg, rgba(0,0,0,.68) 0%, rgba(0,0,0,.18) 100%);
   z-index: 1;
 }
 .heroStoreAdContent {
   position: relative;
   z-index: 2;
 }
+/* Big decorative initial letter on gradient slides */
+.slideInitial {
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 220px;
+  font-weight: 900;
+  color: rgba(255,255,255,.08);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+@media (min-width: 768px) { .slideInitial { font-size: 300px; } }
 
 .heroBadge {
   display: inline-flex;
@@ -192,7 +207,7 @@
 .storeAdOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,.75) 0%, rgba(0,0,0,.08) 60%);
+  background: linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.12) 65%);
   z-index: 1;
 }
 .storeAdContent {
@@ -202,29 +217,47 @@
 }
 .storeAdName {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   color: #fff;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -.2px;
 }
 .storeAdAddr {
   font-size: 11px;
-  color: rgba(255,255,255,.75);
-  margin-bottom: 6px;
+  color: rgba(255,255,255,.72);
+  margin-bottom: 8px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .storeAdBtn {
-  display: inline-block;
-  padding: 4px 12px;
-  background: #F59E0B;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 14px;
+  background: linear-gradient(135deg, #F59E0B, #EF4444);
   color: #fff;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 11px;
   font-weight: 700;
+  box-shadow: 0 2px 10px rgba(245,158,11,.4);
+}
+/* Decorative letter for store ad card (right column, no banner) */
+.storeAdDecor {
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 100px;
+  font-weight: 900;
+  color: rgba(255,255,255,.1);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
 }
 
 /* Info cards */
