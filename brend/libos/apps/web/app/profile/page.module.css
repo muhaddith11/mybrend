@@ -1,0 +1,215 @@
+.page {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 6rem;
+}
+
+/* ── Header ───────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+}
+
+.avatarCircle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.name {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.phone {
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+/* ── Sections ─────────────────────────────── */
+.section {
+  background: var(--surface);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: .75rem 1rem .25rem;
+}
+
+/* ── Menu items ───────────────────────────── */
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .875rem 1rem;
+  text-decoration: none;
+  color: var(--text);
+  border-top: 1px solid var(--border);
+  transition: background .12s;
+  width: 100%;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.menuItem:first-child { border-top: none; }
+.menuItem:hover { background: var(--bg); }
+
+.menuIcon { font-size: 20px; flex-shrink: 0; }
+
+.menuLabel {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  text-align: left;
+}
+
+.menuArrow { color: var(--text-3); flex-shrink: 0; }
+
+/* ── Toggle switch ────────────────────────── */
+.toggle {
+  position: relative;
+  width: 48px;
+  height: 28px;
+  background: var(--border);
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  transition: background .2s;
+  flex-shrink: 0;
+  padding: 0;
+}
+.toggleOn { background: var(--brand); }
+
+.toggleThumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform .2s;
+  display: block;
+}
+.toggleOn .toggleThumb { transform: translateX(20px); }
+
+/* ── Language selector ────────────────────── */
+.langItem {
+  display: flex;
+  align-items: flex-start;
+  gap: .75rem;
+  padding: .875rem 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.langBtns {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.langBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color .15s, color .15s, background .15s;
+  min-width: 110px;
+}
+.langBtn:hover { border-color: var(--brand); color: var(--brand); }
+.langActive {
+  border-color: var(--brand) !important;
+  color: var(--brand) !important;
+  background: var(--brand-light) !important;
+  font-weight: 700;
+}
+
+/* ── Logout ───────────────────────────────── */
+.logoutBtn {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  width: 100%;
+  padding: .875rem 1rem;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: #EF4444;
+  cursor: pointer;
+  transition: background .12s;
+}
+.logoutBtn:hover { background: var(--bg); }
+
+/* ── Guest state ──────────────────────────── */
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.avatar { font-size: 64px; }
+
+.guestText {
+  font-size: 15px;
+  color: var(--text-2);
+  max-width: 260px;
+  line-height: 1.5;
+}
+
+.loginBtn {
+  padding: 12px 32px;
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s;
+}
+.loginBtn:hover { background: var(--brand-dark); }
