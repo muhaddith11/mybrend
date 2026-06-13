@@ -74,6 +74,18 @@
   gap: 4px;
 }
 
+.viewBtn {
+  margin-top: 10px;
+  padding: 9px 0;
+  background: #F59E0B;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 10px;
+  text-align: center;
+  letter-spacing: .3px;
+}
+
 .storeName {
   font-size: 14px;
   font-weight: 700;

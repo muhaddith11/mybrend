@@ -73,6 +73,7 @@ function StoreCard({ store, tr }: { store: Store; tr: Record<string, string> }) 
           {store.rating && <span className={styles.rating}>★ {store.rating.toFixed(1)}</span>}
           {store._count && <span className={styles.count}>{store._count.products} {tr.products}</span>}
         </div>
+        <div className={styles.viewBtn}>{tr.viewStore ?? "Ko'rish"}</div>
       </div>
     </Link>
   )
