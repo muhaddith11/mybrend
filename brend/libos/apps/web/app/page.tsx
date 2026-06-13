@@ -30,18 +30,7 @@ function HomePageInner() {
   const lang = useLangStore(s => s.lang)
   const tr = useT(lang)
 
-  const CAT_CIRCLES = [
-    { label: tr.men,         emoji: '👔', bg: '#EEF2FF', href: '/?gender=MEN' },
-    { label: tr.women,       emoji: '👗', bg: '#FFF0F3', href: '/?gender=WOMEN' },
-    { label: tr.kids,        emoji: '🧸', bg: '#ECFDF5', href: '/?gender=KIDS' },
-    { label: tr.shoes,       emoji: '👟', bg: '#FFF7ED', href: '/?category=shoes' },
-    { label: tr.accessories, emoji: '👜', bg: '#F5F3FF', href: '/?category=accessories' },
-    { label: tr.sport,       emoji: '🏃', bg: '#F0FDFA', href: '/?category=sport' },
-    { label: lang === 'en' ? 'Outerwear' : lang === 'ru' ? 'Верхняя одежда' : 'Ustki kiyim', emoji: '🧥', bg: '#FFFBEB', href: '/?category=outerwear' },
-    { label: lang === 'en' ? 'New' : lang === 'ru' ? 'Новинки' : 'Yangi', emoji: '✨', bg: '#EFF6FF', href: '/?new=true' },
-  ]
-
-  const { data: featuredData, isLoading: featLoading } = useQuery({
+const { data: featuredData, isLoading: featLoading } = useQuery({
     queryKey: ['products-featured'],
     queryFn: () => api.products.featured(),
     staleTime: 60_000,
@@ -97,23 +86,7 @@ function HomePageInner() {
         </div>
       </section>
 
-      {/* ── Category circles ── */}
-      <section className={styles.catSection}>
-        <div className="container">
-          <div className={styles.catRow}>
-            {CAT_CIRCLES.map(c => (
-              <Link key={c.label} href={c.href} className={styles.catCircleWrap}>
-                <div className={styles.catCircle} style={{ background: c.bg }}>
-                  <span className={styles.catEmoji}>{c.emoji}</span>
-                </div>
-                <span className={styles.catLabel}>{c.label}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Stores ── (kategoriyadan keyin) */}
+      {/* ── Stores ── */}
       <section className={styles.productsSection}>
         <div className="container">
           <div className={styles.sectionHead}>
