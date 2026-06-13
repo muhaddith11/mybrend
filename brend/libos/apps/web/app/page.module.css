@@ -320,6 +320,7 @@
   transition: color .15s, transform .15s;
 }
 .heartBtn:hover { color: #EF4444; transform: scale(1.1); }
+.heartActive { color: #EF4444 !important; }
 
 .cardBody {
   padding: .75rem;
