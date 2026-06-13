@@ -1,5 +1,5 @@
 'use client'
-import { Suspense } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -52,6 +52,12 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
   const discounted = discountedData?.products ?? []
   const stores = storesData?.stores ?? []
 
+  const [slide, setSlide] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => setSlide(s => (s + 1) % 3), 2000)
+    return () => clearInterval(t)
+  }, [])
+
   // Currency label per lang
   const cur = lang === 'ru' ? 'сум' : lang === 'en' ? 'UZS' : "so'm"
 
@@ -60,29 +66,126 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
       {/* ── Hero section ── */}
       <section className={styles.heroSection}>
         <div className={`container ${styles.heroGrid}`}>
-          <div className={styles.heroBanner}>
-            <div className={styles.heroBadge}>{tr.heroBadge}</div>
-            <h1 className={styles.heroTitle}>{tr.heroTitle}</h1>
-            <p className={styles.heroSub}>{tr.heroSub}</p>
-            <Link href="/?sale=true" className={styles.heroBtn}>{tr.heroBtn}</Link>
-            <div className={styles.heroBg}>%</div>
+
+          {/* 3-slide auto-slider */}
+          <div className={styles.heroSlider}>
+
+            {/* Slide 0: ZYFF app ad */}
+            <div className={`${styles.heroSlide} ${slide === 0 ? styles.heroSlideActive : ''}`}
+              style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #6D28D9 100%)' }}>
+              <div className={styles.floatEl} style={{ width: 140, height: 140, background: 'rgba(139,92,246,.18)', top: '-30px', right: '8%', animationDuration: '4s' }} />
+              <div className={styles.floatEl} style={{ width: 90, height: 90, background: 'rgba(245,158,11,.12)', bottom: '12%', right: '22%', animationDuration: '3.2s', animationDelay: '.6s', animationName: styles.floatReverse ?? 'float' }} />
+              <div className={styles.floatEl} style={{ width: 55, height: 55, background: 'rgba(255,255,255,.07)', top: '18%', right: '40%', animationDuration: '5s', animationDelay: '1.2s' }} />
+              <div className={styles.heroBadge} style={{ position: 'relative', zIndex: 2, marginBottom: '1rem' }}>🏪 ZYFF — Qo'qon</div>
+              <h1 className={styles.heroAppTitle}>
+                Shahringizdagi barcha<br />
+                <span style={{ color: '#F59E0B' }}>kiyim do'konlar</span><br />
+                bir joyda
+              </h1>
+              <p className={styles.heroAppSub}>Eng yaxshi do'konlarni toping, narxlarni solishtiring</p>
+              <Link href="/stores" className={styles.heroBtn} style={{ position: 'relative', zIndex: 2 }}>
+                Do'konlarni ko'rish →
+              </Link>
+              <div className={styles.heroBg} style={{ color: 'rgba(255,255,255,.03)' }}>Z</div>
+            </div>
+
+            {/* Slide 1: store[0] ad */}
+            <div className={`${styles.heroSlide} ${slide === 1 ? styles.heroSlideActive : ''}`}
+              style={{ background: stores[0]?.themeBg ?? 'linear-gradient(135deg, #1E293B, #475569)' }}>
+              {stores[0]?.banner && (
+                <Image src={stores[0].banner} alt={stores[0].name} fill className={styles.heroStoreAdImg} />
+              )}
+              <div className={styles.heroStoreAdOverlay} />
+              <div className={styles.heroStoreAdContent}>
+                <div className={styles.heroBadge} style={{ marginBottom: '1rem' }}>🏆 Tavsiya etilgan do'kon</div>
+                <h2 className={styles.heroAppTitle}>{stores[0]?.name ?? "Do'konlarimiz"}</h2>
+                {stores[0]?.address && <p className={styles.heroAppSub}>📍 {stores[0].address}</p>}
+                {stores[0] && (
+                  <Link href={`/store/${stores[0].slug}`} className={styles.heroBtn} style={{ position: 'relative', zIndex: 2 }}>
+                    Hozir tashrif buyuring →
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            {/* Slide 2: store[1] ad */}
+            <div className={`${styles.heroSlide} ${slide === 2 ? styles.heroSlideActive : ''}`}
+              style={{ background: stores[1]?.themeBg ?? 'linear-gradient(135deg, #312E81, #4338CA)' }}>
+              {stores[1]?.banner && (
+                <Image src={stores[1].banner} alt={stores[1].name} fill className={styles.heroStoreAdImg} />
+              )}
+              <div className={styles.heroStoreAdOverlay} />
+              <div className={styles.heroStoreAdContent}>
+                <div className={styles.heroBadge} style={{ marginBottom: '1rem' }}>⭐ Premium do'kon</div>
+                <h2 className={styles.heroAppTitle}>{stores[1]?.name ?? "Yangi do'konlar"}</h2>
+                {stores[1]?.address && <p className={styles.heroAppSub}>📍 {stores[1].address}</p>}
+                {stores[1] && (
+                  <Link href={`/store/${stores[1].slug}`} className={styles.heroBtn} style={{ position: 'relative', zIndex: 2 }}>
+                    Hozir tashrif buyuring →
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            {/* Dots */}
+            <div className={styles.heroSliderDots}>
+              {[0, 1, 2].map(i => (
+                <button key={i}
+                  className={`${styles.heroDot} ${slide === i ? styles.heroDotActive : ''}`}
+                  onClick={() => setSlide(i)}
+                />
+              ))}
+            </div>
           </div>
+
+          {/* Right: store ads (fallback to info cards) */}
           <div className={styles.heroCards}>
-            <div className={styles.infoCard} style={{ background: '#ECFDF5' }}>
-              <div>
-                <div className={styles.infoTitle}>{tr.freeDelivery}</div>
-                <div className={styles.infoSub}>{tr.freeDeliverySub}</div>
+            {stores[2] ? (
+              <Link href={`/store/${stores[2].slug}`} className={styles.storeAdCard}
+                style={{ background: stores[2].themeBg ?? '#1E293B' }}>
+                {stores[2].banner && (
+                  <Image src={stores[2].banner} alt={stores[2].name} fill className={styles.storeAdImg} />
+                )}
+                <div className={styles.storeAdOverlay} />
+                <div className={styles.storeAdContent}>
+                  <div className={styles.storeAdName}>{stores[2].name}</div>
+                  {stores[2].address && <div className={styles.storeAdAddr}>📍 {stores[2].address}</div>}
+                  <div className={styles.storeAdBtn}>Ko'rish</div>
+                </div>
+              </Link>
+            ) : (
+              <div className={styles.infoCard} style={{ background: '#ECFDF5' }}>
+                <div>
+                  <div className={styles.infoTitle}>{tr.freeDelivery}</div>
+                  <div className={styles.infoSub}>{tr.freeDeliverySub}</div>
+                </div>
+                <span className={styles.infoEmoji}>🚚</span>
               </div>
-              <span className={styles.infoEmoji}>🚚</span>
-            </div>
-            <div className={styles.infoCard} style={{ background: '#FFF7ED' }}>
-              <div>
-                <div className={styles.infoTitle}>{stores.length > 0 ? `${stores.length}+` : '5+'} {tr.storeCount}</div>
-                <div className={styles.infoSub}>{tr.topStores}</div>
+            )}
+            {stores[3] ? (
+              <Link href={`/store/${stores[3].slug}`} className={styles.storeAdCard}
+                style={{ background: stores[3].themeBg ?? '#312E81' }}>
+                {stores[3].banner && (
+                  <Image src={stores[3].banner} alt={stores[3].name} fill className={styles.storeAdImg} />
+                )}
+                <div className={styles.storeAdOverlay} />
+                <div className={styles.storeAdContent}>
+                  <div className={styles.storeAdName}>{stores[3].name}</div>
+                  {stores[3].address && <div className={styles.storeAdAddr}>📍 {stores[3].address}</div>}
+                  <div className={styles.storeAdBtn}>Ko'rish</div>
+                </div>
+              </Link>
+            ) : (
+              <div className={styles.infoCard} style={{ background: '#FFF7ED' }}>
+                <div>
+                  <div className={styles.infoTitle}>{stores.length > 0 ? `${stores.length}+` : '5+'} {tr.storeCount}</div>
+                  <div className={styles.infoSub}>{tr.topStores}</div>
+                </div>
+                <span className={styles.infoEmoji}>🏬</span>
               </div>
-              <span className={styles.infoEmoji}>🏬</span>
-            </div>
+            )}
           </div>
+
         </div>
       </section>
 
@@ -330,14 +433,24 @@ function StoreListCard({ store, tr }: { store: Store; tr: Record<string, string>
         ) : (
           <div className={styles.storeListInitial} style={{ color }}>{store.name.charAt(0)}</div>
         )}
-      </div>
-      <div className={styles.storeListBody}>
-        <span className={styles.storeListName}>{store.name}</span>
         {store.isOpen !== undefined && (
           <span className={store.isOpen ? styles.openBadge : styles.closedBadge}>
             {store.isOpen ? tr.open : tr.closed}
           </span>
         )}
+      </div>
+      <div className={styles.storeListBody}>
+        <span className={styles.storeListName}>{store.name}</span>
+        {store.rating != null && (
+          <div className={styles.storeListMeta}>
+            <span className={styles.storeListRating}>★ {store.rating.toFixed(1)}</span>
+            {store.reviewCount ? <span className={styles.storeListReviews}>({store.reviewCount})</span> : null}
+          </div>
+        )}
+        {store.address && (
+          <div className={styles.storeListAddr}>📍 {store.address}</div>
+        )}
+        <div className={styles.storeListHours}>🕐 09:00 – 21:00</div>
       </div>
     </Link>
   )
