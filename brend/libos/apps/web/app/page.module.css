@@ -453,11 +453,11 @@
 .storesGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  gap: 12px;
 }
 @media (min-width: 480px) { .storesGrid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 768px) { .storesGrid { grid-template-columns: repeat(4, 1fr); gap: 12px; } }
-@media (min-width: 1024px) { .storesGrid { grid-template-columns: repeat(6, 1fr); } }
+@media (min-width: 768px) { .storesGrid { grid-template-columns: repeat(4, 1fr); gap: 16px; } }
+@media (min-width: 1024px) { .storesGrid { grid-template-columns: repeat(5, 1fr); } }
 
 .storeListCard {
   background: var(--surface);
@@ -471,7 +471,7 @@
 
 .storeListCover {
   position: relative;
-  padding-top: 70%;
+  padding-top: 90%;
 }
 .storeListInitial {
   position: absolute;
