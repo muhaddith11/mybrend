@@ -147,7 +147,9 @@ function NavInner() {
 
             {isLoggedIn ? (
               <button className={styles.iconBtn} onClick={openProfile}>
-                <div className={styles.avatar}>{(user?.name ?? user?.phone ?? 'U').charAt(0).toUpperCase()}</div>
+                <div className={styles.avatar}>
+                  {user?.avatar ?? (user?.name ?? user?.phone ?? 'U').charAt(0).toUpperCase()}
+                </div>
                 <span className={styles.iconLabel}>{tr.profile}</span>
               </button>
             ) : (
