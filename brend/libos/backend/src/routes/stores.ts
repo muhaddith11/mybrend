@@ -34,6 +34,7 @@ export default async function storesRoutes(app: FastifyInstance) {
           city: true, address: true, isOpen: true, rating: true, reviewCount: true,
           genders: true, hasDelivery: true, hasPickup: true, hasCashOnDoor: true,
           deliveryTime: true, themeColor: true, themeBg: true,
+          lat: true, lng: true,
           _count: { select: { products: true } },
         },
       }),
