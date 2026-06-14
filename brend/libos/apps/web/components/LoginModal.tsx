@@ -23,6 +23,10 @@ export function LoginModal() {
   }
 
   async function sendOtp() {
+    if (!name.trim()) {
+      setError("Ismingizni kiriting")
+      return
+    }
     const formatted = formatPhone(phone)
     if (formatted.replace(/\D/g, '').length < 12) {
       setError("Telefon raqamni to'g'ri kiriting")
@@ -126,7 +130,8 @@ export function LoginModal() {
               <input
                 className={styles.input}
                 type="text"
-                placeholder="Ismingiz (ixtiyoriy)"
+                placeholder="Ismingiz"
+                required
                 value={name}
                 onChange={e => setName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && sendOtp()}

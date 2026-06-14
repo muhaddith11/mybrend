@@ -188,7 +188,7 @@ export function Navigation() {
               <X className="w-5 h-5 text-foreground" />
             </button>
 
-            <div className="container mx-auto px-4 lg:px-8 pt-36 pb-16 max-w-2xl">
+            <div className="container mx-auto px-4 lg:px-8 pt-56 pb-16 max-w-2xl">
               {/* Big search input */}
               <div className="flex items-center gap-3 border-b-2 border-primary pb-3 mb-8">
                 <Search className="w-6 h-6 text-primary shrink-0" />

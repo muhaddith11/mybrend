@@ -64,7 +64,7 @@ function NavInner() {
             <span className={styles.topDot}>·</span>
             <Link href="/help" className={styles.topLink}>{tr.help}</Link>
             <span className={styles.topDot}>·</span>
-            <Link href="/app" className={styles.topLink}>{tr.downloadApp}</Link>
+            <span className={styles.topLink} style={{ cursor: 'default', opacity: 0.5 }}>{tr.downloadApp}</span>
           </div>
         </div>
       </div>
