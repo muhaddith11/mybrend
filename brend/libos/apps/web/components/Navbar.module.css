@@ -222,14 +222,15 @@
 }
 .searchBtn:hover { background: var(--brand-dark); }
 
-/* Right icons */
+/* Right icons — mobilda yashirin (pastki mobil nav o'rnini bosadi) */
 .navRight {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 4px;
   margin-left: auto;
   flex-shrink: 0;
 }
+@media (min-width: 640px) { .navRight { display: flex; } }
 
 .iconBtn {
   display: flex;

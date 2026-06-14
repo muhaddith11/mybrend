@@ -115,7 +115,7 @@ export function Navigation() {
             <div className="flex items-center gap-1 sm:gap-2">
               <button
                 onClick={() => setSearchOpen(true)}
-                className="hidden lg:flex items-center justify-center w-11 h-11 text-foreground/80 hover:text-primary transition-colors"
+                className="flex items-center justify-center w-11 h-11 text-foreground/80 hover:text-primary transition-colors"
                 aria-label="Qidirish"
               >
                 <Search className="w-5 h-5" />
@@ -319,7 +319,25 @@ export function Navigation() {
                   </motion.div>
                 ))}
               </nav>
-              <div className="p-8 border-t border-border">
+              <div className="p-8 border-t border-border flex flex-col gap-5">
+                {authPhone ? (
+                  <Link
+                    href="/store/asma/profile"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-3 text-foreground hover:text-primary transition-colors"
+                  >
+                    <User className="w-5 h-5" />
+                    <span className="text-sm tracking-wider uppercase">Profil</span>
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => { setMenuOpen(false); setLoginOpen(true) }}
+                    className="flex items-center gap-3 text-foreground hover:text-primary transition-colors"
+                  >
+                    <LogIn className="w-5 h-5" />
+                    <span className="text-sm tracking-wider uppercase">Kirish</span>
+                  </button>
+                )}
                 <Link
                   href="/store/asma/admin"
                   onClick={() => setMenuOpen(false)}

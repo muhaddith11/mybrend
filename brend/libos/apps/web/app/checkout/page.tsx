@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useCartStore } from '../../store/cart'
@@ -22,7 +22,17 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const byStore = useCartStore(s => s.itemsByStore())
+  // itemsByStore() ni selektor ichida chaqirmaymiz — u har renderda yangi obyekt
+  // qaytarib useSyncExternalStore'da cheksiz loop / crash keltirib chiqaradi.
+  // O'rniga barqaror `items` ustidan useMemo bilan hisoblaymiz.
+  const byStore = useMemo(() => {
+    const r: Record<string, typeof items> = {}
+    for (const item of items) {
+      if (!r[item.storeId]) r[item.storeId] = []
+      r[item.storeId].push(item)
+    }
+    return r
+  }, [items])
   const storeIds = Object.keys(byStore)
 
   if (items.length === 0) {

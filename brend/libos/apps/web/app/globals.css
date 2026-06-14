@@ -42,23 +42,31 @@
 html {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-text-size-adjust: 100%;
+  /* off-canvas drawerlar (savat/menyu) gorizontal scroll yaratmasin;
+     clip — hidden'dan farqli o'laroq scroll-konteyner yaratmaydi, sticky navbar ishlayveradi */
+  overflow-x: clip;
 }
 body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
   min-height: 100dvh;
+  overflow-x: clip;
 }
 
-/* Container — mobilda full width, desktopda centered */
+/* Container — mobilda full width, desktopda centered.
+   Faqat gorizontal padding beramiz (shorthand emas) — aks holda
+   `container pt-56 / py-*` kabi Tailwind vertikal padding utility'lari
+   reset bo'lib ketadi (shorthand padding-top/bottom'ni 0 qiladi). */
 .container {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
-@media (min-width: 640px) { .container { padding: 0 1.5rem; } }
-@media (min-width: 1024px) { .container { padding: 0 2rem; } }
+@media (min-width: 640px) { .container { padding-left: 1.5rem; padding-right: 1.5rem; } }
+@media (min-width: 1024px) { .container { padding-left: 2rem; padding-right: 2rem; } }
 
 /* Buttons — min 44px (touch target) */
 button { cursor: pointer; font-family: inherit; }
