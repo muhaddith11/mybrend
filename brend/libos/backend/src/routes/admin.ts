@@ -66,12 +66,16 @@ export default async function adminRoutes(app: FastifyInstance) {
       }
     }
 
-    const owner = await prisma.storeOwner.findUnique({ where: { email } })
-    if (!owner || owner.password !== hash(password)) {
-      return reply.status(401).send({ error: 'Login yoki parol noto\'g\'ri' })
+    try {
+      const owner = await prisma.storeOwner.findUnique({ where: { email } })
+      if (!owner || owner.password !== hash(password)) {
+        return reply.status(401).send({ error: "Login yoki parol noto'g'ri" })
+      }
+      const token = app.jwt.sign({ ownerId: owner.id, role: 'owner' })
+      return reply.send({ token, owner: { id: owner.id, name: owner.name, email: owner.email } })
+    } catch {
+      return reply.status(401).send({ error: "Login yoki parol noto'g'ri" })
     }
-    const token = app.jwt.sign({ ownerId: owner.id, role: 'owner' })
-    return reply.send({ token, owner: { id: owner.id, name: owner.name, email: owner.email } })
   })
 
   // Admin auth middleware
