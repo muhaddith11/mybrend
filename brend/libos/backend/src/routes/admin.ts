@@ -5,7 +5,7 @@ import { createHash } from 'crypto'
 
 function hash(p: string) { return createHash('sha256').update(p).digest('hex') }
 
-const loginSchema = z.object({ email: z.string().email(), password: z.string().min(6) })
+const loginSchema = z.object({ email: z.string().min(1), password: z.string().min(1) })
 
 const productSchema = z.object({
   sku: z.string().optional(),
@@ -53,9 +53,22 @@ export default async function adminRoutes(app: FastifyInstance) {
   // Do'kon egasi login
   app.post('/login', async (req, reply) => {
     const { email, password } = loginSchema.parse(req.body)
+
+    // Env-var based custom credentials (ADMIN_USERNAME + ADMIN_PASSWORD)
+    const envUser = process.env.ADMIN_USERNAME
+    const envPass = process.env.ADMIN_PASSWORD
+    const envSlug = process.env.ADMIN_STORE_SLUG ?? 'asma'
+    if (envUser && envPass && email === envUser && password === envPass) {
+      const store = await prisma.store.findUnique({ where: { slug: envSlug }, include: { owner: true } })
+      if (store?.owner) {
+        const token = app.jwt.sign({ ownerId: store.owner.id, role: 'owner' })
+        return reply.send({ token, owner: { id: store.owner.id, name: store.owner.name, email: store.owner.email } })
+      }
+    }
+
     const owner = await prisma.storeOwner.findUnique({ where: { email } })
     if (!owner || owner.password !== hash(password)) {
-      return reply.status(401).send({ error: 'Email yoki parol noto\'g\'ri' })
+      return reply.status(401).send({ error: 'Login yoki parol noto\'g\'ri' })
     }
     const token = app.jwt.sign({ ownerId: owner.id, role: 'owner' })
     return reply.send({ token, owner: { id: owner.id, name: owner.name, email: owner.email } })

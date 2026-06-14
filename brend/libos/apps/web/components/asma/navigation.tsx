@@ -173,55 +173,73 @@ export function Navigation() {
       <AnimatePresence>
         {searchOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-background/95 backdrop-blur-md z-50"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-background/98 backdrop-blur-lg z-50 overflow-y-auto"
           >
-            <div className="container mx-auto px-4 lg:px-8 pt-8">
-              {/* Search Input */}
-              <div className="flex items-center gap-4 border-b border-border pb-4">
-                <Search className="w-5 h-5 text-muted-foreground shrink-0" />
+            {/* Close button top-right */}
+            <button
+              onClick={() => setSearchOpen(false)}
+              className="absolute top-6 right-6 p-2 rounded-full bg-muted hover:bg-border transition-colors"
+              aria-label="Yopish"
+            >
+              <X className="w-5 h-5 text-foreground" />
+            </button>
+
+            <div className="container mx-auto px-4 lg:px-8 pt-36 pb-16 max-w-2xl">
+              {/* Big search input */}
+              <div className="flex items-center gap-3 border-b-2 border-primary pb-3 mb-8">
+                <Search className="w-6 h-6 text-primary shrink-0" />
                 <input
                   ref={inputRef}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Mahsulot qidirish..."
-                  className="flex-1 bg-transparent text-lg text-foreground placeholder:text-muted-foreground outline-none"
+                  className="flex-1 bg-transparent text-xl lg:text-2xl text-foreground placeholder:text-muted-foreground/60 outline-none font-serif tracking-wide"
                 />
-                <button
-                  onClick={() => setSearchOpen(false)}
-                  className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
 
               {/* Results */}
-              <div className="mt-6">
-                {searchQuery.trim().length <= 1 && (
-                  <p className="text-sm text-muted-foreground text-center py-8">
+              {searchQuery.trim().length <= 1 && (
+                <div className="text-center py-12">
+                  <Search className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                  <p className="text-muted-foreground tracking-wider">
                     Qidirish uchun kamida 2 ta harf kiriting
                   </p>
-                )}
-                {searchQuery.trim().length > 1 && searchResults.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-8">
-                    &quot;{searchQuery}&quot; bo&apos;yicha hech narsa topilmadi
+                </div>
+              )}
+              {searchQuery.trim().length > 1 && searchResults.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-lg text-muted-foreground mb-2">Hech narsa topilmadi</p>
+                  <p className="text-sm text-muted-foreground/60">
+                    &ldquo;{searchQuery}&rdquo; bo&apos;yicha natija yo&apos;q
                   </p>
-                )}
-                {searchResults.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4">
-                      {searchResults.length} ta natija
-                    </p>
+                </div>
+              )}
+              {searchResults.length > 0 && (
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-[0.2em] mb-5">
+                    {searchResults.length} ta natija
+                  </p>
+                  <div className="divide-y divide-border">
                     {searchResults.map((product) => (
                       <Link
                         key={product.id}
                         href={`/store/asma/product/${product.id}`}
                         onClick={() => setSearchOpen(false)}
-                        className="flex items-center gap-4 p-3 rounded hover:bg-muted transition-colors group"
+                        className="flex items-center gap-5 py-4 hover:opacity-70 transition-opacity group"
                       >
-                        <div className="relative w-14 h-18 bg-muted rounded overflow-hidden shrink-0" style={{ height: '72px' }}>
+                        <div className="relative w-16 bg-muted rounded overflow-hidden shrink-0" style={{ height: '80px' }}>
                           <Image
                             src={product.images[0] || '/asma/placeholder.jpg'}
                             alt={product.nameUz}
@@ -230,26 +248,26 @@ export function Navigation() {
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-serif text-foreground group-hover:text-primary transition-colors truncate">
+                          <p className="font-serif text-foreground truncate text-lg leading-tight">
                             {product.nameUz}
                           </p>
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className="text-sm text-primary mt-1 font-medium">
                             {formatPrice(product.price)}
                           </p>
                         </div>
-                        <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                        <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
                       </Link>
                     ))}
-                    <Link
-                      href="/store/asma/collection"
-                      onClick={() => setSearchOpen(false)}
-                      className="block text-center text-sm text-primary hover:underline py-4"
-                    >
-                      Barcha mahsulotlarni ko&apos;rish →
-                    </Link>
                   </div>
-                )}
-              </div>
+                  <Link
+                    href="/store/asma/collection"
+                    onClick={() => setSearchOpen(false)}
+                    className="block text-center text-sm text-primary hover:underline py-6 tracking-wider uppercase"
+                  >
+                    Barcha mahsulotlarni ko&apos;rish →
+                  </Link>
+                </div>
+              )}
             </div>
           </motion.div>
         )}

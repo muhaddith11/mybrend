@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef } from 'react'
 import { useAuthStore } from '../store/auth'
-import { api } from '@libos/shared'
+import { api, setToken } from '@libos/shared'
 import styles from './LoginModal.module.css'
 
 type Step = 'phone' | 'otp'
@@ -10,6 +10,7 @@ export function LoginModal() {
   const { showLoginModal, closeLogin, login } = useAuthStore()
   const [step, setStep] = useState<Step>('phone')
   const [phone, setPhone] = useState('')
+  const [name, setName] = useState('')
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -46,10 +47,18 @@ export function LoginModal() {
     setLoading(true)
     try {
       const res = await api.auth.verifyOtp(formatPhone(phone), code)
-      login(res.token, res.user)
-      // reset
+      // If name was provided, update profile before logging in
+      let user = res.user
+      if (name.trim()) {
+        try {
+          setToken(res.token)
+          user = await api.auth.updateProfile({ name: name.trim() })
+        } catch {}
+      }
+      login(res.token, user)
       setStep('phone')
       setPhone('')
+      setName('')
       setOtp(['', '', '', '', '', ''])
     } catch (e: any) {
       setError(e?.message ?? "Kod noto'g'ri")
@@ -75,6 +84,7 @@ export function LoginModal() {
     setStep('phone')
     setError('')
     setPhone('')
+    setName('')
     setOtp(['', '', '', '', '', ''])
   }
 
@@ -97,9 +107,9 @@ export function LoginModal() {
 
         {step === 'phone' ? (
           <>
-            <h2 className={styles.heading}>Kirish</h2>
+            <h2 className={styles.heading}>Kirish / Ro'yxatdan o'tish</h2>
             <p className={styles.sub}>Telefon raqamingizni kiriting</p>
-            <div className={styles.inputWrap}>
+            <div className={styles.inputWrap} style={{ marginBottom: '.6rem' }}>
               <span className={styles.prefix}>🇺🇿 +998</span>
               <input
                 className={styles.input}
@@ -109,6 +119,17 @@ export function LoginModal() {
                 onChange={e => setPhone(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && sendOtp()}
                 autoFocus
+              />
+            </div>
+            <div className={styles.inputWrap}>
+              <span className={styles.prefix} style={{ background: 'transparent', border: 'none' }}>👤</span>
+              <input
+                className={styles.input}
+                type="text"
+                placeholder="Ismingiz (ixtiyoriy)"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && sendOtp()}
               />
             </div>
             {error && <p className={styles.error}>{error}</p>}

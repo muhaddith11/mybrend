@@ -10,7 +10,7 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
 export default function AdminLoginPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('asma@libos.uz')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -50,14 +50,15 @@ export default function AdminLoginPage() {
 
         <form onSubmit={handleSubmit} className="bg-card border border-border rounded p-6 space-y-4">
           <div>
-            <label className="block text-sm text-foreground mb-2">Email</label>
+            <label className="block text-sm text-foreground mb-2">Login</label>
             <Input
-              type="email"
+              type="text"
               required
+              placeholder="asmaadmin"
               value={email}
               onChange={e => setEmail(e.target.value)}
               className="bg-background border-border"
-              autoComplete="email"
+              autoComplete="username"
             />
           </div>
           <div>

@@ -64,4 +64,11 @@ export default async function authRoutes(app: FastifyInstance) {
     if (!user) return reply.status(404).send({ error: 'Foydalanuvchi topilmadi' })
     return reply.send(user)
   })
+
+  app.patch('/profile', { preHandler: [app.authenticate] }, async (req, reply) => {
+    const { userId } = req.user as { userId: string }
+    const data = z.object({ name: z.string().optional(), avatar: z.string().optional() }).parse(req.body)
+    const user = await prisma.user.update({ where: { id: userId }, data })
+    return reply.send(user)
+  })
 }

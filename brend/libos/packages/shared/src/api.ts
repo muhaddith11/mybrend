@@ -39,6 +39,8 @@ export const api = {
         method: 'POST', body: JSON.stringify({ phone, code }),
       }),
     me: () => request<User>('/auth/me'),
+    updateProfile: (data: { name?: string; avatar?: string }) =>
+      request<User>('/auth/profile', { method: 'PATCH', body: JSON.stringify(data) }),
   },
 
   stores: {
