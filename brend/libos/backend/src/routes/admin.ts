@@ -59,10 +59,17 @@ export default async function adminRoutes(app: FastifyInstance) {
     const envPass = process.env.ADMIN_PASSWORD
     const envSlug = process.env.ADMIN_STORE_SLUG ?? 'asma'
     if (envUser && envPass && email === envUser && password === envPass) {
-      const store = await prisma.store.findUnique({ where: { slug: envSlug }, include: { owner: true } })
-      if (store?.owner) {
-        const token = app.jwt.sign({ ownerId: store.owner.id, role: 'owner' })
-        return reply.send({ token, owner: { id: store.owner.id, name: store.owner.name, email: store.owner.email } })
+      try {
+        // owner relation kerak emas — store.ownerId ni to'g'ridan ishlatamiz
+        const store = await prisma.store.findUnique({ where: { slug: envSlug } })
+        if (store) {
+          const token = app.jwt.sign({ ownerId: store.ownerId, role: 'owner' })
+          return reply.send({ token, owner: { id: store.ownerId, name: store.name, email: envUser } })
+        }
+        return reply.status(401).send({ error: `Do'kon topilmadi: ${envSlug}` })
+      } catch (e: any) {
+        app.log.error('Admin env-login error: ' + e?.message)
+        return reply.status(500).send({ error: 'Server xatosi: ' + (e?.message ?? 'unknown') })
       }
     }
 
