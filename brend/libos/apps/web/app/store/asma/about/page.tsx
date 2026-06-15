@@ -79,7 +79,7 @@ export default function AboutPage() {
           className="relative aspect-[21/9] bg-muted overflow-hidden"
         >
           <Image
-            src="/about/hero.jpg"
+            src="https://images.unsplash.com/photo-1617137968427-85924c800a22?w=1600&h=686&fit=crop&q=80"
             alt="Asma Design Atelier"
             fill
             className="object-cover"
@@ -130,7 +130,7 @@ export default function AboutPage() {
             className="relative aspect-[4/5] bg-muted"
           >
             <Image
-              src="/about/founder.jpg"
+              src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=1000&fit=crop&q=80"
               alt="Asma Design Founder"
               fill
               className="object-cover"
