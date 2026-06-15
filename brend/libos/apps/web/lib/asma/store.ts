@@ -10,7 +10,7 @@ export interface Product {
   originalPrice?: number
   images: string[]
   category: string
-  categoryName: string
+  categoryName?: string
   sizes: string[]
   colors: string[]
   description: string
