@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronLeft, ChevronRight, ShoppingBag, ArrowRight } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/asma/ui/button'
 import { fetchProducts } from '@/lib/asma/products'
 import { Product, formatPrice, useStore } from '@/lib/asma/store'
@@ -63,17 +64,18 @@ const lookbookItems = [
 type LookItem = typeof lookbookItems[0]
 
 function ProductMiniCard({ product }: { product: Product }) {
-  const { addToCart, setCartOpen } = useStore()
+  const { addToCart } = useStore()
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault()
-    addToCart({ product, quantity: 1, size: product.sizes[0], color: product.colors[0] })
-    setCartOpen(true)
+    e.stopPropagation()
+    addToCart({ product, quantity: 1, size: product.sizes[0] ?? '', color: product.colors[0] ?? '' })
+    toast.success('Savatga qo\'shildi', { description: product.nameUz })
   }
 
   return (
     <Link
-      href={`/product/${product.id}`}
+      href={`/store/asma/product/${product.id}`}
       className="group flex items-center gap-3 p-3 rounded bg-background/50 hover:bg-background/80 transition-colors border border-border/50"
     >
       <div className="relative w-14 h-14 rounded overflow-hidden shrink-0 bg-muted">
@@ -110,19 +112,20 @@ export default function LookbookPage() {
     fetchProducts().then(setProducts).catch(() => {})
   }, [])
 
-  const getLookProducts = (look: LookItem): Product[] => {
-    const matched: Product[] = []
-    for (const cat of look.categories) {
-      const found = products.filter((p) => p.category === cat)
-      matched.push(...found.slice(0, 2))
-    }
-    // deduplicate and limit to 6
+  // Look'lar uchun haqiqiy mahsulotlarni indeks bo'yicha taqsimlaymiz.
+  // (DB kategoriya slug'lari look'larning qattiq kodlangan nomlariga mos
+  // kelmagani uchun avval hech narsa ko'rsatilmas edi.)
+  const getLookProducts = (lookIndex: number): Product[] => {
+    if (products.length === 0) return []
+    const count = Math.min(3, products.length)
+    const start = (lookIndex * 2) % products.length
+    const out: Product[] = []
     const seen = new Set<string>()
-    return matched.filter((p) => {
-      if (seen.has(p.id)) return false
-      seen.add(p.id)
-      return true
-    }).slice(0, 6)
+    for (let i = 0; i < products.length && out.length < count; i++) {
+      const p = products[(start + i) % products.length]
+      if (!seen.has(p.id)) { seen.add(p.id); out.push(p) }
+    }
+    return out
   }
 
   const openLightbox = (item: LookItem, index: number) => {
@@ -170,7 +173,7 @@ export default function LookbookPage() {
       <div className="container mx-auto px-4 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
           {lookbookItems.map((item, index) => {
-            const lookProds = getLookProducts(item)
+            const lookProds = getLookProducts(index)
             return (
               <motion.div
                 key={item.id}
@@ -331,7 +334,7 @@ export default function LookbookPage() {
 
                   {/* Products in this look */}
                   {(() => {
-                    const lookProds = getLookProducts(selectedLook)
+                    const lookProds = getLookProducts(currentIndex)
                     return lookProds.length > 0 ? (
                       <div>
                         <h3 className="text-xs tracking-[0.3em] uppercase text-foreground mb-4">

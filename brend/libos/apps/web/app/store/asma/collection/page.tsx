@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { Filter, X, ChevronDown } from 'lucide-react'
 import { ProductCard } from '@/components/asma/product-card'
 import { fetchProducts } from '@/lib/asma/products'
-import { categories, Product } from '@/lib/asma/store'
+import { Product } from '@/lib/asma/store'
 import { Button } from '@/components/asma/ui/button'
 import { cn } from '@/lib/asma/utils'
 
@@ -34,6 +34,16 @@ function CollectionContent() {
   useEffect(() => {
     setSelectedCategory(searchParams.get('category') || 'all')
   }, [searchParams])
+
+  // Kategoriya tablari haqiqiy mahsulot ma'lumotidan quriladi (DB slug + nom),
+  // shunda qattiq kodlangan ro'yxat bilan mos kelmaslik muammosi bo'lmaydi.
+  const categoryList = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const p of products) {
+      if (p.category && !map.has(p.category)) map.set(p.category, p.categoryName || p.category)
+    }
+    return [{ id: 'all', nameUz: 'Barchasi' }, ...[...map].map(([id, nameUz]) => ({ id, nameUz }))]
+  }, [products])
 
   const filteredProducts = useMemo(() => {
     let list = [...products]
@@ -70,7 +80,7 @@ function CollectionContent() {
       <div className="container mx-auto px-4 lg:px-8 mb-8">
         <div className="flex items-center justify-between gap-4 py-4 border-y border-border">
           <div className="hidden lg:flex items-center gap-6 overflow-x-auto">
-            {categories.map((cat) => (
+            {categoryList.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
@@ -191,7 +201,7 @@ function CollectionContent() {
               <div className="p-6">
                 <h3 className="text-sm tracking-wider uppercase text-foreground mb-4">Kategoriya</h3>
                 <div className="space-y-2">
-                  {categories.map((cat) => (
+                  {categoryList.map((cat) => (
                     <button
                       key={cat.id}
                       onClick={() => { setSelectedCategory(cat.id); setShowFilters(false) }}

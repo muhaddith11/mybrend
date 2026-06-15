@@ -1,42 +1,39 @@
 ﻿'use client'
 
+import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowUpRight } from 'lucide-react'
-
-const categories = [
-  {
-    id: 'suits',
-    name: 'Kostyumlar',
-    description: 'Klassik va zamonaviy kostyumlar',
-    image: '/asma/categories/suits.jpg',
-    href: '/collection?category=suits',
-  },
-  {
-    id: 'coats',
-    name: 'Paltolar',
-    description: 'Premium jun paltolar',
-    image: '/asma/categories/coats.jpg',
-    href: '/collection?category=coats',
-  },
-  {
-    id: 'shirts',
-    name: "Ko'ylaklar",
-    description: 'Yuqori sifatli paxta ko\'ylaklar',
-    image: '/asma/categories/shirts.jpg',
-    href: '/collection?category=shirts',
-  },
-  {
-    id: 'accessories',
-    name: 'Aksessuarlar',
-    description: 'Kamarlar, galstuklar va boshqalar',
-    image: '/asma/categories/accessories.jpg',
-    href: '/collection?category=accessories',
-  },
-]
+import { fetchProducts } from '@/lib/asma/products'
+import { Product } from '@/lib/asma/store'
 
 export function CategoriesSection() {
+  const [products, setProducts] = useState<Product[]>([])
+
+  useEffect(() => {
+    fetchProducts().then(setProducts).catch(() => {})
+  }, [])
+
+  // Kategoriyalar haqiqiy mahsulotlardan olinadi — har biri uchun vakil rasm va
+  // mahsulot soni. Link to'g'ri slug bilan /store/asma/collection ga ketadi.
+  const categories = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; image?: string; count: number }>()
+    for (const p of products) {
+      if (!p.category) continue
+      const ex = map.get(p.category)
+      if (ex) {
+        ex.count++
+        if (!ex.image && p.images[0]) ex.image = p.images[0]
+      } else {
+        map.set(p.category, { id: p.category, name: p.categoryName || p.category, image: p.images[0], count: 1 })
+      }
+    }
+    return [...map.values()]
+  }, [products])
+
+  if (categories.length === 0) return null
+
   return (
     <section className="py-20 lg:py-32 bg-card">
       <div className="container mx-auto px-4 lg:px-8">
@@ -67,17 +64,17 @@ export function CategoriesSection() {
               transition={{ duration: 0.6, delay: index * 0.1 }}
             >
               <Link
-                href={category.href}
+                href={`/store/asma/collection?category=${encodeURIComponent(category.id)}`}
                 className="group relative block aspect-[4/3] overflow-hidden bg-muted"
               >
                 {/* Background Image */}
                 <Image
-                  src={category.image}
+                  src={category.image || '/asma/placeholder.jpg'}
                   alt={category.name}
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-110"
                 />
-                
+
                 {/* Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent transition-opacity duration-300" />
 
@@ -91,7 +88,7 @@ export function CategoriesSection() {
                       {category.name}
                     </h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                      {category.description}
+                      {category.count} ta mahsulot
                     </p>
                     <span className="inline-flex items-center gap-2 text-sm text-primary tracking-wider uppercase">
                       Ko&apos;rish

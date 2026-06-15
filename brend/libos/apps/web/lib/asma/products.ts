@@ -30,7 +30,7 @@ type DBProduct = {
   inStock: boolean
   featured: boolean
   isNew: boolean
-  category: { slug: string } | null
+  category: { slug: string; name: string } | null
 }
 
 function toProduct(row: DBProduct): Product {
@@ -42,7 +42,8 @@ function toProduct(row: DBProduct): Product {
     price: row.price,
     originalPrice: row.originalPrice ?? undefined,
     images: row.images ?? [],
-    category: row.category?.slug ?? 'suits',
+    category: row.category?.slug ?? 'boshqa',
+    categoryName: row.category?.name ?? 'Boshqa',
     sizes: row.sizes ?? [],
     colors: row.colors ?? [],
     description: row.description ?? '',

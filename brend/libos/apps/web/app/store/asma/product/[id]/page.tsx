@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, Minus, Plus, Share2, Truck, RotateCcw, Shield, ChevronLeft, ChevronRight, X, View, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { useStore, formatPrice, Product, colorMap } from '@/lib/asma/store'
 import { fetchProducts } from '@/lib/asma/products'
 import { Button } from '@/components/asma/ui/button'
@@ -24,7 +25,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [showImageModal, setShowImageModal] = useState(false)
   const [show3DViewer, setShow3DViewer] = useState(false)
 
-  const { addToCart, setCartOpen, addToWishlist, removeFromWishlist, isInWishlist } = useStore()
+  const { addToCart, addToWishlist, removeFromWishlist, isInWishlist } = useStore()
   const inWishlist = isInWishlist(product?.id ?? '')
 
   useEffect(() => {
@@ -59,10 +60,16 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     )
   }
 
+  // Razmer/rang faqat mavjud bo'lsa majburiy. Bo'lmasa ham qo'shsa bo'ladi.
+  const needsSize = product.sizes.length > 0
+  const needsColor = product.colors.length > 0
+  const canAdd = product.inStock && (!needsSize || !!selectedSize) && (!needsColor || !!selectedColor)
+
   const handleAddToCart = () => {
-    if (!selectedSize || !selectedColor) return
-    addToCart({ product, quantity, size: selectedSize, color: selectedColor })
-    setCartOpen(true)
+    if (!canAdd) return
+    addToCart({ product, quantity, size: selectedSize ?? '', color: selectedColor ?? '' })
+    // Savatni ochmaymiz — faqat bildirishnoma
+    toast.success('Savatga qo\'shildi', { description: `${product.nameUz} · ${quantity} dona` })
   }
 
   return (
@@ -240,7 +247,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               <div className="flex gap-4 mb-8">
                 <Button
                   onClick={handleAddToCart}
-                  disabled={!selectedSize || !selectedColor || !product.inStock}
+                  disabled={!canAdd}
                   className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 h-14 text-sm tracking-wider uppercase"
                 >
                   Savatga qo&apos;shish

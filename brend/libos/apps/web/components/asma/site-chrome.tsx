@@ -5,6 +5,7 @@ import { Navigation } from '@/components/asma/navigation'
 import { Footer } from '@/components/asma/footer'
 import { CartSidebar } from '@/components/asma/cart-sidebar'
 import { DeliveryBanner } from '@/components/asma/delivery-banner'
+import { Toaster } from '@/components/asma/ui/sonner'
 
 export function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -22,6 +23,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
       <main className="min-h-screen">{children}</main>
       <Footer />
       <CartSidebar />
+      <Toaster position="bottom-right" />
     </>
   )
 }

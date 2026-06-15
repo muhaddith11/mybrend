@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Heart, ShoppingBag, Eye } from 'lucide-react'
+import { toast } from 'sonner'
 import { Product, useStore, formatPrice, colorMap } from '@/lib/asma/store'
 import { cn } from '@/lib/asma/utils'
 
@@ -16,7 +17,7 @@ interface ProductCardProps {
 export function ProductCard({ product, className }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [imageIndex, setImageIndex] = useState(0)
-  const { addToWishlist, removeFromWishlist, isInWishlist, addToCart, setCartOpen } = useStore()
+  const { addToWishlist, removeFromWishlist, isInWishlist, addToCart } = useStore()
 
   const inWishlist = isInWishlist(product.id)
 
@@ -36,10 +37,11 @@ export function ProductCard({ product, className }: ProductCardProps) {
     addToCart({
       product,
       quantity: 1,
-      size: product.sizes[0],
-      color: product.colors[0],
+      size: product.sizes[0] ?? '',
+      color: product.colors[0] ?? '',
     })
-    setCartOpen(true)
+    // Savatga qo'shamiz, lekin savatni OCHMAYMIZ — faqat bildirishnoma
+    toast.success('Savatga qo\'shildi', { description: product.nameUz })
   }
 
   return (
