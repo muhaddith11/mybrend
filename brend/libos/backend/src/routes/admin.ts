@@ -34,6 +34,8 @@ const storeUpdateSchema = z.object({
   description: z.string().optional(),
   address: z.string().optional(),
   phone: z.string().optional(),
+  logo: z.string().optional(),
+  banner: z.string().optional(),
   isOpen: z.boolean().optional(),
   hasDelivery: z.boolean().optional(),
   hasPickup: z.boolean().optional(),

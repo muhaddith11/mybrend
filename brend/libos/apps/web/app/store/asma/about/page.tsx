@@ -1,10 +1,14 @@
 ﻿'use client'
 
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Award, Users, Truck, Heart } from 'lucide-react'
 import { Button } from '@/components/asma/ui/button'
+import { fetchSettings } from '@/lib/asma/settings'
+
+const DEFAULT_HERO = 'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=1600&h=686&fit=crop&q=80'
 
 const values = [
   {
@@ -48,6 +52,12 @@ const timeline = [
 ]
 
 export default function AboutPage() {
+  const [heroImg, setHeroImg] = useState(DEFAULT_HERO)
+
+  useEffect(() => {
+    fetchSettings().then((s) => { if (s.banner) setHeroImg(s.banner) }).catch(() => {})
+  }, [])
+
   return (
     <div className="min-h-screen pt-32 pb-20">
       {/* Page Header */}
@@ -79,10 +89,11 @@ export default function AboutPage() {
           className="relative aspect-[21/9] bg-muted overflow-hidden"
         >
           <Image
-            src="https://images.unsplash.com/photo-1617137968427-85924c800a22?w=1600&h=686&fit=crop&q=80"
+            src={heroImg}
             alt="Asma Design Atelier"
             fill
             className="object-cover"
+            unoptimized
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
           <div className="absolute bottom-8 left-8 right-8 text-center">

@@ -12,6 +12,8 @@ export interface StoreSettings {
   instagram: string
   workingHours: string
   deliveryText: string
+  logo: string
+  banner: string
 }
 
 export const defaultSettings: StoreSettings = {
@@ -21,6 +23,8 @@ export const defaultSettings: StoreSettings = {
   instagram: '',
   workingHours: 'Har kuni: 09:00 - 21:00',
   deliveryText: "Qo'qon shahri bo'ylab 2 soat ichida bepul yetkazib beramiz",
+  logo: '',
+  banner: '',
 }
 
 export async function fetchSettings(): Promise<StoreSettings> {
@@ -35,6 +39,8 @@ export async function fetchSettings(): Promise<StoreSettings> {
       instagram: store.instagram ?? '',
       workingHours: store.workingHours ?? defaultSettings.workingHours,
       deliveryText: store.deliveryText ?? defaultSettings.deliveryText,
+      logo: store.logo ?? '',
+      banner: store.banner ?? '',
     }
   } catch {
     return defaultSettings
@@ -56,6 +62,8 @@ export async function updateSettings(s: StoreSettings): Promise<void> {
       instagram: s.instagram,
       workingHours: s.workingHours,
       deliveryText: s.deliveryText,
+      logo: s.logo,
+      banner: s.banner,
     }),
   })
   if (!res.ok) {

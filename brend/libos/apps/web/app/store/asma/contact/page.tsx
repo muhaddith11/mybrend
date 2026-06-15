@@ -1,10 +1,11 @@
 ﻿'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { MapPin, Phone, Clock, Send, Mail, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/asma/ui/button'
 import { Input } from '@/components/asma/ui/input'
+import { fetchSettings, defaultSettings, StoreSettings } from '@/lib/asma/settings'
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
@@ -24,6 +25,13 @@ export default function ContactPage() {
     message: '',
   })
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [s, setS] = useState<StoreSettings>(defaultSettings)
+
+  useEffect(() => {
+    fetchSettings().then(setS).catch(() => {})
+  }, [])
+
+  const telHref = s.phone ? `tel:${s.phone.replace(/[^\d+]/g, '')}` : '#'
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,10 +86,10 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-medium text-foreground mb-1">Manzil</h3>
                   <p className="text-muted-foreground text-sm">
-                    Qo&apos;qon shahri, Istiqbol ko&apos;chasi, 42-uy
+                    {s.address || "Qo'qon shahri"}
                   </p>
                   <a
-                    href="https://maps.google.com"
+                    href={`https://maps.google.com/?q=${encodeURIComponent(s.address || 'Qoqon')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-primary hover:underline mt-2 inline-block"
@@ -98,10 +106,10 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-medium text-foreground mb-1">Telefon</h3>
                   <a
-                    href="tel:+998901234567"
+                    href={telHref}
                     className="text-muted-foreground text-sm hover:text-primary transition-colors"
                   >
-                    +998 90 123 45 67
+                    {s.phone || '+998 90 123 45 67'}
                   </a>
                 </div>
               </div>
@@ -113,7 +121,7 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-medium text-foreground mb-1">Ish vaqti</h3>
                   <p className="text-muted-foreground text-sm">
-                    Har kuni: 09:00 - 21:00
+                    {s.workingHours || defaultSettings.workingHours}
                   </p>
                 </div>
               </div>
@@ -129,7 +137,7 @@ export default function ContactPage() {
                 className="bg-[#0088cc] hover:bg-[#0088cc]/90 text-white"
               >
                 <a
-                  href="https://t.me/asmadesign"
+                  href={s.telegram ? (s.telegram.startsWith('http') ? s.telegram : `https://t.me/${s.telegram.replace(/^@/, '')}`) : 'https://t.me/asmadesign'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2"
@@ -143,7 +151,7 @@ export default function ContactPage() {
                 className="bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] hover:opacity-90 text-white"
               >
                 <a
-                  href="https://instagram.com/asmadesign"
+                  href={s.instagram ? (s.instagram.startsWith('http') ? s.instagram : `https://instagram.com/${s.instagram.replace(/^@/, '')}`) : 'https://instagram.com/asmadesign'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2"
@@ -161,7 +169,7 @@ export default function ContactPage() {
                 <h3 className="font-medium text-foreground">Tez yetkazib berish</h3>
               </div>
               <p className="text-sm text-muted-foreground">
-                Qo&apos;qon shahri bo&apos;ylab 2 soat ichida bepul yetkazib beramiz!
+                {s.deliveryText || defaultSettings.deliveryText}
               </p>
             </div>
           </motion.div>

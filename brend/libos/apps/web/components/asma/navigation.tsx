@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, ShoppingBag, Heart, Search, User, ArrowRight, LogIn } from 'lucide-react'
 import { useStore, formatPrice } from '@/lib/asma/store'
 import { fetchProducts } from '@/lib/asma/products'
+import { fetchSettings } from '@/lib/asma/settings'
 import { PhoneAuthModal } from '@/components/asma/phone-auth-modal'
 import { cn } from '@/lib/asma/utils'
 
@@ -27,8 +28,13 @@ export function Navigation() {
   const [searchQuery, setSearchQuery] = useState('')
   const [allProducts, setAllProducts] = useState<Awaited<ReturnType<typeof fetchProducts>>>([])
   const [loginOpen, setLoginOpen] = useState(false)
+  const [logo, setLogo] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const { isMenuOpen, setMenuOpen, setCartOpen, getCartCount, wishlist, authPhone } = useStore()
+
+  useEffect(() => {
+    fetchSettings().then((s) => { if (s.logo) setLogo(s.logo) }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 30)
@@ -84,17 +90,23 @@ export function Navigation() {
                 <Menu className="w-6 h-6" />
               </button>
 
-              <Link href="/store/asma" className="flex flex-col group">
-                <motion.span
-                  className="text-2xl lg:text-3xl font-serif font-light tracking-[0.3em] text-foreground leading-none"
-                  whileHover={{ letterSpacing: '0.4em' }}
-                  transition={{ duration: 0.3 }}
-                >
-                  ASMA
-                </motion.span>
-                <span className="text-[10px] tracking-[0.5em] text-primary font-sans uppercase mt-1">
-                  Design
-                </span>
+              <Link href="/store/asma" className="flex items-center group">
+                {logo ? (
+                  <img src={logo} alt="ASMA" className="h-10 lg:h-12 w-auto object-contain" />
+                ) : (
+                  <span className="flex flex-col">
+                    <motion.span
+                      className="text-2xl lg:text-3xl font-serif font-light tracking-[0.3em] text-foreground leading-none"
+                      whileHover={{ letterSpacing: '0.4em' }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      ASMA
+                    </motion.span>
+                    <span className="text-[10px] tracking-[0.5em] text-primary font-sans uppercase mt-1">
+                      Design
+                    </span>
+                  </span>
+                )}
               </Link>
             </div>
 

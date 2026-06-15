@@ -16,3 +16,6 @@ export async function uploadProductImage(file: File): Promise<string> {
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
   return data.publicUrl
 }
+
+// Umumiy rasm yuklash (logo, banner va h.k.) — mahsulot bilan bir bucket
+export const uploadImage = uploadProductImage

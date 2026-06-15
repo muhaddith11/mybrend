@@ -1,11 +1,80 @@
 ﻿'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Save, Loader2, Phone, MapPin, Send, Clock, Truck, CheckCircle2 } from 'lucide-react'
+import { Save, Loader2, Phone, MapPin, Send, Clock, Truck, CheckCircle2, Upload, ImageIcon, X } from 'lucide-react'
 import { fetchSettings, updateSettings, StoreSettings, defaultSettings } from '@/lib/asma/settings'
+import { uploadImage } from '@/lib/asma/upload'
 import { Button } from '@/components/asma/ui/button'
 import { Input } from '@/components/asma/ui/input'
+
+function ImageUploadField({ label, value, onChange, hint, aspect }: {
+  label: string; value: string; onChange: (url: string) => void; hint: string; aspect: string
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [err, setErr] = useState('')
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true); setErr('')
+    try {
+      const url = await uploadImage(file)
+      onChange(url)
+    } catch {
+      setErr('Yuklashda xatolik')
+    } finally {
+      setUploading(false)
+      if (inputRef.current) inputRef.current.value = ''
+    }
+  }
+
+  return (
+    <div>
+      <label className="flex items-center gap-2 text-sm text-foreground mb-2">
+        <ImageIcon className="w-4 h-4 text-primary" />
+        {label}
+      </label>
+      <div className="flex items-start gap-4">
+        <div className={`relative ${aspect} w-32 shrink-0 bg-background border border-border rounded overflow-hidden`}>
+          {value ? (
+            <>
+              <Image src={value} alt={label} fill className="object-cover" />
+              <button
+                type="button"
+                onClick={() => onChange('')}
+                className="absolute top-1 right-1 p-1 bg-background/80 rounded-full text-muted-foreground hover:text-destructive"
+                aria-label="O'chirish"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+              <ImageIcon className="w-6 h-6" />
+            </div>
+          )}
+        </div>
+        <div className="flex-1">
+          <input ref={inputRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={uploading}
+            onClick={() => inputRef.current?.click()}
+          >
+            {uploading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Yuklanmoqda...</> : <><Upload className="w-4 h-4 mr-2" /> Rasm yuklash</>}
+          </Button>
+          <p className="text-xs text-muted-foreground mt-2">{hint}</p>
+          {err && <p className="text-xs text-destructive mt-1">{err}</p>}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const fields: { key: keyof StoreSettings; label: string; placeholder: string; icon: typeof Phone }[] = [
   { key: 'phone', label: 'Telefon raqami', placeholder: '+998 90 123 45 67', icon: Phone },
@@ -96,6 +165,23 @@ export default function AdminSettingsPage() {
             )}
           </div>
         ))}
+
+        <div className="border-t border-border pt-5 space-y-5">
+          <ImageUploadField
+            label="Do'kon logosi"
+            value={form.logo}
+            onChange={(url) => set('logo', url)}
+            hint="Navbarda ko'rinadi. Kvadrat/shaffof PNG tavsiya etiladi."
+            aspect="aspect-square"
+          />
+          <ImageUploadField
+            label="Asosiy rasm (Biz haqimizda / banner)"
+            value={form.banner}
+            onChange={(url) => set('banner', url)}
+            hint="«Biz haqimizda» sahifasidagi katta rasm sifatida ishlatiladi."
+            aspect="aspect-[4/3]"
+          />
+        </div>
 
         {error && <p className="text-sm text-destructive">{error}</p>}
 
