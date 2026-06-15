@@ -63,7 +63,7 @@ export default function AdminLayout({
               {collapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
             </button>
             <Link
-              href="/"
+              href="/store/asma"
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />

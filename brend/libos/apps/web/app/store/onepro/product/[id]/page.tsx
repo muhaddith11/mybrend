@@ -42,7 +42,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-40 flex items-center justify-center gap-3 text-muted-foreground">
+      <div className="min-h-screen pt-10 flex items-center justify-center gap-3 text-muted-foreground">
         <Loader2 className="w-5 h-5 animate-spin" />
         <span>Yuklanmoqda...</span>
       </div>
@@ -51,7 +51,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
   if (!product) {
     return (
-      <div className="min-h-screen pt-40 text-center">
+      <div className="min-h-screen pt-10 text-center">
         <h1 className="text-2xl font-serif">Mahsulot topilmadi</h1>
         <Link href="/store/onepro/collection" className="text-primary hover:underline mt-4 inline-block">
           Kolleksiyaga qaytish
@@ -73,12 +73,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   }
 
   return (
-    <div className="min-h-screen pt-32 pb-20">
+    <div className="min-h-screen pt-8 pb-20">
       <div className="container mx-auto px-4 lg:px-8">
         {/* Breadcrumb */}
         <nav className="mb-8">
           <ol className="flex items-center gap-2 text-sm text-muted-foreground">
-            <li><Link href="/" className="hover:text-foreground transition-colors">Bosh sahifa</Link></li>
+            <li><Link href="/store/onepro" className="hover:text-foreground transition-colors">Bosh sahifa</Link></li>
             <li>/</li>
             <li><Link href="/store/onepro/collection" className="hover:text-foreground transition-colors">Kolleksiya</Link></li>
             <li>/</li>

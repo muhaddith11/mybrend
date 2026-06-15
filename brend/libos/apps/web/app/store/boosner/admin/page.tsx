@@ -246,7 +246,7 @@ export default function AdminDashboard() {
           <span className="text-sm">Lookbook</span>
         </Link>
         <Link
-          href="/"
+          href="/store/boosner"
           target="_blank"
           className="flex items-center gap-3 p-4 bg-card border border-border rounded hover:border-primary transition-colors"
         >

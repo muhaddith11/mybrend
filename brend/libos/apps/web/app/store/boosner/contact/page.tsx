@@ -44,7 +44,7 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen pt-32 pb-20">
+    <div className="min-h-screen pt-8 pb-20">
       {/* Page Header */}
       <div className="container mx-auto px-4 lg:px-8 mb-16">
         <motion.div

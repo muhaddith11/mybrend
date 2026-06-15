@@ -78,7 +78,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         {/* Breadcrumb */}
         <nav className="mb-8">
           <ol className="flex items-center gap-2 text-sm text-muted-foreground">
-            <li><Link href="/" className="hover:text-foreground transition-colors">Bosh sahifa</Link></li>
+            <li><Link href="/store/asma" className="hover:text-foreground transition-colors">Bosh sahifa</Link></li>
             <li>/</li>
             <li><Link href="/store/asma/collection" className="hover:text-foreground transition-colors">Kolleksiya</Link></li>
             <li>/</li>

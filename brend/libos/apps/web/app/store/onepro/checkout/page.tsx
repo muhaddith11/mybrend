@@ -89,7 +89,7 @@ export default function CheckoutPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen pt-40 pb-20">
+      <div className="min-h-screen pt-10 pb-20">
         <div className="container mx-auto px-4 lg:px-8 max-w-lg text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -119,7 +119,7 @@ export default function CheckoutPage() {
 
   if (cart.length === 0) {
     return (
-      <div className="min-h-screen pt-40 pb-20">
+      <div className="min-h-screen pt-10 pb-20">
         <div className="container mx-auto px-4 lg:px-8 max-w-lg text-center">
           <ShoppingBag className="w-16 h-16 text-muted-foreground/30 mx-auto mb-6" />
           <h1 className="text-2xl font-serif text-foreground mb-3">Savatingiz bo&apos;sh</h1>
@@ -135,7 +135,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen pt-32 pb-20">
+    <div className="min-h-screen pt-8 pb-20">
       <div className="container mx-auto px-4 lg:px-8">
         <h1 className="text-3xl lg:text-4xl font-serif font-light tracking-wider text-foreground mb-12 text-center">
           Buyurtmani rasmiylashtirish
