@@ -4,7 +4,6 @@ import { usePathname } from 'next/navigation'
 import { Navigation } from '@/components/boosner/navigation'
 import { Footer } from '@/components/boosner/footer'
 import { CartSidebar } from '@/components/boosner/cart-sidebar'
-import { DeliveryBanner } from '@/components/boosner/delivery-banner'
 import { Toaster } from '@/components/boosner/ui/sonner'
 
 export function SiteChrome({ children }: { children: React.ReactNode }) {
@@ -18,7 +17,6 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <DeliveryBanner />
       <Navigation />
       <main className="min-h-screen">{children}</main>
       <Footer />
