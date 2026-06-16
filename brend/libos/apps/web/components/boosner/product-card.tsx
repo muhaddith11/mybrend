@@ -1,12 +1,10 @@
-﻿'use client'
+'use client'
 
-import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { Heart, ShoppingBag, Eye } from 'lucide-react'
+import { Heart, ShoppingBag, Repeat } from 'lucide-react'
 import { toast } from 'sonner'
-import { Product, useStore, formatPrice, colorMap } from '@/lib/boosner/store'
+import { Product, useStore, formatPrice } from '@/lib/boosner/store'
 import { cn } from '@/lib/boosner/utils'
 
 interface ProductCardProps {
@@ -15,161 +13,78 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, className }: ProductCardProps) {
-  const [isHovered, setIsHovered] = useState(false)
-  const [imageIndex, setImageIndex] = useState(0)
   const { addToWishlist, removeFromWishlist, isInWishlist, addToCart } = useStore()
-
   const inWishlist = isInWishlist(product.id)
+  const href = `/store/boosner/product/${product.id}`
+  const discount = product.originalPrice && product.originalPrice > product.price
+    ? Math.round((1 - product.price / product.originalPrice) * 100)
+    : 0
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (inWishlist) {
-      removeFromWishlist(product.id)
-    } else {
-      addToWishlist(product.id)
-    }
+    e.preventDefault(); e.stopPropagation()
+    inWishlist ? removeFromWishlist(product.id) : addToWishlist(product.id)
   }
 
   const handleQuickAdd = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    addToCart({
-      product,
-      quantity: 1,
-      size: product.sizes[0] ?? '',
-      color: product.colors[0] ?? '',
-    })
-    // Savatga qo'shamiz, lekin savatni OCHMAYMIZ — faqat bildirishnoma
+    e.preventDefault(); e.stopPropagation()
+    addToCart({ product, quantity: 1, size: product.sizes[0] ?? '', color: product.colors[0] ?? '' })
     toast.success('Savatga qo\'shildi', { description: product.nameUz })
   }
 
   return (
-    <motion.div
-      className={cn('group', className)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => {
-        setIsHovered(false)
-        setImageIndex(0)
-      }}
-      whileHover={{ y: -8 }}
-      transition={{ duration: 0.3 }}
-    >
-      {/* Image Container */}
-      <div className="relative aspect-[3/4] bg-muted overflow-hidden mb-2 lg:mb-4">
-        {/* Product Image (clickable) */}
-        <Link href={`/store/boosner/product/${product.id}`} className="absolute inset-0" aria-label={product.nameUz}>
-          <Image
-            src={product.images[imageIndex] || '/asma/placeholder.jpg'}
-            alt={product.nameUz}
-            fill
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
-          />
-        </Link>
-
-          {/* Badges */}
-          <div className="absolute top-3 left-3 flex flex-col gap-2">
-            {product.new && (
-              <span className="px-2 py-1 bg-primary text-primary-foreground text-[10px] tracking-wider uppercase">
-                Yangi
-              </span>
-            )}
-            {product.originalPrice && (
-              <span className="px-2 py-1 bg-destructive text-destructive-foreground text-[10px] tracking-wider uppercase">
-                -{Math.round((1 - product.price / product.originalPrice) * 100)}%
-              </span>
-            )}
-          </div>
-
-          {/* Quick Actions — always visible on mobile, hover-only on desktop */}
-          <div
-            className="absolute bottom-3 left-3 right-3 flex items-center gap-2 transition-all duration-300 lg:opacity-0 lg:translate-y-5 lg:group-hover:opacity-100 lg:group-hover:translate-y-0"
-          >
-            <button
-              onClick={handleQuickAdd}
-              className="flex-1 flex items-center justify-center gap-2 py-3 bg-background/95 backdrop-blur-sm text-foreground text-xs tracking-wider uppercase hover:bg-primary hover:text-primary-foreground transition-colors"
-            >
-              <ShoppingBag className="w-4 h-4" />
-              Qo&apos;shish
-            </button>
-            <Link
-              href={`/store/boosner/product/${product.id}`}
-              className="p-3 bg-background/95 backdrop-blur-sm text-foreground hover:bg-primary hover:text-primary-foreground transition-colors"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Eye className="w-4 h-4" />
-            </Link>
-          </div>
-
-          {/* Wishlist Button */}
+    <div className={cn('group', className)}>
+      {/* Image */}
+      <Link href={href} className="relative block aspect-[4/5] bg-secondary overflow-hidden" aria-label={product.nameUz}>
+        <Image
+          src={product.images[0] || '/asma/placeholder.jpg'}
+          alt={product.nameUz}
+          fill
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        {discount > 0 && (
+          <span className="absolute top-3 left-3 bg-accent text-accent-foreground text-xs font-bold px-2 py-1 rounded">
+            -{discount}%
+          </span>
+        )}
+        {/* hover actions bottom-right */}
+        <div className="absolute bottom-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={handleWishlistToggle}
-            className={cn(
-              'absolute top-3 right-3 p-2 rounded-full bg-background/80 backdrop-blur-sm transition-colors',
-              inWishlist
-                ? 'text-primary'
-                : 'text-muted-foreground hover:text-primary'
-            )}
-            aria-label={inWishlist ? "Istaklar ro'yxatidan olib tashlash" : "Istaklar ro'yxatiga qo'shish"}
+            className={cn('w-9 h-9 rounded-full bg-background shadow grid place-items-center transition-colors',
+              inWishlist ? 'text-accent' : 'text-foreground hover:text-accent')}
+            aria-label="Sevimlilar"
           >
             <Heart className={cn('w-4 h-4', inWishlist && 'fill-current')} />
           </button>
-
-          {/* Image Dots (if multiple images) */}
-          {product.images.length > 1 && (
-            <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
-              {product.images.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    setImageIndex(idx)
-                  }}
-                  className={cn(
-                    'w-1.5 h-1.5 rounded-full transition-colors',
-                    idx === imageIndex ? 'bg-primary' : 'bg-foreground/30'
-                  )}
-                />
-              ))}
-            </div>
-          )}
+          <span className="w-9 h-9 rounded-full bg-background shadow grid place-items-center text-foreground">
+            <Repeat className="w-4 h-4" />
+          </span>
         </div>
+      </Link>
 
-        {/* Product Info */}
-        <Link href={`/store/boosner/product/${product.id}`} className="block space-y-2">
-          <h3 className="font-serif text-foreground group-hover:text-primary transition-colors">
+      {/* Info row: name + price (left), cart button (right) */}
+      <div className="flex items-start justify-between gap-3 mt-3">
+        <Link href={href} className="min-w-0 flex-1">
+          <h3 className="text-sm text-foreground leading-snug line-clamp-2 group-hover:text-accent transition-colors">
             {product.nameUz}
           </h3>
-          <p className="text-xs text-muted-foreground">{product.name}</p>
-          <div className="flex items-center gap-2">
-            <span className="text-primary font-medium">{formatPrice(product.price)}</span>
-            {product.originalPrice && (
-              <span className="text-sm text-muted-foreground line-through">
-                {formatPrice(product.originalPrice)}
-              </span>
+          <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+            {discount > 0 && (
+              <span className="text-xs text-muted-foreground line-through">{formatPrice(product.originalPrice!)}</span>
             )}
-          </div>
-
-          {/* Color Options */}
-          <div className="flex items-center gap-1.5 pt-2">
-            {product.colors.slice(0, 4).map((color) => (
-              <span
-                key={color}
-                className="w-4 h-4 rounded-full border border-border"
-                style={{ backgroundColor: colorMap[color] || color }}
-                title={color}
-              />
-            ))}
-            {product.colors.length > 4 && (
-              <span className="text-xs text-muted-foreground">
-                +{product.colors.length - 4}
-              </span>
-            )}
+            <span className={cn('text-sm font-bold', discount > 0 ? 'text-accent' : 'text-foreground')}>
+              {formatPrice(product.price)}
+            </span>
           </div>
         </Link>
-    </motion.div>
+        <button
+          onClick={handleQuickAdd}
+          className="shrink-0 w-10 h-10 rounded-full bg-foreground text-background grid place-items-center hover:bg-accent transition-colors"
+          aria-label="Savatga qo'shish"
+        >
+          <ShoppingBag className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
   )
 }
-
-

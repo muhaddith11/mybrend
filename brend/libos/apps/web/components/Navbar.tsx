@@ -22,7 +22,8 @@ function NavInner() {
   const [search, setSearch] = useState('')
   const [cityOpen, setCityOpen] = useState(false)
 
-  if (pathname?.startsWith('/store/asma')) return null
+  // Bespoke do'konlar o'z navbar/footer'iga ega — ZYFF marketplace chrome'ini yashiramiz
+  if (/^\/store\/(asma|boosner|onepro)(\/|$)/.test(pathname ?? '')) return null
 
   const gender = searchParams.get('gender')
   const sale = searchParams.get('sale')

@@ -2,26 +2,19 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Truck, CreditCard, RefreshCw, Headphones, ArrowRight } from 'lucide-react'
+import { Truck, CreditCard, RefreshCw, Headphones, ChevronRight } from 'lucide-react'
 import { fetchProducts } from '@/lib/boosner/products'
 import { Product } from '@/lib/boosner/store'
 import { ProductCard } from '@/components/boosner/product-card'
 
 const BASE = '/store/boosner'
 
-const BRANDS = ['Adidas', 'Calvin Klein', 'New Balance', 'Columbia', 'Tommy Hilfiger', 'Skechers', 'GEOX', 'Under Armour', 'Guess', 'Hugo Boss', 'Uniqlo', 'Timberland']
+const BRANDS = ['Moncrief', 'On', 'Adidas', 'Calvin Klein', 'Columbia', 'New Balance', 'Tommy Hilfiger', 'Hugo Boss']
 
-function Section({ title, href, children }: { title: string; href?: string; children: React.ReactNode }) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="container mx-auto px-4 lg:px-8 py-10 lg:py-14">
-      <div className="flex items-end justify-between mb-6">
-        <h2 className="text-xl lg:text-2xl font-extrabold tracking-tight uppercase">{title}</h2>
-        {href && (
-          <Link href={href} className="text-sm font-medium text-muted-foreground hover:text-accent inline-flex items-center gap-1">
-            Hammasi <ArrowRight className="w-4 h-4" />
-          </Link>
-        )}
-      </div>
+      <h2 className="text-3xl lg:text-4xl font-light text-center mb-10 tracking-tight">{title}</h2>
       {children}
     </section>
   )
@@ -29,7 +22,7 @@ function Section({ title, href, children }: { title: string; href?: string; chil
 
 function Grid({ items }: { items: Product[] }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-6">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8">
       {items.map((p) => <ProductCard key={p.id} product={p} />)}
     </div>
   )
@@ -38,90 +31,72 @@ function Grid({ items }: { items: Product[] }) {
 export default function BoosnerHome() {
   const [products, setProducts] = useState<Product[]>([])
 
-  useEffect(() => {
-    fetchProducts().then(setProducts).catch(() => {})
-  }, [])
+  useEffect(() => { fetchProducts().then(setProducts).catch(() => {}) }, [])
 
   const newItems = useMemo(() => [...products].sort((a, b) => (b.new ? 1 : 0) - (a.new ? 1 : 0)).slice(0, 8), [products])
   const discounted = useMemo(() => products.filter((p) => p.originalPrice && p.originalPrice > p.price).slice(0, 8), [products])
   const sneakers = useMemo(() => products.filter((p) => p.category === 'bsn-krossovka').slice(0, 8), [products])
+  const accessories = useMemo(() => products.filter((p) => p.category === 'bsn-aksessuar').slice(0, 8), [products])
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero banner */}
-      <section className="relative h-[55vh] min-h-[360px] overflow-hidden bg-foreground">
+      {/* Hero banner — light image, dark text left */}
+      <section className="relative h-[58vh] min-h-[380px] overflow-hidden bg-secondary">
         <img
-          src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1600&h=900&fit=crop&q=80"
+          src="https://images.unsplash.com/photo-1556906781-9a412961c28c?w=1600&h=900&fit=crop&q=80"
           alt="Yangi kolleksiya"
-          className="absolute inset-0 w-full h-full object-cover opacity-70"
+          className="absolute inset-0 w-full h-full object-cover object-right"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/70 to-transparent" />
         <div className="relative container mx-auto px-4 lg:px-8 h-full flex flex-col justify-center">
-          <span className="text-white/80 text-xs tracking-[0.3em] uppercase mb-3">Boosner</span>
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight max-w-xl leading-tight">
-            Yangi qish kolleksiyasi
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-light text-foreground max-w-md leading-snug">
+            Yangi qish kolleksiyalarimizni hoziroq xarid qiling!
           </h1>
-          <p className="text-white/80 mt-4 max-w-md">100% original brend kiyim va poyabzal — eng yaxshi narxlarda.</p>
           <Link
             href={`${BASE}/collection`}
-            className="mt-8 inline-flex w-fit items-center gap-2 bg-white text-black font-semibold px-8 py-3.5 rounded-full hover:bg-white/90 transition-colors"
+            className="mt-8 inline-flex w-fit items-center gap-2 bg-foreground text-background font-semibold px-8 py-3.5 hover:bg-accent transition-colors"
           >
-            Sotib olish <ArrowRight className="w-4 h-4" />
+            Sotib olish <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
       </section>
 
-      {/* Brands strip */}
-      <section className="border-y border-border bg-secondary/40">
-        <div className="container mx-auto px-4 lg:px-8 py-6">
-          <div className="flex items-center gap-6 lg:gap-10 overflow-x-auto scrollbar-none">
-            {BRANDS.map((b) => (
-              <span key={b} className="whitespace-nowrap text-sm lg:text-base font-bold tracking-wide text-muted-foreground hover:text-foreground transition-colors">
-                {b}
-              </span>
-            ))}
-          </div>
+      {/* Brands — bordered cards */}
+      <Section title="Brendlar">
+        <div className="grid grid-cols-2 md:grid-cols-4 border border-border rounded-lg overflow-hidden">
+          {BRANDS.slice(0, 4).map((b, i) => (
+            <div key={b} className={`aspect-[4/3] grid place-items-center bg-card ${i > 0 ? 'border-l border-border' : ''} ${i >= 2 ? 'border-t md:border-t-0' : ''}`}>
+              <span className="text-lg lg:text-xl font-bold tracking-wide text-foreground">{b}</span>
+            </div>
+          ))}
         </div>
-      </section>
+      </Section>
 
-      {/* New collection */}
-      {newItems.length > 0 && (
-        <Section title="Yangi kolleksiya" href={`${BASE}/collection`}>
-          <Grid items={newItems} />
-        </Section>
-      )}
+      {newItems.length > 0 && <Section title="Yangi kolleksiya"><Grid items={newItems} /></Section>}
 
-      {/* Discounts */}
       {discounted.length > 0 && (
-        <div className="bg-secondary/40">
-          <Section title="Chegirmalar" href={`${BASE}/collection`}>
-            <Grid items={discounted} />
-          </Section>
-        </div>
+        <div className="bg-secondary/40"><Section title="Chegirmalar"><Grid items={discounted} /></Section></div>
       )}
 
-      {/* Footwear */}
-      {sneakers.length > 0 && (
-        <Section title="Oyoq kiyimlar" href={`${BASE}/collection?category=bsn-krossovka`}>
-          <Grid items={sneakers} />
-        </Section>
+      {sneakers.length > 0 && <Section title="Oyoq kiyimlar"><Grid items={sneakers} /></Section>}
+
+      {accessories.length > 0 && (
+        <div className="bg-secondary/40"><Section title="Aksessuarlar"><Grid items={accessories} /></Section></div>
       )}
 
-      {/* Value props */}
-      <section className="border-t border-border">
-        <div className="container mx-auto px-4 lg:px-8 py-10 grid grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Value props — bordered cards */}
+      <section className="container mx-auto px-4 lg:px-8 py-14">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
-            { icon: Truck, t: 'Bepul yetkazib berish', s: "O'zbekiston bo'ylab" },
-            { icon: CreditCard, t: "Qulay to'lov", s: 'Naqd, karta, online' },
-            { icon: RefreshCw, t: '3 kun ichida qaytarish', s: 'Muammosiz' },
-            { icon: Headphones, t: 'Yordam xizmati', s: 'Har kuni 10:00-22:00' },
+            { icon: Truck, t: 'Bepul yetkazib berish', s: "Ortiqcha xarajatlarsiz buyurtmalarni rasmiylashtiring." },
+            { icon: CreditCard, t: "Qulay to'lov usullari", s: 'Naqd, karta va xavfsiz online to\'lovlar.' },
+            { icon: RefreshCw, t: '3 kun ichida qaytarish', s: 'Mos kelmasa, 3 kun ichida qaytarib bering.' },
+            { icon: Headphones, t: 'Yordam xizmati', s: 'Har doim yordam berishga tayyormiz.' },
           ].map((v) => (
-            <div key={v.t} className="flex items-start gap-3">
-              <v.icon className="w-6 h-6 text-accent shrink-0" />
-              <div>
-                <p className="font-semibold text-sm">{v.t}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{v.s}</p>
-              </div>
+            <div key={v.t} className="border border-border rounded-lg p-6 text-center">
+              <v.icon className="w-7 h-7 mx-auto mb-4 text-foreground" />
+              <h3 className="font-semibold text-foreground mb-2">{v.t}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{v.s}</p>
             </div>
           ))}
         </div>

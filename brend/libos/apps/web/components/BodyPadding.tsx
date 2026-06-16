@@ -4,15 +4,16 @@ import { useEffect } from 'react'
 
 export function BodyPadding() {
   const pathname = usePathname()
-  const isAsma = pathname?.startsWith('/store/asma')
+  // Bespoke do'konlar ZYFF mobil bottom-nav'iga ega emas — pastki padding kerak emas
+  const isBespoke = /^\/store\/(asma|boosner|onepro)(\/|$)/.test(pathname ?? '')
 
   useEffect(() => {
-    if (isAsma) {
+    if (isBespoke) {
       document.body.style.paddingBottom = '0'
     } else {
       document.body.style.paddingBottom = 'calc(72px + env(safe-area-inset-bottom, 0px))'
     }
-  }, [isAsma])
+  }, [isBespoke])
 
   return null
 }
