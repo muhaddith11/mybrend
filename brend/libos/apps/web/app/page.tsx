@@ -1,6 +1,7 @@
 'use client'
 import { Suspense, useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { api } from '@libos/shared'
@@ -63,6 +64,17 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
   const discounted = discountedData?.products ?? []
   const stores = storesData?.stores ?? []
 
+  // ── Global mahsulot qidiruvi (barcha do'konlar bo'ylab) ──
+  const searchParams = useSearchParams()
+  const searchQuery = (searchParams.get('search') ?? '').trim()
+  const { data: searchData, isLoading: searchLoading } = useQuery({
+    queryKey: ['products-search', searchQuery],
+    queryFn: () => api.products.search(searchQuery),
+    enabled: searchQuery.length > 0,
+    staleTime: 30_000,
+  })
+  const searchResults = searchData?.products ?? []
+
   const [slide, setSlide] = useState(0)
   useEffect(() => {
     const t = setInterval(() => setSlide(s => (s + 1) % 3), 2000)
@@ -71,6 +83,39 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
 
   // Currency label per lang
   const cur = lang === 'ru' ? 'сум' : lang === 'en' ? 'UZS' : "so'm"
+
+  // ── Qidiruv natijalari rejimi ──
+  if (searchQuery) {
+    return (
+      <div className={styles.page}>
+        <section className={styles.section} style={{ paddingTop: '1.5rem' }}>
+          <div className="container">
+            <div className={styles.sectionHead}>
+              <h2 className={styles.sectionTitle}>“{searchQuery}” bo‘yicha natijalar</h2>
+              <Link href="/" className={styles.sectionAll}>← Bosh sahifa</Link>
+            </div>
+            {searchLoading ? (
+              <div className={styles.productsGrid}>
+                {Array.from({ length: 10 }).map((_, i) => <CardSkeleton key={i} />)}
+              </div>
+            ) : searchResults.length > 0 ? (
+              <>
+                <p style={{ color: 'var(--text-2)', marginBottom: '1rem', fontSize: 14 }}>{searchResults.length} ta mahsulot topildi</p>
+                <div className={styles.productsGrid}>
+                  {searchResults.map((p, i) => <ProductCard key={p.id} product={p as Product} colorIdx={i} tr={tr} cur={cur} />)}
+                </div>
+              </>
+            ) : (
+              <div style={{ padding: '4rem 0', textAlign: 'center', color: 'var(--text-2)' }}>
+                <p style={{ fontSize: 18, marginBottom: '.5rem' }}>Hech narsa topilmadi</p>
+                <p style={{ fontSize: 14 }}>“{searchQuery}” bo‘yicha mahsulot yo‘q. Boshqa so‘z bilan urinib ko‘ring.</p>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.page}>

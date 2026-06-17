@@ -5,6 +5,34 @@ import { PrismaClient } from '@prisma/client'
 export default async function productsRoutes(app: FastifyInstance) {
   const prisma: PrismaClient = (app as any).prisma
 
+  // Global qidiruv — barcha do'konlar bo'ylab mahsulot qidirish
+  app.get('/', async (req, reply) => {
+    const { search } = z.object({ search: z.string().optional() }).parse(req.query)
+    const q = (search ?? '').trim()
+    const products = await prisma.product.findMany({
+      where: {
+        inStock: true,
+        ...(q
+          ? {
+              OR: [
+                { name: { contains: q, mode: 'insensitive' } },
+                { nameUz: { contains: q, mode: 'insensitive' } },
+                { description: { contains: q, mode: 'insensitive' } },
+                { category: { name: { contains: q, mode: 'insensitive' } } },
+              ],
+            }
+          : {}),
+      },
+      include: {
+        store: { select: { name: true, slug: true, themeColor: true, themeBg: true } },
+        category: { select: { name: true, slug: true } },
+      },
+      orderBy: [{ featured: 'desc' }, { createdAt: 'desc' }],
+      take: 60,
+    })
+    return reply.send({ products })
+  })
+
   // Ommabop mahsulotlar (homepage uchun)
   app.get('/featured', async (req, reply) => {
     const products = await prisma.product.findMany({
