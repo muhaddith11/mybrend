@@ -4,10 +4,11 @@ import { useState, use, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Heart, Minus, Plus, Share2, Truck, RotateCcw, Shield, ChevronLeft, ChevronRight, X, View, Loader2 } from 'lucide-react'
+import { Heart, Minus, Plus, Share2, Truck, RotateCcw, Shield, ChevronLeft, ChevronRight, X, View, Loader2, Send, HelpCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { useStore, formatPrice, Product, colorMap } from '@/lib/onepro/store'
 import { fetchProducts } from '@/lib/onepro/products'
+import { fetchSettings } from '@/lib/onepro/settings'
 import { Button } from '@/components/onepro/ui/button'
 import { cn } from '@/lib/onepro/utils'
 import { ProductCard } from '@/components/onepro/product-card'
@@ -24,6 +25,10 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [quantity, setQuantity] = useState(1)
   const [showImageModal, setShowImageModal] = useState(false)
   const [show3DViewer, setShow3DViewer] = useState(false)
+  const [showBuyModal, setShowBuyModal] = useState(false)
+  const [buyName, setBuyName] = useState('')
+  const [buyPhone, setBuyPhone] = useState('+998 ')
+  const [tg, setTg] = useState('')
 
   const { addToCart, addToWishlist, removeFromWishlist, isInWishlist } = useStore()
   const inWishlist = isInWishlist(product?.id ?? '')
@@ -38,7 +43,21 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       )
       setLoading(false)
     })
+    fetchSettings().then((s) => setTg(s.telegram || '')).catch(() => {})
   }, [id])
+
+  const tgHref = tg ? (tg.startsWith('http') ? tg : `https://t.me/${tg.replace(/^@/, '')}`) : 'https://t.me/onepro'
+
+  const submitBuy = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!buyName.trim() || buyPhone.replace(/\D/g, '').length < 12) {
+      toast.error('Ism va telefon raqamni to\'liq kiriting')
+      return
+    }
+    setShowBuyModal(false)
+    toast.success('Arizangiz qabul qilindi!', { description: 'Tez orada operator siz bilan bog\'lanadi.' })
+    setBuyName(''); setBuyPhone('+998 ')
+  }
 
   if (loading) {
     return (
@@ -243,27 +262,49 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               </div>
 
               {/* Actions */}
-              <div className="flex gap-4 mb-8">
+              <div className="space-y-3 mb-8">
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={!canAdd}
+                    className="opb-press flex-1 border-2 border-foreground bg-foreground text-[var(--volt)] h-14 text-sm font-bold tracking-wide uppercase opb-shadow disabled:opacity-50 disabled:pointer-events-none"
+                  >
+                    Savatga qo&apos;shish
+                  </button>
+                  <button
+                    onClick={() => inWishlist ? removeFromWishlist(product.id) : addToWishlist(product.id)}
+                    className={cn(
+                      'w-14 h-14 border-2 border-foreground flex items-center justify-center transition-colors hover:bg-[var(--volt)]',
+                      inWishlist ? 'text-[var(--flame)]' : 'text-foreground'
+                    )}
+                    aria-label="Sevimlilar"
+                  >
+                    <Heart className={cn('w-5 h-5', inWishlist && 'fill-current')} />
+                  </button>
+                </div>
                 <button
-                  onClick={handleAddToCart}
-                  disabled={!canAdd}
-                  className="opb-press flex-1 border-2 border-foreground bg-foreground text-[var(--volt)] h-14 text-sm font-bold tracking-wide uppercase opb-shadow disabled:opacity-50 disabled:pointer-events-none"
+                  onClick={() => setShowBuyModal(true)}
+                  disabled={!product.inStock}
+                  className="opb-press w-full border-2 border-foreground bg-[var(--volt)] text-foreground h-14 text-sm font-bold tracking-wide uppercase opb-shadow disabled:opacity-50 disabled:pointer-events-none"
                 >
-                  Savatga qo&apos;shish
+                  Xarid qilish
                 </button>
-                <button
-                  onClick={() => inWishlist ? removeFromWishlist(product.id) : addToWishlist(product.id)}
-                  className={cn(
-                    'w-14 h-14 border-2 border-foreground flex items-center justify-center transition-colors hover:bg-[var(--volt)]',
-                    inWishlist ? 'text-[var(--flame)]' : 'text-foreground'
-                  )}
-                  aria-label="Sevimlilar"
+                <a
+                  href={tgHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full border-2 border-foreground bg-[#229ED9] text-white hover:bg-[#1c8dc2] transition-colors h-14 text-sm font-bold tracking-wide uppercase flex items-center justify-center gap-2"
                 >
-                  <Heart className={cn('w-5 h-5', inWishlist && 'fill-current')} />
-                </button>
-                <button className="w-14 h-14 border-2 border-foreground text-foreground hover:bg-[var(--volt)] flex items-center justify-center transition-colors" aria-label="Ulashish">
-                  <Share2 className="w-5 h-5" />
-                </button>
+                  <Send className="w-4 h-4" /> Adminga yozish
+                </a>
+                <div className="flex items-center gap-6 pt-1">
+                  <a href={tgHref} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-bold uppercase text-foreground/60 hover:text-foreground transition-colors">
+                    <HelpCircle className="w-4 h-4" /> Savol bering
+                  </a>
+                  <button className="flex items-center gap-2 text-sm font-bold uppercase text-foreground/60 hover:text-foreground transition-colors" aria-label="Ulashish">
+                    <Share2 className="w-4 h-4" /> Ulashish
+                  </button>
+                </div>
               </div>
 
               {/* Features */}
@@ -366,6 +407,55 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 <p className="text-muted-foreground text-sm">3D model viewer bu yerda ko&apos;rsatiladi.</p>
               </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Buy-now (Xarid qilish) modal */}
+      <AnimatePresence>
+        {showBuyModal && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4"
+            onClick={() => setShowBuyModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-md bg-background border-2 border-foreground p-6 relative opb-shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button onClick={() => setShowBuyModal(false)} className="absolute top-4 right-4 text-foreground/60 hover:text-foreground" aria-label="Yopish">
+                <X className="w-5 h-5" />
+              </button>
+              <h3 className="font-display text-2xl uppercase mb-5">Xarid qilish</h3>
+              <div className="flex items-center gap-3 mb-5">
+                <div className="relative w-16 h-16 bg-[var(--cream)] border-2 border-foreground overflow-hidden shrink-0">
+                  <Image src={product.images[0] || '/asma/placeholder.jpg'} alt={product.nameUz} fill className="object-cover" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-bold uppercase text-sm truncate">{product.nameUz}</p>
+                  <p className="font-display text-lg">{formatPrice(product.price)}</p>
+                  {(selectedColor || selectedSize) && (
+                    <p className="text-xs text-foreground/60 mt-0.5">{[selectedColor, selectedSize].filter(Boolean).join(' / ')}</p>
+                  )}
+                </div>
+              </div>
+              <form onSubmit={submitBuy} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wide text-foreground/60 mb-1.5">Ismingiz</label>
+                  <input value={buyName} onChange={(e) => setBuyName(e.target.value)} placeholder="Ismingizni kiriting"
+                    className="w-full h-12 px-4 bg-background border-2 border-foreground text-foreground outline-none" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wide text-foreground/60 mb-1.5">Telefon raqamingiz</label>
+                  <input value={buyPhone} onChange={(e) => setBuyPhone(e.target.value)} type="tel" placeholder="+998"
+                    className="w-full h-12 px-4 bg-background border-2 border-foreground text-foreground outline-none" />
+                </div>
+                <button type="submit" className="opb-press w-full h-12 border-2 border-foreground bg-foreground text-[var(--volt)] font-bold uppercase tracking-wide text-sm opb-shadow">
+                  Ariza yuborish
+                </button>
+              </form>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
