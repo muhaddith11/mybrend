@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Heart, ShoppingBag, User, Menu, X } from 'lucide-react'
+import { Search, Heart, ShoppingBag, User, Menu, X, ChevronLeft } from 'lucide-react'
 import { useStore } from '@/lib/onepro/store'
 import { PhoneAuthModal } from '@/components/onepro/phone-auth-modal'
 
@@ -48,6 +48,14 @@ export function Navigation() {
 
   return (
     <header className="sticky top-0 z-50 border-b-2 border-foreground bg-background">
+      {/* Marketplace'ga qaytish */}
+      <div className="border-b-2 border-foreground bg-[var(--cream)]">
+        <div className="container mx-auto px-4 lg:px-8 h-8 flex items-center">
+          <Link href="/stores" className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-foreground hover:text-[var(--flame)] transition-colors">
+            <ChevronLeft className="w-3.5 h-3.5" /> Barcha do&apos;konlar
+          </Link>
+        </div>
+      </div>
       {/* Marquee utility bar */}
       <div className="border-b-2 border-foreground bg-foreground text-[var(--volt)] opb-marquee-wrap">
         <div className="opb-marquee fast">

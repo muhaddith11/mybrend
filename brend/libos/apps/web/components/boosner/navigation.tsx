@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Search, Heart, ShoppingBag, User, Menu, X, ChevronDown } from 'lucide-react'
+import { Search, Heart, ShoppingBag, User, Menu, X, ChevronDown, ChevronLeft } from 'lucide-react'
 import { useStore } from '@/lib/boosner/store'
 import { fetchSettings } from '@/lib/boosner/settings'
 import { PhoneAuthModal } from '@/components/boosner/phone-auth-modal'
@@ -44,6 +44,16 @@ export function Navigation() {
 
   return (
     <header className="sticky top-0 z-50 bg-background border-b border-border">
+      {/* Top utility bar — marketplace'ga qaytish */}
+      <div className="bg-foreground text-background text-xs">
+        <div className="container mx-auto px-4 lg:px-8 h-9 flex items-center justify-between">
+          <Link href="/stores" className="flex items-center gap-1 tracking-wide opacity-90 hover:opacity-100 transition-opacity">
+            <ChevronLeft className="w-3.5 h-3.5" />
+            Barcha do&apos;konlar
+          </Link>
+          <span className="hidden sm:inline tracking-wide">100% original mahsulotlar</span>
+        </div>
+      </div>
       <div className="container mx-auto px-4 lg:px-8">
         <div className="h-16 lg:h-20 flex items-center gap-4">
           {/* Mobile menu */}
