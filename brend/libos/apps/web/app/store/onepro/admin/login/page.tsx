@@ -50,7 +50,7 @@ export default function AdminLoginPage() {
 
         <form onSubmit={handleSubmit} className="bg-card border border-border rounded p-6 space-y-4">
           <div>
-            <label className="block text-sm text-foreground mb-2">Email</label>
+            <label className="block text-sm text-foreground mb-2">Login</label>
             <Input
               type="text"
               required
