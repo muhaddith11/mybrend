@@ -3,46 +3,48 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* One Pro CSS variables — scoped to .onepro-layout.
-   Sporty, minimalist oq-qora tema (ASMA'ning qora-oltin-elegant temasidan farqli). */
+/* One Pro Boutique — BOLD MODERN / streetwear theme.
+   Scoped to .onepro-layout. High contrast: oq + qora + volt (elektr yashil) + flame.
+   Sharp corners, qora ramkalar, qattiq soyalar. */
 .onepro-layout {
   --background: oklch(1 0 0);
-  --foreground: oklch(0.15 0 0);
-  --card: oklch(0.985 0 0);
-  --card-foreground: oklch(0.15 0 0);
+  --foreground: oklch(0.13 0 0);
+  --card: oklch(0.97 0.008 95);
+  --card-foreground: oklch(0.13 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0 0);
-  --primary: oklch(0.18 0 0);
+  --popover-foreground: oklch(0.13 0 0);
+  --primary: oklch(0.13 0 0);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.96 0 0);
-  --secondary-foreground: oklch(0.18 0 0);
-  --muted: oklch(0.96 0 0);
-  --muted-foreground: oklch(0.5 0 0);
-  --accent: oklch(0.45 0.15 264);
+  --secondary: oklch(0.96 0.008 95);
+  --secondary-foreground: oklch(0.13 0 0);
+  --muted: oklch(0.96 0.004 85);
+  --muted-foreground: oklch(0.48 0 0);
+  --accent: oklch(0.66 0.13 45);          /* yumshoq terakota pop */
   --accent-foreground: oklch(0.99 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  --destructive: oklch(0.58 0.18 27);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.9 0 0);
-  --input: oklch(0.96 0 0);
-  --ring: oklch(0.18 0 0);
-  --chart-1: oklch(0.18 0 0);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
+  --border: oklch(0.24 0 0);              /* yumshoq ko'mir ramkalar */
+  --input: oklch(0.24 0 0);
+  --ring: oklch(0.78 0.11 80);
+  --chart-1: oklch(0.2 0 0);
+  --chart-2: oklch(0.78 0.11 80);
+  --chart-3: oklch(0.66 0.13 45);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.125rem;
-  --sidebar: oklch(0.15 0 0);
+  --radius: 0.375rem;                     /* biroz yumaloq, yumshoqroq */
+  --sidebar: oklch(0.2 0 0);
   --sidebar-foreground: oklch(0.99 0 0);
-  --sidebar-primary: oklch(0.99 0 0);
-  --sidebar-primary-foreground: oklch(0.15 0 0);
-  --sidebar-accent: oklch(0.25 0 0);
+  --sidebar-primary: oklch(0.78 0.11 80);
+  --sidebar-primary-foreground: oklch(0.2 0 0);
+  --sidebar-accent: oklch(0.27 0 0);
   --sidebar-accent-foreground: oklch(0.99 0 0);
-  --sidebar-border: oklch(0.3 0 0);
-  --sidebar-ring: oklch(0.45 0.15 264);
-  --gold: oklch(0.45 0.15 264);
-  --gold-dark: oklch(0.38 0.15 264);
-  --charcoal: oklch(0.15 0 0);
-  --charcoal-light: oklch(0.25 0 0);
+  --sidebar-border: oklch(0.32 0 0);
+  --sidebar-ring: oklch(0.78 0.11 80);
+
+  /* Signature colors — yumshatilgan */
+  --volt: oklch(0.80 0.12 82);            /* iliq oltin (avval elektr-yashil) */
+  --flame: oklch(0.66 0.13 45);           /* yumshoq terakota */
+  --cream: oklch(0.97 0.008 85);
 
   background-color: var(--background);
   color: var(--foreground);
@@ -50,9 +52,10 @@
 }
 
 @theme inline {
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-sans: var(--font-space), system-ui, sans-serif;
   --font-mono: 'Geist Mono', 'Geist Mono Fallback';
-  --font-serif: 'Inter', system-ui, sans-serif;
+  --font-serif: var(--font-space), system-ui, sans-serif;
+  --font-display: var(--font-anton), 'Impact', sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -77,10 +80,13 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --color-volt: var(--volt);
+  --color-flame: var(--flame);
+  --color-cream: var(--cream);
+  --radius-sm: 0rem;
+  --radius-md: 0rem;
+  --radius-lg: 0rem;
+  --radius-xl: 0rem;
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -89,19 +95,36 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --color-gold: var(--gold);
-  --color-gold-dark: var(--gold-dark);
-  --color-charcoal: var(--charcoal);
-  --color-charcoal-light: var(--charcoal-light);
 }
 
-/* Scrollbar for One Pro */
-.onepro-layout ::-webkit-scrollbar { width: 6px; }
+/* ---------- Bold Modern utilities (scoped) ---------- */
+.onepro-layout .font-display { font-family: var(--font-anton), 'Impact', sans-serif; letter-spacing: -0.01em; line-height: 0.92; }
+
+.onepro-layout .opb-shadow { box-shadow: 4px 4px 0 0 var(--border); }
+.onepro-layout .opb-shadow-lg { box-shadow: 6px 6px 0 0 var(--border); }
+.onepro-layout .opb-shadow-volt { box-shadow: 4px 4px 0 0 var(--volt); }
+
+/* Yumshoq burchaklar — neo-brutalist'ni biroz nafislashtirish */
+.onepro-layout .border-2 { border-radius: var(--radius); }
+
+.onepro-layout .opb-press { transition: transform .12s ease, box-shadow .12s ease; }
+.onepro-layout .opb-press:hover { transform: translate(-2px, -2px); }
+.onepro-layout .opb-press:active { transform: translate(2px, 2px); box-shadow: 0 0 0 0 var(--foreground) !important; }
+
+.onepro-layout .opb-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; }
+
+/* Marquee */
+.onepro-layout .opb-marquee-wrap { overflow: hidden; }
+.onepro-layout .opb-marquee { display: flex; width: max-content; white-space: nowrap; animation: opb-marquee 22s linear infinite; }
+.onepro-layout .opb-marquee.fast { animation-duration: 14s; }
+@keyframes opb-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* Scrollbar */
+.onepro-layout ::-webkit-scrollbar { width: 8px; height: 8px; }
 .onepro-layout ::-webkit-scrollbar-track { background: var(--background); }
-.onepro-layout ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-.onepro-layout ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+.onepro-layout ::-webkit-scrollbar-thumb { background: var(--foreground); }
 
 .onepro-layout ::selection {
-  background: var(--gold);
-  color: var(--background);
+  background: var(--volt);
+  color: var(--foreground);
 }
