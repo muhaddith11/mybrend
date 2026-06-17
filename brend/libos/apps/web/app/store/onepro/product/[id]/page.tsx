@@ -156,16 +156,15 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
               <div className="mb-6">
                 {product.new && (
-                  <span className="inline-block px-2 py-1 bg-primary text-primary-foreground text-[10px] tracking-wider uppercase mb-3">
+                  <span className="inline-block px-2 py-1 bg-[var(--volt)] text-foreground text-[10px] font-bold tracking-wider uppercase mb-3">
                     Yangi
                   </span>
                 )}
-                <h1 className="text-3xl lg:text-4xl font-serif font-light text-foreground mb-2">{product.nameUz}</h1>
-                <p className="text-muted-foreground mb-4">{product.name}</p>
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl text-primary font-medium">{formatPrice(product.price)}</span>
+                <h1 className="font-display text-4xl lg:text-5xl uppercase text-foreground mb-3">{product.nameUz}</h1>
+                <div className="flex items-baseline gap-3">
+                  <span className="font-display text-3xl">{formatPrice(product.price)}</span>
                   {product.originalPrice && (
-                    <span className="text-lg text-muted-foreground line-through">{formatPrice(product.originalPrice)}</span>
+                    <span className="text-lg text-foreground/40 line-through">{formatPrice(product.originalPrice)}</span>
                   )}
                 </div>
               </div>
@@ -185,8 +184,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                         key={color}
                         onClick={() => setSelectedColor(color)}
                         className={cn(
-                          'w-10 h-10 rounded-full border-2 transition-all',
-                          selectedColor === color ? 'border-primary scale-110' : 'border-transparent hover:scale-105'
+                          'w-10 h-10 border-2 transition-all',
+                          selectedColor === color ? 'border-[var(--flame)] scale-110' : 'border-foreground hover:scale-105'
                         )}
                         style={{ backgroundColor: colorMap[color] || color }}
                         title={color}
@@ -209,10 +208,10 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                         key={size}
                         onClick={() => setSelectedSize(size)}
                         className={cn(
-                          'min-w-[48px] h-12 px-4 border text-sm tracking-wider transition-colors',
+                          'min-w-[48px] h-12 px-4 border-2 border-foreground text-sm font-bold transition-colors',
                           selectedSize === size
-                            ? 'border-primary bg-primary text-primary-foreground'
-                            : 'border-border hover:border-primary'
+                            ? 'bg-foreground text-[var(--volt)]'
+                            : 'bg-background hover:bg-[var(--volt)]'
                         )}
                       >
                         {size}
@@ -226,12 +225,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               <div className="mb-8">
                 <span className="text-sm tracking-wider uppercase block mb-3">Miqdor</span>
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center border border-border">
-                    <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="p-3 text-muted-foreground hover:text-foreground transition-colors" aria-label="Miqdorni kamaytirish">
+                  <div className="flex items-center border-2 border-foreground">
+                    <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="p-3 text-foreground hover:bg-[var(--volt)] transition-colors" aria-label="Miqdorni kamaytirish">
                       <Minus className="w-4 h-4" />
                     </button>
-                    <span className="w-12 text-center">{quantity}</span>
-                    <button onClick={() => setQuantity((q) => q + 1)} className="p-3 text-muted-foreground hover:text-foreground transition-colors" aria-label="Miqdorni ko'paytirish">
+                    <span className="w-12 text-center font-bold">{quantity}</span>
+                    <button onClick={() => setQuantity((q) => q + 1)} className="p-3 text-foreground hover:bg-[var(--volt)] transition-colors" aria-label="Miqdorni ko'paytirish">
                       <Plus className="w-4 h-4" />
                     </button>
                   </div>
@@ -245,24 +244,24 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
               {/* Actions */}
               <div className="flex gap-4 mb-8">
-                <Button
+                <button
                   onClick={handleAddToCart}
                   disabled={!canAdd}
-                  className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 h-14 text-sm tracking-wider uppercase"
+                  className="opb-press flex-1 border-2 border-foreground bg-foreground text-[var(--volt)] h-14 text-sm font-bold tracking-wide uppercase opb-shadow disabled:opacity-50 disabled:pointer-events-none"
                 >
                   Savatga qo&apos;shish
-                </Button>
+                </button>
                 <button
                   onClick={() => inWishlist ? removeFromWishlist(product.id) : addToWishlist(product.id)}
                   className={cn(
-                    'w-14 h-14 border flex items-center justify-center transition-colors',
-                    inWishlist ? 'border-primary text-primary' : 'border-border text-muted-foreground hover:border-primary hover:text-primary'
+                    'w-14 h-14 border-2 border-foreground flex items-center justify-center transition-colors hover:bg-[var(--volt)]',
+                    inWishlist ? 'text-[var(--flame)]' : 'text-foreground'
                   )}
-                  aria-label={inWishlist ? "Istaklar ro'yxatidan olib tashlash" : "Istaklar ro'yxatiga qo'shish"}
+                  aria-label="Sevimlilar"
                 >
                   <Heart className={cn('w-5 h-5', inWishlist && 'fill-current')} />
                 </button>
-                <button className="w-14 h-14 border border-border text-muted-foreground hover:border-primary hover:text-primary flex items-center justify-center transition-colors" aria-label="Ulashish">
+                <button className="w-14 h-14 border-2 border-foreground text-foreground hover:bg-[var(--volt)] flex items-center justify-center transition-colors" aria-label="Ulashish">
                   <Share2 className="w-5 h-5" />
                 </button>
               </div>

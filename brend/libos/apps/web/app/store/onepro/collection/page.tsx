@@ -1,234 +1,157 @@
-﻿'use client'
+'use client'
 
-import { useState, useMemo, useEffect, Suspense } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Filter, X, ChevronDown } from 'lucide-react'
+import { SlidersHorizontal, X } from 'lucide-react'
 import { ProductCard } from '@/components/onepro/product-card'
 import { fetchProducts } from '@/lib/onepro/products'
-import { Product } from '@/lib/onepro/store'
-import { Button } from '@/components/onepro/ui/button'
-import { cn } from '@/lib/onepro/utils'
+import { Product, colorMap } from '@/lib/onepro/store'
+import { ONEPRO_CATEGORIES } from '@/components/onepro/navigation'
 
-const sortOptions = [
-  { value: 'newest', label: 'Eng yangi' },
-  { value: 'price-asc', label: 'Narx: Past dan yuqori' },
-  { value: 'price-desc', label: 'Narx: Yuqori dan past' },
-  { value: 'popular', label: 'Mashhur' },
-]
+type Sort = 'newest' | 'price-asc' | 'price-desc'
 
-function CollectionContent() {
-  const searchParams = useSearchParams()
-  const initialCategory = searchParams.get('category') || 'all'
+function SortSelect({ sort, setSort }: { sort: Sort; setSort: (s: Sort) => void }) {
+  return (
+    <select
+      value={sort}
+      onChange={(e) => setSort(e.target.value as Sort)}
+      className="border-2 border-foreground bg-background px-3 py-2 text-sm font-bold uppercase outline-none"
+    >
+      <option value="newest">Yangi</option>
+      <option value="price-asc">Narx: arzon</option>
+      <option value="price-desc">Narx: qimmat</option>
+    </select>
+  )
+}
 
+function CatalogInner() {
+  const params = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
-  const [selectedCategory, setSelectedCategory] = useState(initialCategory)
-  const [sortBy, setSortBy] = useState<string>('newest')
-  const [showFilters, setShowFilters] = useState(false)
-  const [showSort, setShowSort] = useState(false)
+  useEffect(() => { fetchProducts().then(setProducts).catch(() => {}) }, [])
 
-  useEffect(() => {
-    fetchProducts().then(setProducts)
-  }, [])
+  const search = (params.get('search') || '').toLowerCase()
+  const onlySale = params.get('sale') === '1'
+  const onlyNew = params.get('new') === '1'
 
-  useEffect(() => {
-    setSelectedCategory(searchParams.get('category') || 'all')
-  }, [searchParams])
+  const [category, setCategory] = useState(params.get('category') || '')
+  const [sizes, setSizes] = useState<string[]>([])
+  const [colors, setColors] = useState<string[]>([])
+  const [sort, setSort] = useState<Sort>('newest')
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
-  // Kategoriya tablari haqiqiy mahsulot ma'lumotidan quriladi (DB slug + nom),
-  // shunda qattiq kodlangan ro'yxat bilan mos kelmaslik muammosi bo'lmaydi.
-  const categoryList = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const p of products) {
-      if (p.category && !map.has(p.category)) map.set(p.category, p.categoryName || p.category)
-    }
-    return [{ id: 'all', nameUz: 'Barchasi' }, ...[...map].map(([id, nameUz]) => ({ id, nameUz }))]
-  }, [products])
+  useEffect(() => { setCategory(params.get('category') || '') }, [params])
 
-  const filteredProducts = useMemo(() => {
-    let list = [...products]
-    if (selectedCategory !== 'all') {
-      list = list.filter((p) => p.category === selectedCategory)
-    }
-    switch (sortBy) {
-      case 'price-asc': list.sort((a, b) => a.price - b.price); break
-      case 'price-desc': list.sort((a, b) => b.price - a.price); break
-      case 'newest': list.sort((a, b) => (b.new ? 1 : 0) - (a.new ? 1 : 0)); break
-      case 'popular': list.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)); break
-    }
+  const allSizes = useMemo(() => Array.from(new Set(products.flatMap((p) => p.sizes))), [products])
+  const allColors = useMemo(() => Array.from(new Set(products.flatMap((p) => p.colors))), [products])
+
+  const filtered = useMemo(() => {
+    let list = products.slice()
+    if (category) list = list.filter((p) => p.category === category)
+    if (onlySale) list = list.filter((p) => p.originalPrice && p.originalPrice > p.price)
+    if (onlyNew) list = list.filter((p) => p.new)
+    if (search) list = list.filter((p) => p.nameUz.toLowerCase().includes(search) || (p.description || '').toLowerCase().includes(search))
+    if (sizes.length) list = list.filter((p) => p.sizes.some((s) => sizes.includes(s)))
+    if (colors.length) list = list.filter((p) => p.colors.some((c) => colors.includes(c)))
+    if (sort === 'price-asc') list.sort((a, b) => a.price - b.price)
+    else if (sort === 'price-desc') list.sort((a, b) => b.price - a.price)
+    else list.sort((a, b) => (b.new ? 1 : 0) - (a.new ? 1 : 0))
     return list
-  }, [products, selectedCategory, sortBy])
+  }, [products, category, onlySale, onlyNew, search, sizes, colors, sort])
+
+  const toggle = (arr: string[], set: (v: string[]) => void, val: string) =>
+    set(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val])
+
+  const title = onlySale ? 'CHEGIRMALAR' : onlyNew ? 'YANGI' : search ? `"${params.get('search')}"` : category ? (ONEPRO_CATEGORIES.find((c) => c.id === category)?.name.toUpperCase() ?? 'KATALOG') : 'BARCHA MAHSULOTLAR'
+
+  const FilterPanel = (
+    <div className="space-y-8">
+      <div>
+        <h4 className="mb-3 font-display text-lg uppercase">Kategoriya</h4>
+        <div className="space-y-2 text-sm font-bold uppercase">
+          <button onClick={() => setCategory('')} className={`block ${!category ? 'text-[var(--flame)]' : 'text-foreground/60 hover:text-foreground'}`}>Barchasi</button>
+          {ONEPRO_CATEGORIES.map((c) => (
+            <button key={c.id} onClick={() => setCategory(c.id)} className={`block ${category === c.id ? 'text-[var(--flame)]' : 'text-foreground/60 hover:text-foreground'}`}>{c.name}</button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <h4 className="mb-3 font-display text-lg uppercase">O&apos;lcham</h4>
+        <div className="flex flex-wrap gap-2">
+          {allSizes.map((s) => (
+            <button key={s} onClick={() => toggle(sizes, setSizes, s)}
+              className={`min-w-10 border-2 border-foreground px-2 py-1 text-xs font-bold ${sizes.includes(s) ? 'bg-foreground text-[var(--volt)]' : 'bg-background hover:bg-[var(--volt)]'}`}>
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <h4 className="mb-3 font-display text-lg uppercase">Rang</h4>
+        <div className="flex flex-wrap gap-2">
+          {allColors.map((c) => (
+            <button key={c} onClick={() => toggle(colors, setColors, c)} title={c}
+              className={`h-8 w-8 border-2 ${colors.includes(c) ? 'border-[var(--flame)]' : 'border-foreground'}`}
+              style={{ backgroundColor: colorMap[c] ?? c }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 
   return (
-    <div className="min-h-screen pt-8 pb-20">
-      <div className="container mx-auto px-4 lg:px-8 mb-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center"
-        >
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-light tracking-wider text-foreground mb-4">
-            Kolleksiya
-          </h1>
-          <p className="text-muted-foreground max-w-lg mx-auto">
-            Premium erkaklar kiyimi kolleksiyamizni kashf eting
-          </p>
-        </motion.div>
+    <div className="container mx-auto px-4 lg:px-8 py-8">
+      <div className="mb-6 border-b-2 border-foreground pb-5">
+        <h1 className="font-display text-5xl uppercase lg:text-7xl">{title}</h1>
+        <p className="mt-2 text-sm font-bold uppercase tracking-wide text-foreground/50">{filtered.length} ta mahsulot</p>
       </div>
 
-      <div className="container mx-auto px-4 lg:px-8 mb-8">
-        <div className="flex items-center justify-between gap-4 py-4 border-y border-border">
-          <div className="hidden lg:flex items-center gap-6 overflow-x-auto">
-            {categoryList.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={cn(
-                  'text-sm tracking-wider uppercase whitespace-nowrap transition-colors',
-                  selectedCategory === cat.id
-                    ? 'text-primary'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {cat.nameUz}
-              </button>
-            ))}
-          </div>
+      <div className="flex items-center justify-between gap-3 lg:hidden">
+        <button onClick={() => setFiltersOpen(true)} className="opb-press inline-flex items-center gap-2 border-2 border-foreground bg-background px-4 py-2 text-sm font-bold uppercase opb-shadow">
+          <SlidersHorizontal className="h-4 w-4" /> Filtr
+        </button>
+        <SortSelect sort={sort} setSort={setSort} />
+      </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowFilters(true)}
-            className="lg:hidden"
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filtr
-          </Button>
-
-          <div className="relative">
-            <button
-              onClick={() => setShowSort(!showSort)}
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Saralash
-              <ChevronDown className={cn('w-4 h-4 transition-transform', showSort && 'rotate-180')} />
-            </button>
-            <AnimatePresence>
-              {showSort && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowSort(false)} />
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded shadow-lg z-50"
-                  >
-                    {sortOptions.map((option) => (
-                      <button
-                        key={option.value}
-                        onClick={() => { setSortBy(option.value); setShowSort(false) }}
-                        className={cn(
-                          'w-full px-4 py-2 text-left text-sm transition-colors',
-                          sortBy === option.value
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                        )}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <span className="hidden sm:block text-sm text-muted-foreground">
-            {filteredProducts.length} ta mahsulot
-          </span>
+      <div className="mt-5 flex gap-8">
+        <aside className="hidden w-56 shrink-0 lg:block">{FilterPanel}</aside>
+        <div className="flex-1">
+          <div className="mb-5 hidden justify-end lg:flex"><SortSelect sort={sort} setSort={setSort} /></div>
+          {filtered.length === 0 ? (
+            <div className="grid place-items-center border-2 border-dashed border-foreground py-24 text-center">
+              <p className="font-bold uppercase tracking-wide text-foreground/50">Mahsulot topilmadi</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:gap-5">
+              {filtered.map((p) => <ProductCard key={p.id} product={p} />)}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="container mx-auto px-4 lg:px-8">
-        <motion.div layout className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-8">
-          <AnimatePresence mode="popLayout">
-            {filteredProducts.map((product, index) => (
-              <motion.div
-                key={product.id}
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
-              >
-                <ProductCard product={product} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
-
-        {filteredProducts.length === 0 && (
-          <div className="text-center py-20">
-            <p className="text-muted-foreground">Mahsulotlar topilmadi</p>
+      {/* Mobile filter drawer */}
+      {filtersOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setFiltersOpen(false)} />
+          <div className="absolute inset-y-0 right-0 w-[85%] max-w-xs overflow-y-auto border-l-2 border-foreground bg-background p-5">
+            <div className="mb-5 flex items-center justify-between">
+              <span className="font-display text-2xl uppercase">Filtr</span>
+              <button onClick={() => setFiltersOpen(false)} className="p-1" aria-label="Yopish"><X className="h-6 w-6" /></button>
+            </div>
+            {FilterPanel}
+            <button onClick={() => setFiltersOpen(false)} className="mt-8 w-full border-2 border-foreground bg-foreground py-3 text-sm font-bold uppercase text-[var(--volt)]">
+              Ko&apos;rsatish ({filtered.length})
+            </button>
           </div>
-        )}
-      </div>
-
-      <AnimatePresence>
-        {showFilters && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 lg:hidden"
-              onClick={() => setShowFilters(false)}
-            />
-            <motion.div
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'tween', duration: 0.3 }}
-              className="fixed top-0 left-0 bottom-0 w-full max-w-sm bg-background border-r border-border z-50 lg:hidden"
-            >
-              <div className="flex items-center justify-between p-6 border-b border-border">
-                <span className="text-lg font-serif tracking-wider">Filtr</span>
-                <button onClick={() => setShowFilters(false)} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="p-6">
-                <h3 className="text-sm tracking-wider uppercase text-foreground mb-4">Kategoriya</h3>
-                <div className="space-y-2">
-                  {categoryList.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => { setSelectedCategory(cat.id); setShowFilters(false) }}
-                      className={cn(
-                        'block w-full text-left py-2 text-sm transition-colors',
-                        selectedCategory === cat.id ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
-                      )}
-                    >
-                      {cat.nameUz}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
     </div>
   )
 }
 
 export default function CollectionPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen pt-8 flex items-center justify-center text-muted-foreground">Yuklanmoqda...</div>}>
-      <CollectionContent />
+    <Suspense fallback={<div className="container mx-auto px-4 py-20 font-display text-3xl uppercase">Yuklanmoqda...</div>}>
+      <CatalogInner />
     </Suspense>
   )
 }
-
-

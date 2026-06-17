@@ -11,11 +11,13 @@ import { PhoneAuthModal } from '@/components/onepro/phone-auth-modal'
 const BASE = '/store/onepro'
 
 export const ONEPRO_CATEGORIES = [
+  { id: 'onp-kostyum', name: 'Kostyumlar', image: 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=600&h=750&fit=crop&q=80' },
   { id: 'onp-koylak', name: "Ko'ylaklar", image: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&h=750&fit=crop&q=80' },
-  { id: 'onp-futbolka', name: 'Futbolkalar', image: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&h=750&fit=crop&q=80' },
+  { id: 'onp-futbolka', name: 'Futbolkalar', image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&h=750&fit=crop&q=80' },
   { id: 'onp-shim', name: 'Shimlar', image: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=600&h=750&fit=crop&q=80' },
-  { id: 'onp-ustki', name: 'Ustki kiyim', image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600&h=750&fit=crop&q=80' },
-  { id: 'onp-aksessuar', name: 'Aksessuarlar', image: 'https://images.unsplash.com/photo-1624222247344-550fb60583dc?w=600&h=750&fit=crop&q=80' },
+  { id: 'onp-ustki', name: 'Ustki kiyim', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&h=750&fit=crop&q=80' },
+  { id: 'onp-poyabzal', name: 'Poyabzal', image: 'https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=600&h=750&fit=crop&q=80' },
+  { id: 'onp-aksessuar', name: 'Aksessuarlar', image: 'https://images.unsplash.com/photo-1611923134239-b9be5816e23c?w=600&h=750&fit=crop&q=80' },
 ]
 
 const NAV = [

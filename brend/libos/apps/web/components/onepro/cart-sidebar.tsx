@@ -29,13 +29,13 @@ export function CartSidebar() {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'tween', duration: 0.3 }}
-            className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-background border-l border-border z-50 flex flex-col"
+            className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-background border-l-2 border-foreground z-50 flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-border">
+            <div className="flex items-center justify-between p-6 border-b-2 border-foreground">
               <div className="flex items-center gap-3">
-                <ShoppingBag className="w-5 h-5 text-primary" />
-                <span className="text-lg font-serif tracking-wider">Savat</span>
+                <ShoppingBag className="w-5 h-5" />
+                <span className="text-2xl font-display uppercase">Savat</span>
                 <span className="text-sm text-muted-foreground">
                   ({cart.length} ta mahsulot)
                 </span>
@@ -75,7 +75,7 @@ export function CartSidebar() {
                       className="flex gap-4 pb-6 border-b border-border"
                     >
                       {/* Product Image */}
-                      <div className="relative w-24 h-32 bg-muted rounded overflow-hidden shrink-0">
+                      <div className="relative w-24 h-32 bg-[var(--cream)] border-2 border-foreground overflow-hidden shrink-0">
                         <Image
                           src={item.product.images[0] || '/asma/placeholder.jpg'}
                           alt={item.product.nameUz}
@@ -86,19 +86,19 @@ export function CartSidebar() {
 
                       {/* Product Details */}
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-serif text-foreground mb-1 truncate">
+                        <h4 className="font-bold uppercase text-foreground mb-1 truncate">
                           {item.product.nameUz}
                         </h4>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          O&apos;lcham: {item.size} | Rang: {item.color}
+                        <p className="text-xs text-muted-foreground mb-2">
+                          {item.size}{item.color ? ` · ${item.color}` : ''}
                         </p>
-                        <p className="text-primary font-medium">
+                        <p className="font-display text-lg">
                           {formatPrice(item.product.price)}
                         </p>
 
                         {/* Quantity Controls */}
                         <div className="flex items-center justify-between mt-3">
-                          <div className="flex items-center gap-2 border border-border rounded">
+                          <div className="flex items-center border-2 border-foreground">
                             <button
                               onClick={() =>
                                 updateQuantity(
@@ -149,24 +149,20 @@ export function CartSidebar() {
 
             {/* Footer */}
             {cart.length > 0 && (
-              <div className="p-6 border-t border-border bg-card">
+              <div className="p-6 border-t-2 border-foreground bg-[var(--cream)]">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-muted-foreground">Jami:</span>
-                  <span className="text-xl font-serif text-primary">
+                  <span className="text-sm font-bold uppercase tracking-wide text-foreground/60">Jami:</span>
+                  <span className="font-display text-2xl">
                     {formatPrice(getCartTotal())}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground mb-4">
-                  Yetkazib berish narxi buyurtma tasdiqlanganda hisoblanadi
-                </p>
-                <Button
-                  asChild
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                  size="lg"
+                <Link
+                  href="/store/onepro/checkout"
                   onClick={() => setCartOpen(false)}
+                  className="opb-press flex w-full items-center justify-center border-2 border-foreground bg-foreground py-4 text-sm font-bold uppercase tracking-wide text-[var(--volt)] opb-shadow"
                 >
-                  <Link href="/store/onepro/checkout">Buyurtmani rasmiylashtirish</Link>
-                </Button>
+                  Buyurtmani rasmiylashtirish
+                </Link>
               </div>
             )}
           </motion.div>
