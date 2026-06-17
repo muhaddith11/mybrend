@@ -1,131 +1,127 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Heart, ShoppingBag, User, Menu, X } from 'lucide-react'
 import { useStore } from '@/lib/onepro/store'
-import { fetchSettings } from '@/lib/onepro/settings'
 import { PhoneAuthModal } from '@/components/onepro/phone-auth-modal'
 
 const BASE = '/store/onepro'
 
-const categories = [
-  { label: 'Chegirmalar', href: `${BASE}/collection?sale=1`, accent: true },
-  { label: 'Yangi kolleksiya', href: `${BASE}/collection?new=1` },
-  { label: "Ko'ylaklar", href: `${BASE}/collection?category=onp-koylak` },
-  { label: 'Futbolkalar', href: `${BASE}/collection?category=onp-futbolka` },
-  { label: 'Shimlar', href: `${BASE}/collection?category=onp-shim` },
-  { label: 'Ustki kiyim', href: `${BASE}/collection?category=onp-ustki` },
-  { label: 'Aksessuarlar', href: `${BASE}/collection?category=onp-aksessuar` },
+export const ONEPRO_CATEGORIES = [
+  { id: 'onp-koylak', name: "Ko'ylaklar", image: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=600&h=750&fit=crop&q=80' },
+  { id: 'onp-futbolka', name: 'Futbolkalar', image: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&h=750&fit=crop&q=80' },
+  { id: 'onp-shim', name: 'Shimlar', image: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=600&h=750&fit=crop&q=80' },
+  { id: 'onp-ustki', name: 'Ustki kiyim', image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600&h=750&fit=crop&q=80' },
+  { id: 'onp-aksessuar', name: 'Aksessuarlar', image: 'https://images.unsplash.com/photo-1624222247344-550fb60583dc?w=600&h=750&fit=crop&q=80' },
 ]
+
+const NAV = [
+  { label: 'SALE', href: `${BASE}/collection?sale=1`, accent: true },
+  { label: 'YANGI', href: `${BASE}/collection?new=1`, accent: false },
+  ...ONEPRO_CATEGORIES.map((c) => ({ label: c.name.toUpperCase(), href: `${BASE}/collection?category=${c.id}`, accent: false })),
+]
+
+const MARQUEE = ['BEPUL YETKAZIB BERISH', '100% ORIGINAL', '3 KUN ICHIDA QAYTARISH', 'YANGI KOLLEKSIYA', "O'ZBEKISTON BO'YLAB"]
 
 export function Navigation() {
   const router = useRouter()
   const [search, setSearch] = useState('')
-  const [logo, setLogo] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [loginOpen, setLoginOpen] = useState(false)
-  const { setCartOpen, getCartCount, wishlist, authPhone } = useStore()
+  const { getCartCount, wishlist, authPhone, setCartOpen } = useStore()
+  const count = getCartCount()
 
-  useEffect(() => {
-    fetchSettings().then((s) => { if (s.logo) setLogo(s.logo) }).catch(() => {})
-  }, [])
-
-  const submitSearch = (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault()
     router.push(search.trim() ? `${BASE}/collection?search=${encodeURIComponent(search.trim())}` : `${BASE}/collection`)
+    setMenuOpen(false)
   }
 
+  const Badge = ({ n }: { n: number }) => n > 0 ? (
+    <span className="absolute right-0 top-0 grid h-4 min-w-4 place-items-center border border-foreground bg-[var(--flame)] px-1 text-[10px] font-bold text-white">{n}</span>
+  ) : null
+
   return (
-    <header className="sticky top-0 z-50 bg-background border-b border-border">
-      {/* Top utility bar */}
-      <div className="bg-foreground text-background text-xs">
-        <div className="container mx-auto px-4 lg:px-8 h-9 flex items-center justify-between">
-          <span className="tracking-wide">O&apos;zbekiston bo&apos;ylab yetkazib berish</span>
-          <span className="hidden sm:inline tracking-wide">100% original mahsulotlar</span>
+    <header className="sticky top-0 z-50 border-b-2 border-foreground bg-background">
+      {/* Marquee utility bar */}
+      <div className="border-b-2 border-foreground bg-foreground text-[var(--volt)] opb-marquee-wrap">
+        <div className="opb-marquee fast">
+          {[0, 1].map((dup) => (
+            <span key={dup} className="flex">
+              {MARQUEE.map((t, i) => (
+                <span key={i} className="mx-6 flex items-center gap-3 py-1.5 text-[11px] font-bold tracking-[0.18em]">
+                  {t} <span className="text-[var(--flame)]">✦</span>
+                </span>
+              ))}
+            </span>
+          ))}
         </div>
       </div>
 
       {/* Main bar */}
       <div className="container mx-auto px-4 lg:px-8">
-        <div className="h-16 lg:h-20 flex items-center gap-3 lg:gap-6">
-          {/* Mobile menu */}
-          <button onClick={() => setMenuOpen(true)} className="lg:hidden p-2 -ml-2" aria-label="Menyu">
-            <Menu className="w-6 h-6" />
+        <div className="flex h-16 items-center gap-3 lg:h-20 lg:gap-6">
+          <button onClick={() => setMenuOpen(true)} className="-ml-2 p-2 lg:hidden" aria-label="Menyu">
+            <Menu className="h-7 w-7" />
           </button>
 
-          {/* Logo */}
-          <Link href={BASE} className="shrink-0">
-            {logo ? (
-              <img src={logo} alt="One Pro" className="h-8 lg:h-9 w-auto object-contain" />
-            ) : (
-              <span className="text-2xl lg:text-3xl font-extrabold tracking-tight text-foreground">ONEPRO</span>
-            )}
+          <Link href={BASE} className="group shrink-0 leading-none">
+            <span className="font-display text-3xl tracking-tight lg:text-4xl">ONE PRO</span>
+            <span className="ml-0.5 inline-block bg-[var(--volt)] px-1.5 text-[10px] font-bold tracking-[0.3em] text-foreground transition-transform group-hover:-rotate-3">BOUTIQUE</span>
           </Link>
 
-          {/* Search */}
-          <form onSubmit={submitSearch} className="flex-1 max-w-2xl hidden sm:flex">
+          <form onSubmit={submit} className="mx-auto hidden max-w-md flex-1 sm:flex">
             <div className="relative w-full">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Mahsulot, brend qidirish..."
-                className="w-full h-11 pl-12 pr-4 bg-secondary border border-border rounded-full text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-foreground transition-colors"
+                placeholder="QIDIRISH..."
+                className="h-11 w-full border-2 border-foreground bg-background pl-12 pr-4 text-sm font-medium tracking-wide outline-none placeholder:text-foreground/40 focus:opb-shadow"
               />
             </div>
           </form>
 
-          {/* Right icons */}
-          <div className="flex items-center gap-1 lg:gap-2 ml-auto">
+          <div className="ml-auto flex items-center gap-1">
             {authPhone ? (
-              <Link href={`${BASE}/profile`} className="p-2.5 hover:text-accent transition-colors" aria-label="Profil">
-                <User className="w-5 h-5" />
-              </Link>
+              <Link href={`${BASE}/profile`} className="grid h-10 w-10 place-items-center transition-colors hover:bg-[var(--volt)]" aria-label="Profil"><User className="h-5 w-5" /></Link>
             ) : (
-              <button onClick={() => setLoginOpen(true)} className="p-2.5 hover:text-accent transition-colors" aria-label="Kirish">
-                <User className="w-5 h-5" />
-              </button>
+              <button onClick={() => setLoginOpen(true)} className="grid h-10 w-10 place-items-center transition-colors hover:bg-[var(--volt)]" aria-label="Kirish"><User className="h-5 w-5" /></button>
             )}
-            <Link href={`${BASE}/wishlist`} className="relative p-2.5 hover:text-accent transition-colors" aria-label="Sevimlilar">
-              <Heart className="w-5 h-5" />
-              {wishlist.length > 0 && (
-                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-accent text-accent-foreground text-[10px] rounded-full grid place-items-center font-bold">{wishlist.length}</span>
-              )}
+            <Link href={`${BASE}/wishlist`} className="relative grid h-10 w-10 place-items-center transition-colors hover:bg-[var(--volt)]" aria-label="Sevimlilar">
+              <Heart className="h-5 w-5" /><Badge n={wishlist.length} />
             </Link>
-            <button onClick={() => setCartOpen(true)} className="relative p-2.5 hover:text-accent transition-colors" aria-label="Savat">
-              <ShoppingBag className="w-5 h-5" />
-              {getCartCount() > 0 && (
-                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-accent text-accent-foreground text-[10px] rounded-full grid place-items-center font-bold">{getCartCount()}</span>
-              )}
+            <button onClick={() => setCartOpen(true)} className="relative grid h-10 w-10 place-items-center transition-colors hover:bg-[var(--volt)]" aria-label="Savat">
+              <ShoppingBag className="h-5 w-5" /><Badge n={count} />
             </button>
           </div>
         </div>
 
-        {/* Mobile search */}
-        <form onSubmit={submitSearch} className="sm:hidden pb-3">
+        <form onSubmit={submit} className="pb-3 sm:hidden">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Qidirish..."
-              className="w-full h-11 pl-12 pr-4 bg-secondary border border-border rounded-full text-sm outline-none focus:border-foreground"
+              placeholder="QIDIRISH..."
+              className="h-11 w-full border-2 border-foreground bg-background pl-12 pr-4 text-sm font-medium outline-none placeholder:text-foreground/40"
             />
           </div>
         </form>
       </div>
 
-      {/* Category nav */}
-      <nav className="border-t border-border bg-background">
+      {/* Category strip */}
+      <nav className="border-t-2 border-foreground bg-[var(--volt)]">
         <div className="container mx-auto px-4 lg:px-8">
-          <div className="flex items-center gap-5 lg:gap-7 overflow-x-auto h-11 text-sm font-medium scrollbar-none">
-            {categories.map((c) => (
+          <div className="flex h-10 items-center gap-6 overflow-x-auto text-xs font-bold tracking-wide" style={{ scrollbarWidth: 'none' }}>
+            {NAV.map((c) => (
               <Link
                 key={c.label}
                 href={c.href}
-                className={`whitespace-nowrap transition-colors hover:text-accent ${c.accent ? 'text-accent font-semibold' : 'text-foreground/80'}`}
+                className={`whitespace-nowrap transition-transform hover:-translate-y-0.5 ${c.accent ? 'bg-[var(--flame)] px-2 py-0.5 text-white' : 'text-foreground'}`}
               >
                 {c.label}
               </Link>
@@ -134,30 +130,30 @@ export function Navigation() {
         </div>
       </nav>
 
-      {/* Mobile menu drawer */}
-      {menuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setMenuOpen(false)} />
-          <div className="absolute top-0 left-0 bottom-0 w-72 max-w-[80%] bg-background flex flex-col">
-            <div className="h-16 flex items-center justify-between px-4 border-b border-border">
-              <span className="text-xl font-extrabold">ONEPRO</span>
-              <button onClick={() => setMenuOpen(false)} className="p-2" aria-label="Yopish"><X className="w-6 h-6" /></button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col">
-              {categories.map((c) => (
-                <Link
-                  key={c.label}
-                  href={c.href}
-                  onClick={() => setMenuOpen(false)}
-                  className={`py-3 text-base border-b border-border ${c.accent ? 'text-accent font-semibold' : 'text-foreground'}`}
-                >
-                  {c.label}
-                </Link>
-              ))}
-            </div>
+      {/* Mobile drawer */}
+      <AnimatePresence>
+        {menuOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <motion.div className="absolute inset-0 bg-black/50" onClick={() => setMenuOpen(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
+            <motion.div
+              className="absolute inset-y-0 left-0 flex w-[82%] max-w-xs flex-col border-r-2 border-foreground bg-background"
+              initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+            >
+              <div className="flex h-16 items-center justify-between border-b-2 border-foreground px-4">
+                <span className="font-display text-2xl">ONE PRO</span>
+                <button onClick={() => setMenuOpen(false)} className="p-2" aria-label="Yopish"><X className="h-7 w-7" /></button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4">
+                {NAV.map((c) => (
+                  <Link key={c.label} href={c.href} onClick={() => setMenuOpen(false)} className={`block border-b border-foreground/10 py-3 text-lg font-bold ${c.accent ? 'text-[var(--flame)]' : ''}`}>
+                    {c.label}
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
       <PhoneAuthModal open={loginOpen} onClose={() => setLoginOpen(false)} />
     </header>

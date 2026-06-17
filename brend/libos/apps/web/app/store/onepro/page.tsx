@@ -2,130 +2,185 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Truck, CreditCard, RefreshCw, Headphones, ArrowRight } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { ArrowRight, ArrowUpRight, Truck, ShieldCheck, RefreshCw, Headphones } from 'lucide-react'
 import { fetchProducts } from '@/lib/onepro/products'
 import { Product } from '@/lib/onepro/store'
 import { ProductCard } from '@/components/onepro/product-card'
+import { ONEPRO_CATEGORIES } from '@/components/onepro/navigation'
 
 const BASE = '/store/onepro'
 
-const BRANDS = ['Premium sifat', 'Original mahsulot', 'Zamonaviy uslub', 'Tez yetkazib berish', 'Qulay narx', 'Kafolat']
-
-function Section({ title, href, children }: { title: string; href?: string; children: React.ReactNode }) {
-  return (
-    <section className="container mx-auto px-4 lg:px-8 py-10 lg:py-14">
-      <div className="flex items-end justify-between mb-6">
-        <h2 className="text-xl lg:text-2xl font-extrabold tracking-tight uppercase">{title}</h2>
-        {href && (
-          <Link href={href} className="text-sm font-medium text-muted-foreground hover:text-accent inline-flex items-center gap-1">
-            Hammasi <ArrowRight className="w-4 h-4" />
-          </Link>
-        )}
-      </div>
-      {children}
-    </section>
-  )
-}
-
 function Grid({ items }: { items: Product[] }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-6">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 lg:gap-5">
       {items.map((p) => <ProductCard key={p.id} product={p} />)}
     </div>
   )
 }
 
+function Heading({ kicker, title, href }: { kicker: string; title: string; href?: string }) {
+  return (
+    <div className="mb-8 flex items-end justify-between">
+      <div>
+        <p className="opb-eyebrow text-[var(--flame)]">{kicker}</p>
+        <h2 className="mt-2 font-display text-4xl uppercase lg:text-6xl">{title}</h2>
+      </div>
+      {href && (
+        <Link href={href} className="opb-press hidden shrink-0 items-center gap-1 border-2 border-foreground bg-background px-4 py-2 text-sm font-bold uppercase opb-shadow sm:inline-flex">
+          Hammasi <ArrowRight className="h-4 w-4" />
+        </Link>
+      )}
+    </div>
+  )
+}
+
+const HERO_MARQUEE = ['BEPUL YETKAZIB BERISH', 'ORIGINAL MAHSULOT', 'KAFOLAT', 'TEZ YETKAZISH', 'QULAY NARX']
+
 export default function OneProHome() {
   const [products, setProducts] = useState<Product[]>([])
+  useEffect(() => { fetchProducts().then(setProducts).catch(() => {}) }, [])
 
-  useEffect(() => {
-    fetchProducts().then(setProducts).catch(() => {})
-  }, [])
-
-  const newItems = useMemo(() => [...products].sort((a, b) => (b.new ? 1 : 0) - (a.new ? 1 : 0)).slice(0, 8), [products])
-  const discounted = useMemo(() => products.filter((p) => p.originalPrice && p.originalPrice > p.price).slice(0, 8), [products])
-  const shirts = useMemo(() => products.filter((p) => p.category === 'onp-koylak').slice(0, 8), [products])
+  const newItems = useMemo(() => products.filter((p) => p.new).slice(0, 8), [products])
+  const featured = useMemo(() => products.filter((p) => p.featured).slice(0, 8), [products])
+  const sale = useMemo(() => products.filter((p) => p.originalPrice && p.originalPrice > p.price).slice(0, 8), [products])
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero banner */}
-      <section className="relative h-[55vh] min-h-[360px] overflow-hidden bg-foreground">
-        <img
-          src="https://images.unsplash.com/photo-1490578474895-699cd4e2cf59?w=1600&h=900&fit=crop&q=80"
-          alt="One Pro kolleksiya"
-          className="absolute inset-0 w-full h-full object-cover opacity-70"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent" />
-        <div className="relative container mx-auto px-4 lg:px-8 h-full flex flex-col justify-center">
-          <span className="text-white/80 text-xs tracking-[0.3em] uppercase mb-3">One Pro Butik</span>
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight max-w-xl leading-tight">
-            Erkaklar uslubi
-          </h1>
-          <p className="text-white/80 mt-4 max-w-md">Zamonaviy va sifatli erkaklar kiyimlari — One Pro butigida.</p>
-          <Link
-            href={`${BASE}/collection`}
-            className="mt-8 inline-flex w-fit items-center gap-2 bg-white text-black font-semibold px-8 py-3.5 rounded-full hover:bg-white/90 transition-colors"
-          >
-            Sotib olish <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      </section>
-
-      {/* Brands strip */}
-      <section className="border-y border-border bg-secondary/40">
-        <div className="container mx-auto px-4 lg:px-8 py-6">
-          <div className="flex items-center gap-6 lg:gap-10 overflow-x-auto scrollbar-none">
-            {BRANDS.map((b) => (
-              <span key={b} className="whitespace-nowrap text-sm lg:text-base font-bold tracking-wide text-muted-foreground hover:text-foreground transition-colors">
-                {b}
-              </span>
-            ))}
+    <>
+      {/* HERO */}
+      <section className="relative overflow-hidden border-b-2 border-foreground bg-foreground">
+        <div className="container mx-auto px-4 lg:px-8 grid items-center gap-8 py-12 lg:grid-cols-2 lg:py-0 lg:min-h-[80vh]">
+          <div className="relative z-10 order-2 lg:order-1">
+            <motion.p initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="opb-eyebrow text-[var(--volt)]">
+              One Pro Boutique — Erkaklar uchun
+            </motion.p>
+            <h1 className="mt-3 font-display uppercase text-background">
+              {['STREET', 'STYLE', 'PRO'].map((word, i) => (
+                <motion.span
+                  key={word}
+                  className="block text-6xl leading-[0.85] sm:text-7xl lg:text-8xl"
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.15 + i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <span className={i === 1 ? 'text-[var(--volt)]' : ''}>{word}</span>
+                </motion.span>
+              ))}
+            </h1>
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="mt-6 max-w-md text-background/70">
+              Klassikadan kundalik kiyimgacha — kuchli uslub, original sifat. Bugun buyurtma bering.
+            </motion.p>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="mt-8 flex flex-wrap gap-3">
+              <Link href={`${BASE}/collection`} className="opb-press inline-flex items-center gap-2 border-2 border-[var(--volt)] bg-[var(--volt)] px-8 py-4 font-bold uppercase tracking-wide text-foreground opb-shadow-volt">
+                Xaridni boshlash <ArrowUpRight className="h-5 w-5" />
+              </Link>
+              <Link href={`${BASE}/collection?new=1`} className="opb-press inline-flex items-center gap-2 border-2 border-background px-8 py-4 font-bold uppercase tracking-wide text-background">
+                Yangi kolleksiya
+              </Link>
+            </motion.div>
           </div>
+
+          <motion.div className="relative order-1 lg:order-2 lg:h-[80vh]" initial={{ opacity: 0, scale: 1.05 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8 }}>
+            <div className="relative h-[44vh] overflow-hidden border-2 border-[var(--volt)] lg:absolute lg:inset-y-12 lg:right-0 lg:left-6 lg:h-auto">
+              <img src="https://images.unsplash.com/photo-1490578474895-699cd4e2cf59?w=1200&q=80" alt="One Pro" className="h-full w-full object-cover" />
+            </div>
+            <motion.div
+              className="absolute -bottom-3 left-2 z-10 flex h-20 w-20 rotate-[-8deg] flex-col items-center justify-center border-2 border-foreground bg-[var(--flame)] text-center font-display text-white lg:bottom-6 lg:left-0 lg:h-28 lg:w-28"
+              animate={{ rotate: [-8, 4, -8] }} transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <span className="text-2xl leading-none lg:text-4xl">SALE</span>
+              <span className="text-[10px] lg:text-xs">-50% gacha</span>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
-      {/* New collection */}
-      {newItems.length > 0 && (
-        <Section title="Yangi kolleksiya" href={`${BASE}/collection`}>
-          <Grid items={newItems} />
-        </Section>
-      )}
-
-      {/* Discounts */}
-      {discounted.length > 0 && (
-        <div className="bg-secondary/40">
-          <Section title="Chegirmalar" href={`${BASE}/collection`}>
-            <Grid items={discounted} />
-          </Section>
+      {/* Marquee band */}
+      <div className="border-b-2 border-foreground bg-[var(--volt)] py-2.5 opb-marquee-wrap">
+        <div className="opb-marquee">
+          {[0, 1].map((dup) => (
+            <span key={dup} className="flex">
+              {HERO_MARQUEE.map((t, i) => (
+                <span key={i} className="mx-5 text-sm font-bold uppercase tracking-wide text-foreground whitespace-nowrap">{t} <span className="text-[var(--flame)]">/</span></span>
+              ))}
+            </span>
+          ))}
         </div>
+      </div>
+
+      {/* CATEGORIES */}
+      <section className="container mx-auto px-4 lg:px-8 py-14 lg:py-20">
+        <Heading kicker="Kolleksiya" title="Kategoriyalar" />
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 lg:gap-5">
+          {ONEPRO_CATEGORIES.map((c) => (
+            <Link key={c.id} href={`${BASE}/collection?category=${c.id}`} className="group relative block aspect-[4/5] overflow-hidden border-2 border-foreground transition-all duration-200 hover:-translate-x-1 hover:-translate-y-1 hover:opb-shadow">
+              <img src={c.image} alt={c.name} className="h-full w-full object-cover grayscale transition-all duration-500 group-hover:scale-110 group-hover:grayscale-0" />
+              <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 to-transparent" />
+              <span className="absolute bottom-3 left-3 font-display text-xl uppercase text-background">{c.name}</span>
+              <span className="absolute right-3 top-3 grid h-8 w-8 place-items-center bg-[var(--volt)] text-foreground opacity-0 transition-opacity group-hover:opacity-100"><ArrowUpRight className="h-4 w-4" /></span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* NEW */}
+      {newItems.length > 0 && (
+        <section className="border-y-2 border-foreground bg-[var(--cream)] py-14 lg:py-20">
+          <div className="container mx-auto px-4 lg:px-8">
+            <Heading kicker="Endigina keldi" title="Yangi" href={`${BASE}/collection?new=1`} />
+            <Grid items={newItems} />
+          </div>
+        </section>
       )}
 
-      {/* Shirts */}
-      {shirts.length > 0 && (
-        <Section title="Ko'ylaklar" href={`${BASE}/collection?category=onp-koylak`}>
-          <Grid items={shirts} />
-        </Section>
+      {/* SALE */}
+      {sale.length > 0 && (
+        <section className="container mx-auto px-4 lg:px-8 py-14 lg:py-20">
+          <Heading kicker="Maxsus narxlar" title="Chegirmalar" href={`${BASE}/collection?sale=1`} />
+          <Grid items={sale} />
+        </section>
       )}
 
-      {/* Value props */}
-      <section className="border-t border-border">
-        <div className="container mx-auto px-4 lg:px-8 py-10 grid grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* PROMISE */}
+      <section className="border-y-2 border-foreground bg-foreground py-12">
+        <div className="container mx-auto px-4 lg:px-8 grid grid-cols-2 gap-6 lg:grid-cols-4">
           {[
-            { icon: Truck, t: 'Bepul yetkazib berish', s: "O'zbekiston bo'ylab" },
-            { icon: CreditCard, t: "Qulay to'lov", s: 'Naqd, karta, online' },
-            { icon: RefreshCw, t: '3 kun ichida qaytarish', s: 'Muammosiz' },
-            { icon: Headphones, t: 'Yordam xizmati', s: 'Har kuni 10:00-22:00' },
+            { icon: Truck, t: 'Tez yetkazish', s: "O'zbekiston bo'ylab" },
+            { icon: ShieldCheck, t: '100% original', s: 'Kafolat bilan' },
+            { icon: RefreshCw, t: '3 kun qaytarish', s: 'Muammosiz' },
+            { icon: Headphones, t: "Qo'llab-quvvatlash", s: '10:00 — 22:00' },
           ].map((v) => (
-            <div key={v.t} className="flex items-start gap-3">
-              <v.icon className="w-6 h-6 text-accent shrink-0" />
+            <div key={v.t} className="flex items-start gap-3 text-background">
+              <v.icon className="h-7 w-7 shrink-0 text-[var(--volt)]" />
               <div>
-                <p className="font-semibold text-sm">{v.t}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{v.s}</p>
+                <p className="font-bold uppercase">{v.t}</p>
+                <p className="text-xs text-background/55">{v.s}</p>
               </div>
             </div>
           ))}
         </div>
       </section>
-    </div>
+
+      {/* FEATURED */}
+      {featured.length > 0 && (
+        <section className="container mx-auto px-4 lg:px-8 py-14 lg:py-20">
+          <Heading kicker="Eng ko'p sotilgan" title="Tanlangan" href={`${BASE}/collection`} />
+          <Grid items={featured} />
+        </section>
+      )}
+
+      {/* CTA */}
+      <section className="container mx-auto px-4 lg:px-8 pb-20">
+        <div className="relative overflow-hidden border-2 border-foreground bg-[var(--volt)] px-6 py-16 text-center opb-shadow-lg lg:py-24">
+          <p className="opb-eyebrow text-foreground/60">One Pro Boutique</p>
+          <h2 className="mx-auto mt-3 max-w-3xl font-display text-5xl uppercase leading-[0.9] lg:text-7xl">
+            O&apos;zingga mos<br />uslubni top
+          </h2>
+          <Link href={`${BASE}/collection`} className="opb-press mt-8 inline-flex items-center gap-2 border-2 border-foreground bg-foreground px-8 py-4 font-bold uppercase tracking-wide text-[var(--volt)] opb-shadow">
+            Katalogni ko&apos;rish <ArrowUpRight className="h-5 w-5" />
+          </Link>
+        </div>
+      </section>
+    </>
   )
 }
