@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useAuthStore } from '../store/auth'
 import { useThemeStore } from '../store/theme'
@@ -33,6 +33,16 @@ export function ProfileDrawer() {
   const tr = useT(lang)
   const [showPicker, setShowPicker] = useState(false)
   const [showOwner, setShowOwner] = useState(false)
+
+  // Drawer ochiq bo'lganda orqa fon (sahifa) scroll'ini bloklash —
+  // shunda scroll faqat drawer ichida ishlaydi
+  useEffect(() => {
+    if (showProfileDrawer) {
+      const prev = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      return () => { document.body.style.overflow = prev }
+    }
+  }, [showProfileDrawer])
 
   if (!showProfileDrawer) return null
 
