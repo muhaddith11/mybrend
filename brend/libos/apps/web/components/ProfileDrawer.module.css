@@ -56,7 +56,9 @@
 /* ── Body ── */
 .body {
   flex: 1;
+  min-height: 0; /* flexbox scroll: kontentdan past qisqarsin, shunda overflow ishlaydi */
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 1.25rem 1.5rem 2rem;
   display: flex;
   flex-direction: column;
