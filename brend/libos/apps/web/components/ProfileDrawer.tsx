@@ -18,6 +18,13 @@ const PERSON_EMOJIS = [
   '👤','👦','👧','👨','👩','🧑','👴','👵','🧔','👱','🧕','🦸',
 ]
 
+// Admin paneli bor do'konlar (do'kon egalari shu yerdan kiradi)
+const ADMIN_STORES: { slug: string; name: string; emoji: string }[] = [
+  { slug: 'asma', name: 'Asma Design', emoji: '👔' },
+  { slug: 'boosner', name: 'Boosner', emoji: '🔥' },
+  { slug: 'onepro', name: 'One Pro', emoji: '🧥' },
+]
+
 export function ProfileDrawer() {
   const { isLoggedIn, user, logout, openLogin, showProfileDrawer, closeProfile } = useAuthStore()
   const { dark, toggle } = useThemeStore()
@@ -25,6 +32,7 @@ export function ProfileDrawer() {
   const { emoji, setEmoji } = useAvatarStore()
   const tr = useT(lang)
   const [showPicker, setShowPicker] = useState(false)
+  const [showOwner, setShowOwner] = useState(false)
 
   if (!showProfileDrawer) return null
 
@@ -163,6 +171,46 @@ export function ProfileDrawer() {
               </div>
             </div>
           )}
+
+          {/* ── Do'kon egasi paneli (har doim ko'rinadi) ── */}
+          <div className={styles.section}>
+            <button
+              className={styles.menuItem}
+              onClick={() => setShowOwner(o => !o)}
+              style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+            >
+              <span className={styles.menuIcon}>🏪</span>
+              <span className={styles.menuLabel}>
+                {lang === 'ru' ? 'Панель владельца магазина' : lang === 'en' ? 'Store owner panel' : "Do'kon egasi paneli"}
+              </span>
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                style={{ transform: showOwner ? 'rotate(90deg)' : 'none', transition: 'transform .2s' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+
+            {showOwner && (
+              <div style={{ paddingLeft: 6 }}>
+                <p style={{ fontSize: 12, color: 'var(--text-3)', margin: '6px 0 8px 6px' }}>
+                  {lang === 'ru' ? 'Выберите свой магазин:' : lang === 'en' ? 'Choose your store:' : "Do'koningizni tanlang:"}
+                </p>
+                {ADMIN_STORES.map(s => (
+                  <Link
+                    key={s.slug}
+                    href={`/store/${s.slug}/admin/login`}
+                    className={styles.menuItem}
+                    onClick={closeProfile}
+                  >
+                    <span className={styles.menuIcon}>{s.emoji}</span>
+                    <span className={styles.menuLabel}>{s.name}</span>
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </aside>
     </>
