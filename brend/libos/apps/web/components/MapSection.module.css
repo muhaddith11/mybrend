@@ -20,6 +20,8 @@
 
 .mapBox {
   position: relative;
+  z-index: 0;
+  isolation: isolate; /* leaflet ichki z-indexlari header ustiga chiqmasin */
   height: 420px;
   border-radius: 16px;
   overflow: hidden;
