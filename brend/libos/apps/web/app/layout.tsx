@@ -7,6 +7,7 @@ import { LoginModal } from '../components/LoginModal'
 import { ProfileDrawer } from '../components/ProfileDrawer'
 import { BodyPadding } from '../components/BodyPadding'
 import { ThemeProvider } from '../components/ThemeProvider'
+import { Onboarding } from '../components/Onboarding'
 
 export const metadata: Metadata = {
   title: 'ZYFF — Shahardagi barcha kiyim do\'konlari',
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <CartDrawer />
           <LoginModal />
           <ProfileDrawer />
+          <Onboarding />
         </Providers>
       </body>
     </html>
