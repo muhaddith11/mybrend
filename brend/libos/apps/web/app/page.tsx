@@ -372,8 +372,8 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
             <div className={styles.footerCol}>
               <div className={styles.footerColTitle}>{tr.contact}</div>
               <a href="tel:+998502500550" className={styles.footerLink}>+998 50 250 05 50</a>
-              <a href="https://instagram.com/_muhaddith_7" target="_blank" rel="noopener noreferrer" className={styles.footerLink}>Instagram: @_muhaddith_7</a>
-              <a href="https://t.me/muhaddith707" target="_blank" rel="noopener noreferrer" className={styles.footerLink}>Telegram: @muhaddith707</a>
+              <a href="https://instagram.com/zyff.uz" target="_blank" rel="noopener noreferrer" className={styles.footerLink}>Instagram: @zyff.uz</a>
+              <a href="https://t.me/zyff_uz" target="_blank" rel="noopener noreferrer" className={styles.footerLink}>Telegram: @zyff_uz</a>
             </div>
           </div>
           <div className={styles.footerBottom}>
