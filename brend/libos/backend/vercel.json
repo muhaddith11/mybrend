@@ -1,5 +1,6 @@
 {
-  "buildCommand": "prisma generate",
+  "buildCommand": "prisma generate && mkdir -p public",
+  "outputDirectory": "public",
   "functions": {
     "api/index.ts": {
       "includeFiles": "prisma/**"
