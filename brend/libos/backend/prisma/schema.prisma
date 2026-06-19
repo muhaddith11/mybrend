@@ -48,6 +48,8 @@ model User {
   avatar    String?
   otp       String?
   otpExpiry DateTime?
+  lastOtpSentAt DateTime? // OTP rate-limit: oxirgi kod yuborilgan vaqt (spam oldini olish)
+  otpAttempts   Int       @default(0) // noto'g'ri urinishlar soni (brute-force oldini olish)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

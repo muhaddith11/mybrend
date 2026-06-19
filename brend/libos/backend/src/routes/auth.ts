@@ -9,16 +9,30 @@ const verifyOtpSchema = z.object({ phone: z.string(), code: z.string().length(6)
 export default async function authRoutes(app: FastifyInstance) {
   const prisma: PrismaClient = (app as any).prisma
 
+  const OTP_COOLDOWN_MS = 60 * 1000 // kodlar orasida kamida 1 daqiqa (SMS spam oldini olish)
+  const MAX_OTP_ATTEMPTS = 5 // shuncha noto'g'ri urinishdan keyin yangi kod kerak
+
   app.post('/send-otp', async (req, reply) => {
     const { phone } = sendOtpSchema.parse(req.body)
+
+    // Rate-limit: oxirgi kod yaqinda yuborilgan bo'lsa — kutish
+    const existing = await prisma.user.findUnique({ where: { phone } })
+    if (existing?.lastOtpSentAt) {
+      const elapsed = Date.now() - existing.lastOtpSentAt.getTime()
+      if (elapsed < OTP_COOLDOWN_MS) {
+        const wait = Math.ceil((OTP_COOLDOWN_MS - elapsed) / 1000)
+        return reply.status(429).send({ error: `Iltimos, ${wait} soniyadan keyin qayta urining` })
+      }
+    }
+
     const code = Math.floor(100000 + Math.random() * 900000).toString()
     const expiry = new Date(Date.now() + 10 * 60 * 1000) // 10 daqiqa
 
-    // OTP'ni DB'ga saqlaymiz (serverless'da in-memory ishlamaydi)
+    // OTP'ni DB'ga saqlaymiz (serverless'da in-memory ishlamaydi). Urinishlar 0 ga tushadi.
     await prisma.user.upsert({
       where: { phone },
-      update: { otp: code, otpExpiry: expiry },
-      create: { phone, otp: code, otpExpiry: expiry },
+      update: { otp: code, otpExpiry: expiry, lastOtpSentAt: new Date(), otpAttempts: 0 },
+      create: { phone, otp: code, otpExpiry: expiry, lastOtpSentAt: new Date(), otpAttempts: 0 },
     })
 
     await sendSms(phone, `ZYFF tasdiqlash kodi: ${code}`)
@@ -43,14 +57,19 @@ export default async function authRoutes(app: FastifyInstance) {
     if (new Date() > user.otpExpiry) {
       return reply.status(400).send({ error: 'Kod muddati tugagan' })
     }
+    // Brute-force himoyasi: juda ko'p noto'g'ri urinish bo'lsa, yangi kod kerak
+    if (user.otpAttempts >= MAX_OTP_ATTEMPTS) {
+      return reply.status(429).send({ error: "Juda ko'p urinish. Yangi kod so'rang." })
+    }
     if (user.otp !== code) {
+      await prisma.user.update({ where: { phone }, data: { otpAttempts: { increment: 1 } } })
       return reply.status(400).send({ error: "Noto'g'ri kod" })
     }
 
-    // OTP'ni tozalaymiz
+    // OTP'ni tozalaymiz va urinishlarni nollaymiz
     await prisma.user.update({
       where: { phone },
-      data: { otp: null, otpExpiry: null },
+      data: { otp: null, otpExpiry: null, otpAttempts: 0 },
     })
 
     const token = app.jwt.sign({ userId: user.id, phone: user.phone })
