@@ -2,7 +2,9 @@
   "name": "libos",
   "private": true,
   "workspaces": [
-    "apps/web"
+    "apps/*",
+    "packages/*",
+    "backend"
   ],
   "scripts": {
     "dev": "turbo run dev",

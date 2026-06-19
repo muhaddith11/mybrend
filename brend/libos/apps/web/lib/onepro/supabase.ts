@@ -1,7 +1,12 @@
-﻿import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = 'https://amvmwibqdrufiaodqair.supabase.co'
-const supabaseKey = 'sb_publishable_cuZzESB7VKhdldnbgA6EeQ_akDyGcTQ'
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error(
+    'NEXT_PUBLIC_SUPABASE_URL va NEXT_PUBLIC_SUPABASE_ANON_KEY .env.local da belgilanishi shart'
+  )
+}
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
-

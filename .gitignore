@@ -1,0 +1,21 @@
+# Secrets / environment
+.env
+.env.local
+.env.*.local
+
+# Bot runtime data
+data.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
