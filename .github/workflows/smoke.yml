@@ -1,0 +1,48 @@
+name: Smoke test (production)
+
+# Jonli saytni kuzatadi — bugungidek "jimgina buzilish"ni avtomatik ushlaydi.
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 * * * *' # har soatda
+  workflow_dispatch: {} # qo'lda ishga tushirish
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vercel deploy'ini kutish (faqat push'da)
+        if: github.event_name == 'push'
+        run: sleep 120
+
+      - name: Production endpointlarni tekshirish
+        run: |
+          fail=0
+          check() {
+            name="$1"; url="$2"; expect="$3"
+            code=$(curl -s -o /dev/null -w "%{http_code}" -m 30 "$url")
+            if [ "$code" = "$expect" ]; then
+              echo "✅ $name: $code"
+            else
+              echo "❌ $name: $code (kutilgan $expect) — $url"
+              fail=1
+            fi
+          }
+
+          check "web zyff.uz"     "https://zyff.uz/"                  "200"
+          check "backend health"  "https://libos-api.vercel.app/health" "200"
+          check "www -> zyff.uz"   "https://www.zyff.uz/"             "308"
+
+          # Eng muhim: sitemap mahsulotlarni o'z ichiga oladimi?
+          # (web -> backend -> DB butun zanjir ishlayotganini isbotlaydi)
+          sm=$(curl -sL -m 30 "https://zyff.uz/sitemap.xml")
+          if echo "$sm" | grep -q "/product/"; then
+            count=$(echo "$sm" | grep -c "/product/")
+            echo "✅ sitemap: $count ta mahsulot URL"
+          else
+            echo "❌ sitemap'da mahsulot YO'Q — data qatlami buzilgan bo'lishi mumkin (NEXT_PUBLIC_API_URL?)"
+            fail=1
+          fi
+
+          exit $fail

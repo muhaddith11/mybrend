@@ -1,0 +1,40 @@
+name: CI
+
+# Har push va PR'da build + typecheck — buzuq kod main'ga (va Vercel'ga) chiqmasin
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: brend/libos
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: brend/libos/package-lock.json
+
+      - name: Install deps
+        run: npm install --legacy-peer-deps
+
+      - name: Backend typecheck
+        run: |
+          cd backend
+          npx prisma generate
+          npx tsc -p tsconfig.json --noEmit
+
+      - name: Web build
+        env:
+          # Build env validatsiyasini o'tkazish uchun (haqiqiy publik backend manzili)
+          NEXT_PUBLIC_API_URL: https://libos-api.vercel.app/api
+        run: |
+          cd apps/web
+          npx next build
