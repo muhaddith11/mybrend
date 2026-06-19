@@ -23,7 +23,25 @@ const prisma = new PrismaClient()
 const app = Fastify({ logger: { level: 'info' } })
 
 // Pluginlar
-app.register(cors, { origin: true })
+// CORS — faqat o'z saytlarimiz API'ni chaqira olsin (oldin har qanday sayt ruxsat edi)
+app.register(cors, {
+  origin(origin, cb) {
+    // Origin yo'q (native app, curl, server-to-server) → ruxsat
+    if (!origin) return cb(null, true)
+    try {
+      const { hostname } = new URL(origin)
+      const ok =
+        hostname === 'zyff.uz' ||
+        hostname.endsWith('.zyff.uz') || // www, admin va boshqa subdomenlar
+        hostname.endsWith('.vercel.app') || // Vercel deploylar: web, admin, preview
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' // lokal dev
+      cb(null, ok)
+    } catch {
+      cb(null, false)
+    }
+  },
+})
 app.register(jwt, { secret: env.JWT_SECRET })
 
 // Global dekoratorlar
