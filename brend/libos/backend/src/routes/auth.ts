@@ -22,7 +22,6 @@ export default async function authRoutes(app: FastifyInstance) {
     })
 
     await sendSms(phone, `ZYFF tasdiqlash kodi: ${code}`)
-    console.log(`OTP ${phone}: ${code}`)
     return reply.send({ success: true, message: 'Kod yuborildi' })
   })
 

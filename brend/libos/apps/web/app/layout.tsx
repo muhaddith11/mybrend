@@ -1,3 +1,4 @@
+import '../lib/env' // boot/build'da env'ni tekshiradi (fail-fast)
 import type { Metadata } from 'next'
 import './globals.css'
 import { Providers } from '../components/Providers'

@@ -2,6 +2,7 @@ import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
 import { PrismaClient } from '@prisma/client'
+import { env } from './env.js' // boot'da env'ni tekshiradi (fail-fast)
 
 // Strip BOM that Windows/PowerShell can inject into env vars
 if (process.env.DATABASE_URL) {
@@ -23,7 +24,7 @@ const app = Fastify({ logger: { level: 'info' } })
 
 // Pluginlar
 app.register(cors, { origin: true })
-app.register(jwt, { secret: process.env.JWT_SECRET ?? 'libos-dev-secret' })
+app.register(jwt, { secret: env.JWT_SECRET })
 
 // Global dekoratorlar
 app.decorate('prisma', prisma)
@@ -60,13 +61,13 @@ export default async function handler(req: any, res: any) {
 }
 
 // Lokal dev uchun
-if (process.env.NODE_ENV !== 'production' || process.env.LOCAL_SERVER) {
+if (env.NODE_ENV !== 'production' || process.env.LOCAL_SERVER) {
   const start = async () => {
     try {
       await prisma.$connect()
       console.log('✅ PostgreSQL ulandi')
-      await app.listen({ port: Number(process.env.PORT ?? 3001), host: '0.0.0.0' })
-      console.log(`🚀 Libos backend: http://localhost:${process.env.PORT ?? 3001}`)
+      await app.listen({ port: env.PORT, host: '0.0.0.0' })
+      console.log(`🚀 Libos backend: http://localhost:${env.PORT}`)
     } catch (err) {
       app.log.error(err)
       await prisma.$disconnect()
