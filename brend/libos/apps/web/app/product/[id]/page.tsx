@@ -1,165 +1,80 @@
-'use client'
-import { useParams } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
-import Link from 'next/link'
-import Image from 'next/image'
+import type { Metadata } from 'next'
+import { cache } from 'react'
 import { api } from '@libos/shared'
-import { useCartStore } from '../../../store/cart'
-import { useAuthStore } from '../../../store/auth'
-import styles from './page.module.css'
+import type { Product, Store } from '@libos/shared'
+import { ProductView } from './ProductView'
 
-export default function ProductPage() {
-  const { id } = useParams<{ id: string }>()
-  const addItem = useCartStore(s => s.addItem)
-  const openLogin = useAuthStore(s => s.openLogin)
+// Server'da render — Google bo'sh emas, to'liq HTML ko'radi. 5 daqiqada yangilanadi.
+export const revalidate = 300
 
-  const { data: product, isLoading } = useQuery({
-    queryKey: ['product', id],
-    queryFn: () => api.products.getById(id),
-  })
+type ProductFull = Product & { store?: Store }
 
-  const [selectedImg, setSelectedImg] = useState(0)
-  const [selectedSize, setSelectedSize] = useState<string | null>(null)
-  const [selectedColor, setSelectedColor] = useState<string | null>(null)
-  const [added, setAdded] = useState(false)
-
-  if (isLoading) return <div className={styles.loading}>Yuklanmoqda...</div>
-  if (!product) return <div className={styles.notFound}>Mahsulot topilmadi</div>
-
-  const store = product.store
-  const theme = store?.themeColor ?? '#534AB7'
-  const images: string[] = product.images ?? []
-
-  // Unique sizes & colors from variants
-  const sizes = [...new Set((product.variants ?? []).map((v: any) => v.size).filter(Boolean))]
-  const colors = [...new Set((product.variants ?? []).map((v: any) => v.color).filter(Boolean))]
-
-  function handleAddToCart() {
-    if (!product) return
-    addItem({
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      image: images[0],
-      storeId: store?.id ?? '',
-      storeName: store?.name ?? '',
-      storeSlug: store?.slug ?? '',
-      size: selectedSize ?? undefined,
-      color: selectedColor ?? undefined,
-    })
-    setAdded(true)
-    setTimeout(() => setAdded(false), 2000)
+// cache() — generateMetadata va Page bir so'rovda bitta fetch ishlatadi
+const getProduct = cache(async (id: string): Promise<ProductFull | null> => {
+  try {
+    return await api.products.getById(id)
+  } catch {
+    return null
   }
+})
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params
+  const p = await getProduct(id)
+  if (!p) return { title: 'Mahsulot topilmadi' }
+
+  const title = p.nameUz || p.name
+  const desc = (
+    p.description?.trim() ||
+    `${title}${p.store?.name ? ` — ${p.store.name}` : ''}. ZYFF orqali Qo'qonda xarid qiling.`
+  ).slice(0, 160)
+  const img = p.images?.[0]
+
+  return {
+    title,
+    description: desc,
+    alternates: { canonical: `/product/${id}` },
+    openGraph: {
+      title,
+      description: desc,
+      type: 'website',
+      url: `/product/${id}`,
+      images: img ? [{ url: img }] : undefined,
+    },
+  }
+}
+
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const product = await getProduct(id)
+
+  const jsonLd = product
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: product.nameUz || product.name,
+        description: product.description || undefined,
+        image: product.images?.length ? product.images : undefined,
+        sku: product.sku || undefined,
+        ...(product.store ? { brand: { '@type': 'Brand', name: product.store.name } } : {}),
+        offers: {
+          '@type': 'Offer',
+          price: product.price,
+          priceCurrency: 'UZS',
+          availability: (product.inStock ?? true)
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/OutOfStock',
+          url: `https://zyff.uz/product/${id}`,
+        },
+      }
+    : null
 
   return (
-    <div className="container" style={{ padding: '2rem 1rem 5rem' }}>
-      {/* Breadcrumb */}
-      <nav className={styles.breadcrumb}>
-        <Link href="/">Bosh sahifa</Link>
-        {store && <><span>/</span><Link href={`/store/${store.slug}`}>{store.name}</Link></>}
-        <span>/</span>
-        <span>{product.name}</span>
-      </nav>
-
-      <div className={styles.layout}>
-        {/* Images */}
-        <div className={styles.images}>
-          <div className={styles.mainImg}>
-            {images[selectedImg] ? (
-              <Image src={images[selectedImg]} alt={product.name} fill className={styles.img} />
-            ) : (
-              <div className={styles.imgFallback} style={{ color: theme }}>{product.name.charAt(0)}</div>
-            )}
-          </div>
-          {images.length > 1 && (
-            <div className={styles.thumbs}>
-              {images.map((src, i) => (
-                <button
-                  key={i}
-                  className={`${styles.thumb} ${selectedImg === i ? styles.thumbActive : ''}`}
-                  style={selectedImg === i ? { borderColor: theme } : {}}
-                  onClick={() => setSelectedImg(i)}
-                >
-                  <Image src={src} alt="" fill className={styles.img} />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Details */}
-        <div className={styles.details}>
-          {store && (
-            <Link href={`/store/${store.slug}`} className={styles.storeLink} style={{ color: theme }}>
-              ← {store.name}
-            </Link>
-          )}
-          <h1 className={styles.name}>{product.name}</h1>
-          <p className={styles.price} style={{ color: theme }}>
-            {product.price.toLocaleString()} so'm
-          </p>
-
-          {product.description && (
-            <p className={styles.desc}>{product.description}</p>
-          )}
-
-          {/* Sizes */}
-          {sizes.length > 0 && (
-            <div className={styles.variantSection}>
-              <p className={styles.variantLabel}>O'lcham</p>
-              <div className={styles.variantRow}>
-                {sizes.map((s: string) => (
-                  <button
-                    key={s}
-                    className={`${styles.variantBtn} ${selectedSize === s ? styles.variantActive : ''}`}
-                    style={selectedSize === s ? { borderColor: theme, background: theme, color: '#fff' } : {}}
-                    onClick={() => setSelectedSize(s === selectedSize ? null : s)}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Colors */}
-          {colors.length > 0 && (
-            <div className={styles.variantSection}>
-              <p className={styles.variantLabel}>Rang</p>
-              <div className={styles.variantRow}>
-                {colors.map((c: string) => (
-                  <button
-                    key={c}
-                    className={`${styles.variantBtn} ${selectedColor === c ? styles.variantActive : ''}`}
-                    style={selectedColor === c ? { borderColor: theme, background: theme, color: '#fff' } : {}}
-                    onClick={() => setSelectedColor(c === selectedColor ? null : c)}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Stock */}
-          <p className={styles.stock}>
-            {(product.inStock ?? true)
-              ? <span className={styles.inStock}>✓ Mavjud</span>
-              : <span className={styles.outStock}>Tugagan</span>}
-          </p>
-
-          {/* Add to cart */}
-          <button
-            className={styles.addBtn}
-            style={{ background: theme }}
-            onClick={handleAddToCart}
-            disabled={product.inStock === false}
-          >
-            {added ? '✓ Savatga qo\'shildi!' : '🛍 Savatga qo\'shish'}
-          </button>
-        </div>
-      </div>
-    </div>
+    <>
+      {jsonLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      )}
+      <ProductView id={id} initialProduct={product} />
+    </>
   )
 }
