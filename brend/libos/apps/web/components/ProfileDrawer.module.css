@@ -16,6 +16,8 @@
   top: 0;
   right: 0;
   bottom: 0;
+  height: 100dvh;        /* mobil dinamik viewport — to'liq balandlik kafolati */
+  max-height: 100dvh;
   width: 100%;
   background: var(--surface);
   z-index: 200;
@@ -58,6 +60,7 @@
   flex: 1;
   min-height: 0; /* flexbox scroll: kontentdan past qisqarsin, shunda overflow ishlaydi */
   overflow-y: auto;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   padding: 1.25rem 1.5rem 2rem;
   display: flex;
