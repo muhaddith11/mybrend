@@ -31,7 +31,7 @@ function jsonRpcError(id: string | number, error: { code: number; message: objec
   return { jsonrpc: '2.0', id, error: { ...error, data: null } }
 }
 
-function checkAuth(req: any): boolean {
+export function checkAuth(req: any): boolean {
   const auth = req.headers.authorization ?? ''
   if (!auth.startsWith('Basic ')) return false
 

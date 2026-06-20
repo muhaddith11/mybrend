@@ -20,7 +20,7 @@ const CLICK_ERROR = {
   INVALID_REQUEST: -9,
 }
 
-function checkSign(params: Record<string, string>, secretKey: string, action: number): boolean {
+export function checkSign(params: Record<string, string>, secretKey: string, action: number): boolean {
   const {
     click_trans_id, service_id, click_paydoc_id,
     merchant_trans_id, amount, action: act, sign_time, sign_string,
