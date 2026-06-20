@@ -21,9 +21,15 @@ export const metadata: Metadata = {
   keywords: ['ZYFF', 'zyff.uz', 'Qoʻqon', 'kiyim', 'kiyim doʻkoni', 'online xarid', 'marketplace', "O'zbekiston", 'Asma', 'Boosner', 'One Pro'],
   applicationName: 'ZYFF',
   alternates: { canonical: '/' },
-  // Google Search Console — URL-prefiks propertysini HTML-teg orqali tasdiqlash
-  // (DNS usuli o'jarlik qilgani uchun zaxira yo'l). Token ommaviy — HTML'da ko'rinadi.
-  verification: { google: 'kKiisl4ii5e7l9lM_HOzilWaUvYrstd1PiOr' },
+  // Google Search Console — URL-prefiks propertysini HTML-teg orqali tasdiqlash.
+  // HTML-teg tokeni DNS tokenidan farq qiladi (oxirida qo'shimcha). Token ommaviy.
+  // Agar transkripsiyada xato bo'lsa, Vercel'da NEXT_PUBLIC_GSC_VERIFICATION ga
+  // to'g'ridan-to'g'ri paste qilib (kod o'zgartmasdan) tuzatish mumkin.
+  verification: {
+    google:
+      process.env.NEXT_PUBLIC_GSC_VERIFICATION ||
+      'kKiisl4ii5e7l9lM_HOzilWaUvYrstd1PiOr4uhurUg',
+  },
   openGraph: {
     type: 'website',
     siteName: 'ZYFF',
