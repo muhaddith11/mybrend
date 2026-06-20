@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { PrismaClient, DeliveryType } from '@prisma/client'
+import { PrismaClient, Prisma, DeliveryType } from '@prisma/client'
 import { sendOrderNotification } from '../plugins/telegram'
 
 const createOrderSchema = z.object({
@@ -39,24 +39,23 @@ const storeInclude = {
 
 type OrderLine = { productId: string; quantity: number; size?: string; color?: string }
 
-// Buyurtma qatorlariga mos variant stokini kamaytiradi (best-effort).
-// Mos variant topilib, stoki bor bo'lsagina kamaytiramiz va hech qachon manfiyga
-// tushirmaymiz. Variant topilmasa (admin miqdor kiritmagan) — buyurtmani bloklamaymiz.
-async function decrementStock(prisma: PrismaClient, items: OrderLine[]) {
+// Buyurtma qatorlariga mos variant stokini kamaytiradi.
+// Atomik va race-xavfsiz: `quantity: { gte }` sharti DB darajasida tekshiriladi,
+// shuning uchun ikki parallel so'rov bir vaqtda oxirgi mahsulotni olishga
+// urinsa ham stok HECH QACHON manfiyga tushmaydi — faqat biri kamaytira oladi.
+// Variant topilmasa yoki stok yetmasa — jimgina o'tkazib yuboramiz (best-effort:
+// buyurtma stok yetishmovchiligi sababli bloklanmaydi).
+// Buyurtma yaratish bilan bitta tranzaksiyada chaqiriladi — shuning uchun `tx`.
+async function decrementStock(tx: Prisma.TransactionClient, items: OrderLine[]) {
   for (const it of items) {
-    const variant = await prisma.productVariant.findFirst({
+    await tx.productVariant.updateMany({
       where: {
         productId: it.productId,
         size: it.size ?? null,
         color: it.color ?? null,
-        quantity: { gt: 0 },
+        quantity: { gte: it.quantity },
       },
-    })
-    if (!variant) continue
-    const dec = Math.min(variant.quantity, it.quantity) // manfiyga tushmasin
-    await prisma.productVariant.update({
-      where: { id: variant.id },
-      data: { quantity: { decrement: dec } },
+      data: { quantity: { decrement: it.quantity } },
     })
   }
 }
@@ -92,42 +91,47 @@ export default async function ordersRoutes(app: FastifyInstance) {
       return sum + (product?.price ?? 0) * item.quantity
     }, 0)
 
-    const order = await prisma.order.create({
-      data: {
-        userId: user.id,
-        storeId: store.id,
-        deliveryType: 'DELIVERY' as DeliveryType,
-        customerName: body.customerName,
-        address: body.address,
-        lat: body.lat,
-        lng: body.lng,
-        note: body.note,
-        paymentMethod: body.paymentMethod,
-        totalPrice,
-        items: {
-          create: body.items.map(item => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            size: item.size,
-            color: item.color,
-            price: products.find(p => p.id === item.productId)?.price ?? 0,
-          })),
+    // Buyurtma yaratish va stok kamaytirish — bitta atomik tranzaksiyada.
+    // Birortasi xato qilsa, ikkalasi ham bekor bo'ladi (qisman yozuv bo'lmaydi).
+    const order = await prisma.$transaction(async (tx) => {
+      const created = await tx.order.create({
+        data: {
+          userId: user.id,
+          storeId: store.id,
+          deliveryType: 'DELIVERY' as DeliveryType,
+          customerName: body.customerName,
+          address: body.address,
+          lat: body.lat,
+          lng: body.lng,
+          note: body.note,
+          paymentMethod: body.paymentMethod,
+          totalPrice,
+          items: {
+            create: body.items.map(item => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              size: item.size,
+              color: item.color,
+              price: products.find(p => p.id === item.productId)?.price ?? 0,
+            })),
+          },
         },
-      },
-      include: {
-        items: { include: { product: true } },
-        store: { select: { id: true, name: true, slug: true, logo: true, themeColor: true, telegramChatId: true } },
-      },
+        include: {
+          items: { include: { product: true } },
+          store: { select: { id: true, name: true, slug: true, logo: true, themeColor: true, telegramChatId: true } },
+        },
+      })
+      await decrementStock(tx, body.items)
+      return created
     })
 
-    // Stokni kamaytiramiz (best-effort — xato bo'lsa buyurtma baribir o'tadi)
-    await decrementStock(prisma, body.items).catch(() => {})
-
+    // Telegram xabari — buyurtmani bloklamaydi (fire-and-forget), lekin xato
+    // bo'lsa jimgina yutilmaydi, logga yoziladi (kuzatib turish uchun).
     sendOrderNotification({
       ...order,
       chatId: order.store.telegramChatId,
       user: { phone, name: body.customerName },
-    }).catch(() => {})
+    }).catch((err) => req.log.error({ err, orderId: order.id }, 'Telegram buyurtma xabari yuborilmadi'))
 
     return reply.status(201).send({ ok: true, orderId: order.id })
   })
@@ -153,38 +157,41 @@ export default async function ordersRoutes(app: FastifyInstance) {
 
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { phone: true, name: true } })
 
-    const order = await prisma.order.create({
-      data: {
-        userId,
-        storeId: body.storeId,
-        deliveryType: body.deliveryType as DeliveryType,
-        address: body.address,
-        note: body.note,
-        totalPrice,
-        items: {
-          create: body.items.map(item => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            size: item.size,
-            color: item.color,
-            price: products.find(p => p.id === item.productId)?.price ?? 0,
-          })),
+    // Buyurtma + stok — bitta atomik tranzaksiyada (qisman yozuv bo'lmasin).
+    const order = await prisma.$transaction(async (tx) => {
+      const created = await tx.order.create({
+        data: {
+          userId,
+          storeId: body.storeId,
+          deliveryType: body.deliveryType as DeliveryType,
+          address: body.address,
+          note: body.note,
+          totalPrice,
+          items: {
+            create: body.items.map(item => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              size: item.size,
+              color: item.color,
+              price: products.find(p => p.id === item.productId)?.price ?? 0,
+            })),
+          },
         },
-      },
-      include: {
-        items: { include: { product: true } },
-        store: { select: { id: true, name: true, slug: true, logo: true, themeColor: true, telegramChatId: true } },
-      },
+        include: {
+          items: { include: { product: true } },
+          store: { select: { id: true, name: true, slug: true, logo: true, themeColor: true, telegramChatId: true } },
+        },
+      })
+      await decrementStock(tx, body.items)
+      return created
     })
 
-    // Stokni kamaytiramiz (best-effort)
-    await decrementStock(prisma, body.items).catch(() => {})
-
+    // Telegram xabari — fire-and-forget, xato logga yoziladi
     sendOrderNotification({
       ...order,
       chatId: order.store.telegramChatId,
       user: user ?? { phone: 'Noma\'lum', name: null },
-    }).catch(() => {})
+    }).catch((err) => req.log.error({ err, orderId: order.id }, 'Telegram buyurtma xabari yuborilmadi'))
 
     return reply.status(201).send(order)
   })

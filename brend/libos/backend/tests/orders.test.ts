@@ -104,7 +104,7 @@ describe('POST /api/orders/guest — narx server tomonda hisoblanadi', () => {
     await app.close()
   })
 
-  test('stok manfiyga tushmaydi — so\'ralgan miqdor stokdan koʻp boʻlsa ham buyurtma oʻtadi', async () => {
+  test('stok yetmasa kamaytirilmaydi va buyurtma baribir oʻtadi (race-xavfsiz)', async () => {
     const seedV = {
       ...seed,
       variants: [{ id: 'v1', productId: 'p1', size: 'M', color: 'Qora', quantity: 1 }],
@@ -121,8 +121,34 @@ describe('POST /api/orders/guest — narx server tomonda hisoblanadi', () => {
         items: [{ productId: 'p1', quantity: 10, size: 'M', color: 'Qora' }],
       },
     })
-    assert.equal(res.statusCode, 201) // bloklanmaydi
-    assert.equal(fake.variants[0].quantity, 0) // 1 dan ko'pi yechilmaydi (manfiy emas)
+    assert.equal(res.statusCode, 201) // bloklanmaydi (best-effort)
+    // Stok yetmagani uchun (gte:10 > 1) variant umuman o'zgartirilmaydi —
+    // bu race-xavfsiz: hech qachon manfiyga tushmaydi.
+    assert.equal(fake.variants[0].quantity, 1)
+    await app.close()
+  })
+
+  test('parallel ikki buyurtma oxirgi mahsulotni olsa — stok manfiyga tushmaydi', async () => {
+    const seedV = {
+      ...seed,
+      variants: [{ id: 'v1', productId: 'p1', size: 'M', color: 'Qora', quantity: 1 }],
+    }
+    const { app, fake } = await buildOrdersTestApp(seedV)
+    const payload = {
+      storeSlug: 'asma',
+      customerName: 'Ali',
+      phone: '+998901230003',
+      items: [{ productId: 'p1', quantity: 1, size: 'M', color: 'Qora' }],
+    }
+    // Ikki so'rovni bir vaqtda yuboramiz (oxirgi 1 dona uchun poyga)
+    const [r1, r2] = await Promise.all([
+      app.inject({ method: 'POST', url: '/api/orders/guest', headers: json, payload }),
+      app.inject({ method: 'POST', url: '/api/orders/guest', headers: json, payload }),
+    ])
+    assert.equal(r1.statusCode, 201)
+    assert.equal(r2.statusCode, 201)
+    assert.equal(fake.createdOrders.length, 2) // ikkala buyurtma ham yaratiladi
+    assert.equal(fake.variants[0].quantity, 0) // 1 marta kamaydi, manfiyga tushmaydi
     await app.close()
   })
 

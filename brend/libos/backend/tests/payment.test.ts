@@ -6,7 +6,7 @@ import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { checkSign } from '../src/routes/payment/click.js'
 import { checkAuth } from '../src/routes/payment/payme.js'
-import { buildPaymentTestApp } from './helpers/paymentApp.js'
+import { buildPaymentTestApp, createPaymeFakePrisma } from './helpers/paymentApp.js'
 
 // Bu modullar import paytida env o'qimaydi (faqat funksiya chaqiruvida yoki
 // route registratsiyasida). Shuning uchun env'ni shu yerda — test'lar
@@ -124,6 +124,138 @@ describe('Payme webhook — ruxsatsiz soʻrov rad etiladi', () => {
     })
     assert.equal(res.statusCode, 401)
     assert.equal(res.json().error.code, -32504)
+    await app.close()
+  })
+})
+
+// ─── Payme webhook biznes-mantig'i (auth o'tgandan keyin) ─────────────────────
+// Buyurtma narxi 500 so'm → Payme kutadigan summa 50000 tiyin.
+const PAYME_AUTH = { ...json, authorization: basicAuth('Paycom', PAYME_SECRET) }
+const EXPECTED_TIYIN = 500 * 100
+
+function paymeSetup() {
+  return createPaymeFakePrisma({ orders: [{ id: 'order_1', totalPrice: 500 }] })
+}
+function paymeCall(app: any, body: object) {
+  return app.inject({ method: 'POST', url: '/api/payment/payme/webhook', headers: PAYME_AUTH, payload: body })
+}
+
+describe('Payme CheckPerformTransaction', () => {
+  test('toʻgʻri summa → allow: true', async () => {
+    const fake = paymeSetup()
+    const { app } = await buildPaymentTestApp(fake.prisma)
+    const res = await paymeCall(app, {
+      method: 'CheckPerformTransaction',
+      params: { amount: EXPECTED_TIYIN, account: { order_id: 'order_1' } },
+      id: 1,
+    })
+    assert.equal(res.json().result.allow, true)
+    await app.close()
+  })
+
+  test('notoʻgʻri summa → -31001 (firibgarlikka qarshi)', async () => {
+    const fake = paymeSetup()
+    const { app } = await buildPaymentTestApp(fake.prisma)
+    const res = await paymeCall(app, {
+      method: 'CheckPerformTransaction',
+      params: { amount: 1, account: { order_id: 'order_1' } }, // soxta past summa
+      id: 1,
+    })
+    assert.equal(res.json().error.code, -31001)
+    await app.close()
+  })
+
+  test('mavjud boʻlmagan buyurtma → -31050', async () => {
+    const fake = paymeSetup()
+    const { app } = await buildPaymentTestApp(fake.prisma)
+    const res = await paymeCall(app, {
+      method: 'CheckPerformTransaction',
+      params: { amount: EXPECTED_TIYIN, account: { order_id: 'yoq' } },
+      id: 1,
+    })
+    assert.equal(res.json().error.code, -31050)
+    await app.close()
+  })
+})
+
+describe('Payme hayot-sikli: Create → Perform → Check', () => {
+  test('toʻliq oqim va idempotentlik', async () => {
+    const fake = paymeSetup()
+    const { app } = await buildPaymentTestApp(fake.prisma)
+    const account = { order_id: 'order_1' }
+
+    // 1. CreateTransaction → state 1, tranzaksiya ID qaytadi
+    const create = await paymeCall(app, {
+      method: 'CreateTransaction',
+      params: { id: 'ptx1', time: 1700000000000, amount: EXPECTED_TIYIN, account },
+      id: 1,
+    })
+    assert.equal(create.json().result.state, 1)
+    const txId = create.json().result.transaction
+    assert.ok(txId)
+
+    // 1b. CreateTransaction qayta chaqirilsa (idempotent) → o'sha tranzaksiya, state 1
+    const createAgain = await paymeCall(app, {
+      method: 'CreateTransaction',
+      params: { id: 'ptx1', time: 1700000000000, amount: EXPECTED_TIYIN, account },
+      id: 2,
+    })
+    assert.equal(createAgain.json().result.transaction, txId)
+    assert.equal(createAgain.json().result.state, 1)
+
+    // 2. PerformTransaction → state 2, buyurtma CONFIRMED
+    const perform = await paymeCall(app, { method: 'PerformTransaction', params: { id: 'ptx1' }, id: 3 })
+    assert.equal(perform.json().result.state, 2)
+    assert.equal(fake.orders[0].status, 'CONFIRMED')
+    assert.equal(fake.payments[0].status, 'PAID')
+
+    // 2b. PerformTransaction qayta (idempotent) → yana state 2, ikki marta to'lanmaydi
+    const performAgain = await paymeCall(app, { method: 'PerformTransaction', params: { id: 'ptx1' }, id: 4 })
+    assert.equal(performAgain.json().result.state, 2)
+
+    // 3. CheckTransaction → joriy holat state 2
+    const check = await paymeCall(app, { method: 'CheckTransaction', params: { id: 'ptx1' }, id: 5 })
+    assert.equal(check.json().result.state, 2)
+    await app.close()
+  })
+
+  test('notoʻgʻri summa bilan CreateTransaction → -31001', async () => {
+    const fake = paymeSetup()
+    const { app } = await buildPaymentTestApp(fake.prisma)
+    const res = await paymeCall(app, {
+      method: 'CreateTransaction',
+      params: { id: 'ptx2', time: 1700000000000, amount: 1, account: { order_id: 'order_1' } },
+      id: 1,
+    })
+    assert.equal(res.json().error.code, -31001)
+    assert.equal(fake.payments.length, 0) // payment yaratilmasligi kerak
+    await app.close()
+  })
+})
+
+describe('Payme CancelTransaction', () => {
+  test('yaratilgan tranzaksiya bekor qilinadi → state -1', async () => {
+    const fake = paymeSetup()
+    const { app } = await buildPaymentTestApp(fake.prisma)
+    const account = { order_id: 'order_1' }
+
+    await paymeCall(app, {
+      method: 'CreateTransaction',
+      params: { id: 'ptx1', time: 1700000000000, amount: EXPECTED_TIYIN, account },
+      id: 1,
+    })
+    const cancel = await paymeCall(app, { method: 'CancelTransaction', params: { id: 'ptx1', reason: 5 }, id: 2 })
+    assert.equal(cancel.json().result.state, -1)
+    assert.equal(fake.payments[0].status, 'CANCELLED')
+    assert.equal(fake.orders[0].status, 'CANCELLED')
+    await app.close()
+  })
+
+  test('mavjud boʻlmagan tranzaksiya → -31003', async () => {
+    const fake = paymeSetup()
+    const { app } = await buildPaymentTestApp(fake.prisma)
+    const res = await paymeCall(app, { method: 'CancelTransaction', params: { id: 'yoq', reason: 5 }, id: 1 })
+    assert.equal(res.json().error.code, -31003)
     await app.close()
   })
 })

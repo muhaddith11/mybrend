@@ -60,6 +60,23 @@ export function createOrdersFakePrisma(seed: { products: SeedProduct[]; stores: 
         if (v && data.quantity?.decrement != null) v.quantity -= data.quantity.decrement
         return v
       },
+      // Race-xavfsiz kamaytirish: stok yetarli (gte) variantlarnigina yangilaydi.
+      // orders.ts'dagi yangi decrementStock shu metoddan foydalanadi.
+      async updateMany({ where, data }: any) {
+        let count = 0
+        for (const v of variants) {
+          const match =
+            v.productId === where.productId &&
+            (v.size ?? null) === (where.size ?? null) &&
+            (v.color ?? null) === (where.color ?? null) &&
+            v.quantity >= (where.quantity?.gte ?? 0)
+          if (match) {
+            if (data.quantity?.decrement != null) v.quantity -= data.quantity.decrement
+            count++
+          }
+        }
+        return { count }
+      },
     },
     order: {
       async create({ data }: any) {
@@ -79,7 +96,11 @@ export function createOrdersFakePrisma(seed: { products: SeedProduct[]; stores: 
         return order
       },
     },
-  }
+  } as any
+
+  // Interaktiv tranzaksiya: soxta nusxada xuddi shu prisma'ni `tx` sifatida
+  // uzatamiz (rollback'siz, lekin route mantig'ini tekshirish uchun yetarli).
+  prisma.$transaction = async (fn: any) => fn(prisma)
 
   return { prisma, createdOrders, users, variants }
 }

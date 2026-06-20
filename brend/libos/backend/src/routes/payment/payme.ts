@@ -1,6 +1,27 @@
 import type { FastifyInstance } from 'fastify'
 import { PrismaClient } from '@prisma/client'
 
+// JSON-RPC so'rovining `id` maydoni — string yoki son bo'lishi mumkin.
+type JsonRpcId = string | number
+
+// Payme webhook `params` maydonida keladigan qiymatlar (rasmiy protokol).
+// Hammasi ixtiyoriy: metodga qarab faqat ba'zilari to'ldiriladi, shuning uchun
+// har birini ishlatishdan oldin tekshiramiz.
+type PaymeParams = {
+  id?: string                    // Payme tranzaksiya ID
+  account?: { order_id?: string } // bizning buyurtma ID
+  amount?: number                // tiyin
+  time?: number                  // Payme yaratish vaqti (ms)
+  reason?: number                // bekor qilish sababi
+  from?: number                  // GetStatement: boshlanish (ms)
+  to?: number                    // GetStatement: tugash (ms)
+}
+
+// checkAuth faqat `authorization` sarlavhasiga muhtoj — to'liq FastifyRequest
+// shart emas, shuning uchun minimal struktura bilan tiplaymiz (test ham shu
+// shaklda chaqiradi).
+type AuthLike = { headers: { authorization?: string } }
+
 // Payme xato kodlari (rasmiy hujjatdan)
 const PAYME_ERROR = {
   PARSE_ERROR:          { code: -32700, message: { ru: 'Ошибка парсинга', uz: 'Parse xatosi' } },
@@ -31,7 +52,7 @@ function jsonRpcError(id: string | number, error: { code: number; message: objec
   return { jsonrpc: '2.0', id, error: { ...error, data: null } }
 }
 
-export function checkAuth(req: any): boolean {
+export function checkAuth(req: AuthLike): boolean {
   const auth = req.headers.authorization ?? ''
   if (!auth.startsWith('Basic ')) return false
 
@@ -60,8 +81,8 @@ export default async function paymeRoutes(app: FastifyInstance) {
 
     const { method, params, id } = req.body as {
       method: string
-      params: Record<string, any>
-      id: string | number
+      params: PaymeParams
+      id: JsonRpcId
     }
 
     app.log.info({ method, params }, 'Payme webhook')
@@ -118,9 +139,9 @@ export default async function paymeRoutes(app: FastifyInstance) {
 
 // ─── Payme metodlari ───────────────────────────────────────────────────────────
 
-async function checkPerformTransaction(prisma: PrismaClient, id: any, params: any) {
-  const orderId: string = params.account?.order_id
-  const amount: number = params.amount // tiyin
+async function checkPerformTransaction(prisma: PrismaClient, id: JsonRpcId, params: PaymeParams) {
+  const orderId = params.account?.order_id
+  const amount = params.amount // tiyin
 
   if (!orderId) return jsonRpcError(id, PAYME_ERROR.INVALID_ACCOUNT)
 
@@ -140,11 +161,13 @@ async function checkPerformTransaction(prisma: PrismaClient, id: any, params: an
   return jsonRpcResponse(id, { allow: true })
 }
 
-async function createTransaction(prisma: PrismaClient, id: any, params: any) {
-  const orderId: string = params.account?.order_id
-  const paymeTransId: string = params.id
-  const amount: number = params.amount
-  const time: number = params.time
+async function createTransaction(prisma: PrismaClient, id: JsonRpcId, params: PaymeParams) {
+  const orderId = params.account?.order_id
+  const paymeTransId = params.id ?? ''
+  const amount = params.amount
+  const time = params.time ?? 0
+
+  if (!orderId) return jsonRpcError(id, PAYME_ERROR.INVALID_ACCOUNT)
 
   const order = await prisma.order.findUnique({
     where: { id: orderId },
@@ -197,8 +220,8 @@ async function createTransaction(prisma: PrismaClient, id: any, params: any) {
   })
 }
 
-async function performTransaction(prisma: PrismaClient, id: any, params: any) {
-  const paymeTransId: string = params.id
+async function performTransaction(prisma: PrismaClient, id: JsonRpcId, params: PaymeParams) {
+  const paymeTransId = params.id ?? ''
 
   const payment = await prisma.payment.findUnique({ where: { paymeTransId } })
   if (!payment) return jsonRpcError(id, PAYME_ERROR.TRANSACTION_NOT_FOUND)
@@ -232,9 +255,9 @@ async function performTransaction(prisma: PrismaClient, id: any, params: any) {
   })
 }
 
-async function cancelTransaction(prisma: PrismaClient, id: any, params: any) {
-  const paymeTransId: string = params.id
-  const reason: number = params.reason
+async function cancelTransaction(prisma: PrismaClient, id: JsonRpcId, params: PaymeParams) {
+  const paymeTransId = params.id ?? ''
+  const reason = params.reason ?? null
 
   const payment = await prisma.payment.findUnique({ where: { paymeTransId } })
   if (!payment) return jsonRpcError(id, PAYME_ERROR.TRANSACTION_NOT_FOUND)
@@ -267,8 +290,8 @@ async function cancelTransaction(prisma: PrismaClient, id: any, params: any) {
   })
 }
 
-async function checkTransaction(prisma: PrismaClient, id: any, params: any) {
-  const paymeTransId: string = params.id
+async function checkTransaction(prisma: PrismaClient, id: JsonRpcId, params: PaymeParams) {
+  const paymeTransId = params.id ?? ''
 
   const payment = await prisma.payment.findUnique({ where: { paymeTransId } })
   if (!payment) return jsonRpcError(id, PAYME_ERROR.TRANSACTION_NOT_FOUND)
@@ -290,9 +313,9 @@ async function checkTransaction(prisma: PrismaClient, id: any, params: any) {
   })
 }
 
-async function getStatement(prisma: PrismaClient, id: any, params: any) {
-  const from: number = params.from
-  const to: number = params.to
+async function getStatement(prisma: PrismaClient, id: JsonRpcId, params: PaymeParams) {
+  const from = params.from ?? 0
+  const to = params.to ?? 0
 
   const payments = await prisma.payment.findMany({
     where: {

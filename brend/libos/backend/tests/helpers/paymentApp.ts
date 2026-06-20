@@ -23,6 +23,64 @@ export const throwingPrisma: any = new Proxy(
   }
 )
 
+// Payme webhook hayot-siklini (Create→Perform→Cancel) test qilish uchun
+// in-memory soxta prisma. payme.ts ishlatadigan order/payment metodlarini taqlid
+// qiladi. Auth o'tgandan keyingi biznes-mantiqni tekshirishga mo'ljallangan.
+type PaymeSeedOrder = { id: string; totalPrice: number; status?: string }
+
+export function createPaymeFakePrisma(seed: { orders: PaymeSeedOrder[] }) {
+  const orders: any[] = seed.orders.map((o) => ({ status: 'NEW', ...o }))
+  const payments: any[] = []
+  let pId = 1
+  const findOrder = (id: string) => orders.find((o) => o.id === id)
+
+  const prisma: any = {
+    order: {
+      async findUnique({ where, include }: any) {
+        const o = findOrder(where.id)
+        if (!o) return null
+        const result: any = { ...o }
+        if (include?.payment) result.payment = payments.find((p) => p.orderId === o.id) ?? null
+        return result
+      },
+      async update({ where, data }: any) {
+        const o = findOrder(where.id)
+        if (o) Object.assign(o, data)
+        return o ? { ...o } : null
+      },
+    },
+    payment: {
+      async findUnique({ where }: any) {
+        if (where.paymeTransId !== undefined)
+          return payments.find((p) => p.paymeTransId === where.paymeTransId) ?? null
+        if (where.orderId !== undefined) return payments.find((p) => p.orderId === where.orderId) ?? null
+        if (where.id !== undefined) return payments.find((p) => p.id === where.id) ?? null
+        return null
+      },
+      async upsert({ where, create, update }: any) {
+        const existing = payments.find((p) => p.orderId === where.orderId)
+        if (existing) {
+          Object.assign(existing, update)
+          return { ...existing }
+        }
+        const created = { id: 'pay_' + pId++, ...create }
+        payments.push(created)
+        return { ...created }
+      },
+      async update({ where, data }: any) {
+        const p = payments.find((x) => x.id === where.id)
+        if (p) Object.assign(p, data)
+        return p ? { ...p } : null
+      },
+      async findMany() {
+        return payments.map((p) => ({ ...p }))
+      },
+    },
+  }
+
+  return { prisma, orders, payments }
+}
+
 export async function buildPaymentTestApp(prisma: any = throwingPrisma) {
   const app = Fastify()
   app.decorate('prisma', prisma)
