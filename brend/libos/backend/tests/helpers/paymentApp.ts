@@ -28,7 +28,7 @@ export const throwingPrisma: any = new Proxy(
 // qiladi. Auth o'tgandan keyingi biznes-mantiqni tekshirishga mo'ljallangan.
 type PaymeSeedOrder = { id: string; totalPrice: number; status?: string }
 
-export function createPaymeFakePrisma(seed: { orders: PaymeSeedOrder[] }) {
+export function createPaymentFakePrisma(seed: { orders: PaymeSeedOrder[] }) {
   const orders: any[] = seed.orders.map((o) => ({ status: 'NEW', ...o }))
   const payments: any[] = []
   let pId = 1
@@ -68,7 +68,12 @@ export function createPaymeFakePrisma(seed: { orders: PaymeSeedOrder[] }) {
         return { ...created }
       },
       async update({ where, data }: any) {
-        const p = payments.find((x) => x.id === where.id)
+        // payme `where.id` bilan, click esa `where.orderId` bilan yangilaydi
+        const p = payments.find(
+          (x) =>
+            (where.id !== undefined && x.id === where.id) ||
+            (where.orderId !== undefined && x.orderId === where.orderId)
+        )
         if (p) Object.assign(p, data)
         return p ? { ...p } : null
       },

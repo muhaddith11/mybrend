@@ -6,7 +6,7 @@ import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { checkSign } from '../src/routes/payment/click.js'
 import { checkAuth } from '../src/routes/payment/payme.js'
-import { buildPaymentTestApp, createPaymeFakePrisma } from './helpers/paymentApp.js'
+import { buildPaymentTestApp, createPaymentFakePrisma } from './helpers/paymentApp.js'
 
 // Bu modullar import paytida env o'qimaydi (faqat funksiya chaqiruvida yoki
 // route registratsiyasida). Shuning uchun env'ni shu yerda — test'lar
@@ -134,7 +134,7 @@ const PAYME_AUTH = { ...json, authorization: basicAuth('Paycom', PAYME_SECRET) }
 const EXPECTED_TIYIN = 500 * 100
 
 function paymeSetup() {
-  return createPaymeFakePrisma({ orders: [{ id: 'order_1', totalPrice: 500 }] })
+  return createPaymentFakePrisma({ orders: [{ id: 'order_1', totalPrice: 500 }] })
 }
 function paymeCall(app: any, body: object) {
   return app.inject({ method: 'POST', url: '/api/payment/payme/webhook', headers: PAYME_AUTH, payload: body })
@@ -256,6 +256,84 @@ describe('Payme CancelTransaction', () => {
     const { app } = await buildPaymentTestApp(fake.prisma)
     const res = await paymeCall(app, { method: 'CancelTransaction', params: { id: 'yoq', reason: 5 }, id: 1 })
     assert.equal(res.json().error.code, -31003)
+    await app.close()
+  })
+})
+
+// ─── Click webhook biznes-mantig'i (imzo o'tgandan keyin) ─────────────────────
+// Click so'mda yuboradi: buyurtma narxi 50000 so'm → amount 50000.
+function clickSetup() {
+  return createPaymentFakePrisma({ orders: [{ id: 'order_1', totalPrice: 50000 }] })
+}
+function clickCall(app: any, params: Record<string, string>) {
+  return app.inject({ method: 'POST', url: '/api/payment/click/webhook', headers: json, payload: params })
+}
+// Imzoni har doim joriy params asosida qayta hisoblaymiz (action/amount o'zgarsa ham imzo to'g'ri qolsin)
+function signed(p: Record<string, string>): Record<string, string> {
+  return { ...p, sign_string: clickSign(p, CLICK_SECRET) }
+}
+
+describe('Click webhook Prepare (action=0)', () => {
+  test('toʻgʻri imzo + summa → SUCCESS (0) va PENDING payment yaratiladi', async () => {
+    const fake = clickSetup()
+    const { app } = await buildPaymentTestApp(fake.prisma)
+    const res = await clickCall(app, signed({ ...baseClick, action: '0' }))
+    const body = res.json()
+    assert.equal(body.error, 0)
+    assert.equal(body.merchant_prepare_id, 'order_1')
+    assert.equal(fake.payments[0].status, 'PENDING')
+    assert.equal(fake.payments[0].provider, 'CLICK')
+    await app.close()
+  })
+
+  test('summa mos kelmasa → INVALID_AMOUNT (-2), payment yaratilmaydi', async () => {
+    const fake = clickSetup()
+    const { app } = await buildPaymentTestApp(fake.prisma)
+    // Imzo to'g'ri (tampered summa bilan imzolangan), lekin summa buyurtmaga mos emas
+    const res = await clickCall(app, signed({ ...baseClick, action: '0', amount: '1' }))
+    assert.equal(res.json().error, -2)
+    assert.equal(fake.payments.length, 0)
+    await app.close()
+  })
+
+  test('mavjud boʻlmagan buyurtma → USER_NOT_FOUND (-5)', async () => {
+    const fake = clickSetup()
+    const { app } = await buildPaymentTestApp(fake.prisma)
+    const res = await clickCall(app, signed({ ...baseClick, action: '0', merchant_trans_id: 'yoq' }))
+    assert.equal(res.json().error, -5)
+    await app.close()
+  })
+})
+
+describe('Click webhook Complete (action=1)', () => {
+  test('Prepare → Complete → toʻlov PAID, buyurtma CONFIRMED', async () => {
+    const fake = clickSetup()
+    const { app } = await buildPaymentTestApp(fake.prisma)
+    await clickCall(app, signed({ ...baseClick, action: '0' })) // avval Prepare
+    const res = await clickCall(app, signed({ ...baseClick, action: '1', error: '0' }))
+    assert.equal(res.json().error, 0)
+    assert.equal(res.json().merchant_confirm_id, 'order_1')
+    assert.equal(fake.payments[0].status, 'PAID')
+    assert.equal(fake.orders[0].status, 'CONFIRMED')
+    await app.close()
+  })
+
+  test('Prepare qilinmasdan Complete → TRANSACTION_NOT_FOUND (-6)', async () => {
+    const fake = clickSetup()
+    const { app } = await buildPaymentTestApp(fake.prisma)
+    const res = await clickCall(app, signed({ ...baseClick, action: '1', error: '0' }))
+    assert.equal(res.json().error, -6)
+    await app.close()
+  })
+
+  test('Click xato yuborsa (error<0) → toʻlov va buyurtma CANCELLED', async () => {
+    const fake = clickSetup()
+    const { app } = await buildPaymentTestApp(fake.prisma)
+    await clickCall(app, signed({ ...baseClick, action: '0' }))
+    const res = await clickCall(app, signed({ ...baseClick, action: '1', error: '-5' }))
+    assert.equal(res.json().error, 0) // bekor qilish ham muvaffaqiyatli javob
+    assert.equal(fake.payments[0].status, 'CANCELLED')
+    assert.equal(fake.orders[0].status, 'CANCELLED')
     await app.close()
   })
 })
