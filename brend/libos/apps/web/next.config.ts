@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next'
+import { withSentryConfig } from '@sentry/nextjs'
 
 // Mahsulot rasmlari Supabase Storage'da saqlanadi. Hostni hamma joyda
 // ishlatiladigan env'dan olamiz — Supabase loyihasi o'zgarsa konfig avtomatik
@@ -25,4 +26,9 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default nextConfig
+// Sentry bilan o'raymiz. Source map yuklash uchun org/project slug + auth
+// token kerak (hozircha yo'q) — usiz ham runtime xatolar to'liq ushlanadi.
+export default withSentryConfig(nextConfig, {
+  silent: true, // build loglarini tinch tutadi
+  disableLogger: true, // bundle hajmini kamaytiradi (Sentry loggerini olib tashlaydi)
+})
