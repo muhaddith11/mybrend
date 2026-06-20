@@ -10,6 +10,17 @@ import { BodyPadding } from '../components/BodyPadding'
 import { ThemeProvider } from '../components/ThemeProvider'
 import { Onboarding } from '../components/Onboarding'
 
+// Google Search Console tasdiqlash tokeni.
+// Eng ishonchli: Vercel'da NEXT_PUBLIC_GSC_VERIFICATION ga Google'ning HTML-teg
+// ekranidagi to'liq <meta ... content="..."> tegni o'zi paste qiling —
+// content qiymati avtomatik ajratiladi (qo'lda tahrir, transkripsiya xatosi yo'q).
+// Env yo'q bo'lsa, quyidagi token ishlatiladi.
+const gscRaw = process.env.NEXT_PUBLIC_GSC_VERIFICATION ?? ''
+const gscToken =
+  gscRaw.match(/content=["']([^"']+)["']/)?.[1] ||
+  gscRaw ||
+  'kKiisI4ii5e7l9lM_HOziIWaUvYrstd1PiOr4uhurUg'
+
 export const metadata: Metadata = {
   metadataBase: new URL('https://zyff.uz'),
   title: {
@@ -22,14 +33,7 @@ export const metadata: Metadata = {
   applicationName: 'ZYFF',
   alternates: { canonical: '/' },
   // Google Search Console — URL-prefiks propertysini HTML-teg orqali tasdiqlash.
-  // HTML-teg tokeni DNS tokenidan farq qiladi (oxirida qo'shimcha). Token ommaviy.
-  // Agar transkripsiyada xato bo'lsa, Vercel'da NEXT_PUBLIC_GSC_VERIFICATION ga
-  // to'g'ridan-to'g'ri paste qilib (kod o'zgartmasdan) tuzatish mumkin.
-  verification: {
-    google:
-      process.env.NEXT_PUBLIC_GSC_VERIFICATION ||
-      'kKiisl4ii5e7l9lM_HOzilWaUvYrstd1PiOr4uhurUg',
-  },
+  verification: { google: gscToken },
   openGraph: {
     type: 'website',
     siteName: 'ZYFF',
