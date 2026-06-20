@@ -18,9 +18,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: brend/libos/package-lock.json
+          # package-lock.json gitignore'da (track qilinmaydi) — shuning uchun
+          # npm cache (lockfile hash'iga tayanadi) ishlatilmaydi.
+          # Node 22: `node --test` glob naqshini qo'llab-quvvatlaydi (npm test).
+          node-version: 22
 
       - name: Install deps
         run: npm install --legacy-peer-deps
@@ -30,6 +31,11 @@ jobs:
           cd backend
           npx prisma generate
           npx tsc -p tsconfig.json --noEmit
+
+      - name: Backend tests
+        run: |
+          cd backend
+          npm test
 
       - name: Web build
         env:
