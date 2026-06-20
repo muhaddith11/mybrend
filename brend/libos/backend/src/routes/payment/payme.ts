@@ -47,7 +47,7 @@ export function checkAuth(req: any): boolean {
 }
 
 export default async function paymeRoutes(app: FastifyInstance) {
-  const prisma: PrismaClient = (app as any).prisma
+  const prisma: PrismaClient = app.prisma
 
   // Payme barcha so'rovlarni shu bitta endpoint'ga yuboradi
   app.post('/payme/webhook', async (req, reply) => {

@@ -11,7 +11,7 @@ const genderQuery = z.object({
 })
 
 export default async function storesRoutes(app: FastifyInstance) {
-  const prisma: PrismaClient = (app as any).prisma
+  const prisma: PrismaClient = app.prisma
 
   // Barcha do'konlar (gender bo'yicha filter)
   app.get('/', async (req, reply) => {

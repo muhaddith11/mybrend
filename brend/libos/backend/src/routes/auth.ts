@@ -7,7 +7,7 @@ const sendOtpSchema = z.object({ phone: z.string().min(9) })
 const verifyOtpSchema = z.object({ phone: z.string(), code: z.string().length(6) })
 
 export default async function authRoutes(app: FastifyInstance) {
-  const prisma: PrismaClient = (app as any).prisma
+  const prisma: PrismaClient = app.prisma
 
   const OTP_COOLDOWN_MS = 60 * 1000 // kodlar orasida kamida 1 daqiqa (SMS spam oldini olish)
   const MAX_OTP_ATTEMPTS = 5 // shuncha noto'g'ri urinishdan keyin yangi kod kerak

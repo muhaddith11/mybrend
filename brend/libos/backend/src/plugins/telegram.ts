@@ -13,6 +13,16 @@ const PAYMENT_LABELS: Record<string, string> = {
   payme: '💳 Payme',
 }
 
+// Telegram HTML rejimi uchun foydalanuvchi matnini xavfsizlaymiz.
+// Mijoz ismi/manzilida `<`, `>`, `&` bo'lsa, escape qilmasak Telegram 400 qaytarib
+// xabar umuman yetib bormaydi (injection). HTML'da faqat shu uch belgi maxsus.
+function esc(s: unknown): string {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
 export async function sendOrderNotification(order: {
   chatId?: string | null
   id: string
@@ -39,8 +49,8 @@ export async function sendOrderNotification(order: {
 
   const itemLines = order.items
     .map(i => {
-      const displayName = i.product.nameUz || i.product.name
-      return `  • ${i.product.sku ? `[${i.product.sku}] ` : ''}${displayName} x${i.quantity}${i.size ? ` (${i.size})` : ''}${i.color ? ` [${i.color}]` : ''} — ${i.price.toLocaleString()} so'm`
+      const displayName = esc(i.product.nameUz || i.product.name)
+      return `  • ${i.product.sku ? `[${esc(i.product.sku)}] ` : ''}${displayName} x${i.quantity}${i.size ? ` (${esc(i.size)})` : ''}${i.color ? ` [${esc(i.color)}]` : ''} — ${i.price.toLocaleString()} so'm`
     })
     .join('\n')
 
@@ -48,31 +58,31 @@ export async function sendOrderNotification(order: {
     ? `https://maps.google.com/?q=${order.lat},${order.lng}`
     : null
 
-  const customerName = order.customerName || order.user.name || 'Noma\'lum'
+  const customerName = esc(order.customerName || order.user.name || 'Noma\'lum')
 
   const text = [
-    `🛍 *Yangi buyurtma!* — ${order.store.name}`,
+    `🛍 <b>Yangi buyurtma!</b> — ${esc(order.store.name)}`,
     ``,
-    `👤 *Mijoz:* ${customerName}`,
-    `📞 *Tel:* ${order.user.phone}`,
+    `👤 <b>Mijoz:</b> ${customerName}`,
+    `📞 <b>Tel:</b> ${esc(order.user.phone)}`,
     ``,
-    `📦 *Mahsulotlar:*`,
+    `📦 <b>Mahsulotlar:</b>`,
     itemLines,
     ``,
-    order.paymentMethod ? (PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod) : (DELIVERY_LABELS[order.deliveryType] || order.deliveryType),
-    order.address ? `📍 *Manzil:* ${order.address}` : null,
-    mapsLink ? `🗺 [Xaritada ko'rish](${mapsLink})` : null,
-    order.note ? `📝 *Izoh:* ${order.note}` : null,
+    order.paymentMethod ? esc(PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod) : esc(DELIVERY_LABELS[order.deliveryType] || order.deliveryType),
+    order.address ? `📍 <b>Manzil:</b> ${esc(order.address)}` : null,
+    mapsLink ? `🗺 <a href="${mapsLink}">Xaritada ko'rish</a>` : null,
+    order.note ? `📝 <b>Izoh:</b> ${esc(order.note)}` : null,
     ``,
-    `💰 *Jami:* ${order.totalPrice.toLocaleString()} so'm`,
-    `🔖 *ID:* \`${order.id.slice(-8)}\``,
+    `💰 <b>Jami:</b> ${order.totalPrice.toLocaleString()} so'm`,
+    `🔖 <b>ID:</b> <code>${esc(order.id.slice(-8))}</code>`,
   ].filter(Boolean).join('\n')
 
   try {
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
     })
   } catch (err) {
     console.error('Telegram notification failed:', err)

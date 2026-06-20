@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { PrismaClient } from '@prisma/client'
 
 export default async function productsRoutes(app: FastifyInstance) {
-  const prisma: PrismaClient = (app as any).prisma
+  const prisma: PrismaClient = app.prisma
 
   // Global qidiruv — barcha do'konlar bo'ylab mahsulot qidirish
   app.get('/', async (req, reply) => {

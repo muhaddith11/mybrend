@@ -1,9 +1,11 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { PrismaClient } from '@prisma/client'
-import { createHash } from 'crypto'
+import bcrypt from 'bcryptjs'
 
-function hash(p: string) { return createHash('sha256').update(p).digest('hex') }
+// Mavjud bo'lmagan email uchun ham bcrypt.compare chaqiramiz — javob vaqti bir xil
+// qolib, user-enumeration (timing attack) imkonsiz bo'lsin.
+const DUMMY_HASH = '$2a$10$CwTycUXWue0Thq9StjUM0uJ8DvWlZQ3PqQ9YxLk7Yb5Ym0Qe5Hq2'
 
 const loginSchema = z.object({ email: z.string().min(1), password: z.string().min(1) })
 
@@ -50,7 +52,7 @@ const storeUpdateSchema = z.object({
 })
 
 export default async function adminRoutes(app: FastifyInstance) {
-  const prisma: PrismaClient = (app as any).prisma
+  const prisma: PrismaClient = app.prisma
 
   // Do'kon egasi login
   app.post('/login', async (req, reply) => {
@@ -77,7 +79,8 @@ export default async function adminRoutes(app: FastifyInstance) {
 
     try {
       const owner = await prisma.storeOwner.findUnique({ where: { email } })
-      if (!owner || owner.password !== hash(password)) {
+      const ok = await bcrypt.compare(password, owner?.password ?? DUMMY_HASH)
+      if (!owner || !ok) {
         return reply.status(401).send({ error: "Login yoki parol noto'g'ri" })
       }
       const token = app.jwt.sign({ ownerId: owner.id, role: 'owner' })

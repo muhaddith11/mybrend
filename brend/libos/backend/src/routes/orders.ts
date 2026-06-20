@@ -37,8 +37,32 @@ const storeInclude = {
   select: { id: true, name: true, slug: true, logo: true, themeColor: true },
 }
 
+type OrderLine = { productId: string; quantity: number; size?: string; color?: string }
+
+// Buyurtma qatorlariga mos variant stokini kamaytiradi (best-effort).
+// Mos variant topilib, stoki bor bo'lsagina kamaytiramiz va hech qachon manfiyga
+// tushirmaymiz. Variant topilmasa (admin miqdor kiritmagan) — buyurtmani bloklamaymiz.
+async function decrementStock(prisma: PrismaClient, items: OrderLine[]) {
+  for (const it of items) {
+    const variant = await prisma.productVariant.findFirst({
+      where: {
+        productId: it.productId,
+        size: it.size ?? null,
+        color: it.color ?? null,
+        quantity: { gt: 0 },
+      },
+    })
+    if (!variant) continue
+    const dec = Math.min(variant.quantity, it.quantity) // manfiyga tushmasin
+    await prisma.productVariant.update({
+      where: { id: variant.id },
+      data: { quantity: { decrement: dec } },
+    })
+  }
+}
+
 export default async function ordersRoutes(app: FastifyInstance) {
-  const prisma: PrismaClient = (app as any).prisma
+  const prisma: PrismaClient = app.prisma
 
   // Mehmon (guest) buyurtma — ro'yxatdan o'tmagan mijozlar uchun
   app.post('/guest', async (req, reply) => {
@@ -47,15 +71,21 @@ export default async function ordersRoutes(app: FastifyInstance) {
     const store = await prisma.store.findUnique({ where: { slug: body.storeSlug } })
     if (!store) return reply.status(404).send({ error: 'Do\'kon topilmadi' })
 
+    const productIds = body.items.map(i => i.productId)
+    // Faqat shu do'konning mahsulotlari — boshqa do'kon yoki mavjud bo'lmagan ID jimgina 0 narx bermasin
+    const products = await prisma.product.findMany({ where: { id: { in: productIds }, storeId: store.id } })
+    const foundIds = new Set(products.map(p => p.id))
+    const invalid = productIds.filter(id => !foundIds.has(id))
+    if (invalid.length) {
+      return reply.status(400).send({ error: "Buyurtmada noto'g'ri yoki boshqa do'kon mahsuloti bor" })
+    }
+
     // Telefon bo'yicha user topamiz yoki yaratamiz
     const phone = body.phone.replace(/\s/g, '')
     let user = await prisma.user.findUnique({ where: { phone } })
     if (!user) {
       user = await prisma.user.create({ data: { phone, name: body.customerName } })
     }
-
-    const productIds = body.items.map(i => i.productId)
-    const products = await prisma.product.findMany({ where: { id: { in: productIds } } })
 
     const totalPrice = body.items.reduce((sum, item) => {
       const product = products.find(p => p.id === item.productId)
@@ -90,6 +120,9 @@ export default async function ordersRoutes(app: FastifyInstance) {
       },
     })
 
+    // Stokni kamaytiramiz (best-effort — xato bo'lsa buyurtma baribir o'tadi)
+    await decrementStock(prisma, body.items).catch(() => {})
+
     sendOrderNotification({
       ...order,
       chatId: order.store.telegramChatId,
@@ -105,7 +138,13 @@ export default async function ordersRoutes(app: FastifyInstance) {
     const body = createOrderSchema.parse(req.body)
 
     const productIds = body.items.map(i => i.productId)
-    const products = await prisma.product.findMany({ where: { id: { in: productIds } } })
+    // Mahsulotlar shu do'konga tegishli va hammasi mavjud bo'lishi shart
+    const products = await prisma.product.findMany({ where: { id: { in: productIds }, storeId: body.storeId } })
+    const foundIds = new Set(products.map(p => p.id))
+    const invalid = productIds.filter(id => !foundIds.has(id))
+    if (invalid.length) {
+      return reply.status(400).send({ error: "Buyurtmada noto'g'ri yoki boshqa do'kon mahsuloti bor" })
+    }
 
     const totalPrice = body.items.reduce((sum, item) => {
       const product = products.find(p => p.id === item.productId)
@@ -137,6 +176,9 @@ export default async function ordersRoutes(app: FastifyInstance) {
         store: { select: { id: true, name: true, slug: true, logo: true, themeColor: true, telegramChatId: true } },
       },
     })
+
+    // Stokni kamaytiramiz (best-effort)
+    await decrementStock(prisma, body.items).catch(() => {})
 
     sendOrderNotification({
       ...order,

@@ -35,7 +35,7 @@ export function checkSign(params: Record<string, string>, secretKey: string, act
 }
 
 export default async function clickRoutes(app: FastifyInstance) {
-  const prisma: PrismaClient = (app as any).prisma
+  const prisma: PrismaClient = app.prisma
   const SECRET_KEY = process.env.CLICK_SECRET_KEY ?? ''
   const SERVICE_ID = process.env.CLICK_SERVICE_ID ?? ''
 

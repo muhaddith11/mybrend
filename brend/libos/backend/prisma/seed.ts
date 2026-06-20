@@ -1,14 +1,13 @@
 import { PrismaClient } from '@prisma/client'
-import { createHash } from 'crypto'
+import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
-function hash(password: string) {
-  return createHash('sha256').update(password).digest('hex')
-}
-
 async function main() {
   console.log('🌱 Seed ma\'lumotlar kiritilmoqda...')
+
+  // Barcha test do'kon egalari uchun bitta parol (bcrypt bilan hashlangan)
+  const ownerPassword = await bcrypt.hash('secret123', 10)
 
   // ─── Kategoriyalar ──────────────────────────────────────────
   const categories = await Promise.all([
@@ -35,23 +34,23 @@ async function main() {
   const owners = await Promise.all([
     prisma.storeOwner.upsert({
       where: { email: 'zara@libos.uz' }, update: {},
-      create: { email: 'zara@libos.uz', phone: '+998901234561', name: 'ZARA Manager', password: hash('secret123') },
+      create: { email: 'zara@libos.uz', phone: '+998901234561', name: 'ZARA Manager', password: ownerPassword },
     }),
     prisma.storeOwner.upsert({
       where: { email: 'sport@libos.uz' }, update: {},
-      create: { email: 'sport@libos.uz', phone: '+998901234562', name: 'SportCity Manager', password: hash('secret123') },
+      create: { email: 'sport@libos.uz', phone: '+998901234562', name: 'SportCity Manager', password: ownerPassword },
     }),
     prisma.storeOwner.upsert({
       where: { email: 'nafosat@libos.uz' }, update: {},
-      create: { email: 'nafosat@libos.uz', phone: '+998901234563', name: 'Nafosat Manager', password: hash('secret123') },
+      create: { email: 'nafosat@libos.uz', phone: '+998901234563', name: 'Nafosat Manager', password: ownerPassword },
     }),
     prisma.storeOwner.upsert({
       where: { email: 'kidsland@libos.uz' }, update: {},
-      create: { email: 'kidsland@libos.uz', phone: '+998901234564', name: 'KidsLand Manager', password: hash('secret123') },
+      create: { email: 'kidsland@libos.uz', phone: '+998901234564', name: 'KidsLand Manager', password: ownerPassword },
     }),
     prisma.storeOwner.upsert({
       where: { email: 'asma@libos.uz' }, update: {},
-      create: { email: 'asma@libos.uz', phone: '+998502500550', name: 'Asma Design', password: hash('secret123') },
+      create: { email: 'asma@libos.uz', phone: '+998502500550', name: 'Asma Design', password: ownerPassword },
     }),
   ])
 

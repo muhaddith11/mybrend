@@ -1,6 +1,7 @@
 import './instrument.js' // Sentry — eng birinchi yuklanishi shart
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import rateLimit from '@fastify/rate-limit'
 import jwt from '@fastify/jwt'
 import { PrismaClient } from '@prisma/client'
 import { env } from './env.js' // boot'da env'ni tekshiradi (fail-fast)
@@ -25,6 +26,14 @@ const prisma = new PrismaClient()
 const app = Fastify({ logger: { level: 'info' } })
 
 // Pluginlar
+// Rate-limit — bitta IP daqiqasiga 300 ta so'rovdan oshmasin (spam/brute-force/DoS oldini olish).
+// Guest buyurtma va OTP kabi auth'siz endpointlar uchun ayniqsa muhim.
+app.register(rateLimit, {
+  global: true,
+  max: 300,
+  timeWindow: '1 minute',
+})
+
 // CORS — faqat o'z saytlarimiz API'ni chaqira olsin (oldin har qanday sayt ruxsat edi)
 app.register(cors, {
   origin(origin, cb) {

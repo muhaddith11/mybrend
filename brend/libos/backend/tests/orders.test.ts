@@ -61,6 +61,71 @@ describe('POST /api/orders/guest — narx server tomonda hisoblanadi', () => {
     await app.close()
   })
 
+  test('mavjud boʻlmagan / boshqa doʻkon mahsuloti → 400', async () => {
+    const { app, fake } = await buildOrdersTestApp(seed)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/orders/guest',
+      headers: json,
+      payload: {
+        storeSlug: 'asma',
+        customerName: 'Ali',
+        phone: '+998901234599',
+        items: [
+          { productId: 'p1', quantity: 1 },
+          { productId: 'yoq-bunaqa-id', quantity: 1 }, // noto'g'ri ID
+        ],
+      },
+    })
+    assert.equal(res.statusCode, 400)
+    assert.equal(fake.createdOrders.length, 0) // buyurtma yaratilmasligi kerak
+    await app.close()
+  })
+
+  test('stok kamayadi — mos variant topilsa', async () => {
+    const seedV = {
+      ...seed,
+      variants: [{ id: 'v1', productId: 'p1', size: 'M', color: 'Qora', quantity: 5 }],
+    }
+    const { app, fake } = await buildOrdersTestApp(seedV)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/orders/guest',
+      headers: json,
+      payload: {
+        storeSlug: 'asma',
+        customerName: 'Ali',
+        phone: '+998901230001',
+        items: [{ productId: 'p1', quantity: 2, size: 'M', color: 'Qora' }],
+      },
+    })
+    assert.equal(res.statusCode, 201)
+    assert.equal(fake.variants[0].quantity, 3) // 5 - 2 = 3
+    await app.close()
+  })
+
+  test('stok manfiyga tushmaydi — so\'ralgan miqdor stokdan koʻp boʻlsa ham buyurtma oʻtadi', async () => {
+    const seedV = {
+      ...seed,
+      variants: [{ id: 'v1', productId: 'p1', size: 'M', color: 'Qora', quantity: 1 }],
+    }
+    const { app, fake } = await buildOrdersTestApp(seedV)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/orders/guest',
+      headers: json,
+      payload: {
+        storeSlug: 'asma',
+        customerName: 'Ali',
+        phone: '+998901230002',
+        items: [{ productId: 'p1', quantity: 10, size: 'M', color: 'Qora' }],
+      },
+    })
+    assert.equal(res.statusCode, 201) // bloklanmaydi
+    assert.equal(fake.variants[0].quantity, 0) // 1 dan ko'pi yechilmaydi (manfiy emas)
+    await app.close()
+  })
+
   test('bir xil telefon bilan ikki buyurtma → bitta user (dublikat emas)', async () => {
     const { app, fake } = await buildOrdersTestApp(seed)
     const payload = {

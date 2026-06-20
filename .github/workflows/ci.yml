@@ -18,13 +18,15 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          # package-lock.json gitignore'da (track qilinmaydi) — shuning uchun
-          # npm cache (lockfile hash'iga tayanadi) ishlatilmaydi.
           # Node 22: `node --test` glob naqshini qo'llab-quvvatlaydi (npm test).
           node-version: 22
+          # Lockfile endi commit qilinadi — npm cache hash uchun ishlatiladi.
+          cache: npm
+          cache-dependency-path: brend/libos/package-lock.json
 
       - name: Install deps
-        run: npm install --legacy-peer-deps
+        # npm ci — lockfile'dagi AYNAN o'sha versiyalarni o'rnatadi (reproducible build)
+        run: npm ci --legacy-peer-deps
 
       - name: Backend typecheck
         run: |
