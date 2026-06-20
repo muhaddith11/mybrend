@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { createHash } from 'crypto'
 
-function cloudinarySign(params: Record<string, string>, apiSecret: string) {
+export function cloudinarySign(params: Record<string, string>, apiSecret: string) {
   const str = Object.keys(params).sort().map(k => `${k}=${params[k]}`).join('&')
   return createHash('sha1').update(str + apiSecret).digest('hex')
 }
