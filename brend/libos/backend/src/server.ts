@@ -9,6 +9,7 @@ if (process.env.DATABASE_URL) {
   process.env.DATABASE_URL = process.env.DATABASE_URL.replace(/^﻿/, '')
 }
 
+import { errorHandler } from './errorHandler.js'
 import authRoutes from './routes/auth.js'
 import storesRoutes from './routes/stores.js'
 import productsRoutes from './routes/products.js'
@@ -53,6 +54,9 @@ app.decorate('authenticate', async (req: any, reply: any) => {
     reply.status(401).send({ error: 'Kirish uchun tizimga kiring' })
   }
 })
+
+// Validatsiya va kutilmagan xatolarni bir joyda boshqaramiz
+app.setErrorHandler(errorHandler)
 
 // Routelar
 app.register(authRoutes,     { prefix: '/api/auth' })
