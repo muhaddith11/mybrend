@@ -21,6 +21,9 @@ export const metadata: Metadata = {
   keywords: ['ZYFF', 'zyff.uz', 'Qoʻqon', 'kiyim', 'kiyim doʻkoni', 'online xarid', 'marketplace', "O'zbekiston", 'Asma', 'Boosner', 'One Pro'],
   applicationName: 'ZYFF',
   alternates: { canonical: '/' },
+  // Google Search Console — URL-prefiks propertysini HTML-teg orqali tasdiqlash
+  // (DNS usuli o'jarlik qilgani uchun zaxira yo'l). Token ommaviy — HTML'da ko'rinadi.
+  verification: { google: 'kKiisl4ii5e7l9lM_HOzilWaUvYrstd1PiOr' },
   openGraph: {
     type: 'website',
     siteName: 'ZYFF',
