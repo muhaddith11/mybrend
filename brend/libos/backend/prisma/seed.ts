@@ -33,23 +33,23 @@ async function main() {
   // ─── Do'kon egalari ─────────────────────────────────────────
   const owners = await Promise.all([
     prisma.storeOwner.upsert({
-      where: { email: 'zara@libos.uz' }, update: {},
+      where: { email: 'zara@libos.uz' }, update: { password: ownerPassword },
       create: { email: 'zara@libos.uz', phone: '+998901234561', name: 'ZARA Manager', password: ownerPassword },
     }),
     prisma.storeOwner.upsert({
-      where: { email: 'sport@libos.uz' }, update: {},
+      where: { email: 'sport@libos.uz' }, update: { password: ownerPassword },
       create: { email: 'sport@libos.uz', phone: '+998901234562', name: 'SportCity Manager', password: ownerPassword },
     }),
     prisma.storeOwner.upsert({
-      where: { email: 'nafosat@libos.uz' }, update: {},
+      where: { email: 'nafosat@libos.uz' }, update: { password: ownerPassword },
       create: { email: 'nafosat@libos.uz', phone: '+998901234563', name: 'Nafosat Manager', password: ownerPassword },
     }),
     prisma.storeOwner.upsert({
-      where: { email: 'kidsland@libos.uz' }, update: {},
+      where: { email: 'kidsland@libos.uz' }, update: { password: ownerPassword },
       create: { email: 'kidsland@libos.uz', phone: '+998901234564', name: 'KidsLand Manager', password: ownerPassword },
     }),
     prisma.storeOwner.upsert({
-      where: { email: 'asma@libos.uz' }, update: {},
+      where: { email: 'asma@libos.uz' }, update: { password: ownerPassword },
       create: { email: 'asma@libos.uz', phone: '+998502500550', name: 'Asma Design', password: ownerPassword },
     }),
   ])

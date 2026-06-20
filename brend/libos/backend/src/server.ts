@@ -1,6 +1,7 @@
 import './instrument.js' // Sentry — eng birinchi yuklanishi shart
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import helmet from '@fastify/helmet'
 import rateLimit from '@fastify/rate-limit'
 import jwt from '@fastify/jwt'
 import { PrismaClient } from '@prisma/client'
@@ -26,6 +27,13 @@ const prisma = new PrismaClient()
 const app = Fastify({ logger: { level: 'info' } })
 
 // Pluginlar
+// Helmet — xavfsizlik HTTP sarlavhalari (X-Frame-Options, X-Content-Type-Options, HSTS, ...).
+// CSP o'chirilgan (API faqat JSON qaytaradi), CORP esa cross-origin — aks holda web→API so'rovlari bloklanardi.
+app.register(helmet, {
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+})
+
 // Rate-limit — bitta IP daqiqasiga 300 ta so'rovdan oshmasin (spam/brute-force/DoS oldini olish).
 // Guest buyurtma va OTP kabi auth'siz endpointlar uchun ayniqsa muhim.
 app.register(rateLimit, {
@@ -34,19 +42,26 @@ app.register(rateLimit, {
   timeWindow: '1 minute',
 })
 
-// CORS — faqat o'z saytlarimiz API'ni chaqira olsin (oldin har qanday sayt ruxsat edi)
+// CORS — faqat o'z saytlarimiz API'ni chaqira olsin.
+// ALLOWED_ORIGINS: vergul bilan ajratilgan qo'shimcha hostlar (Vercel app URL'lari) — env'dan.
+// STRICT_CORS=true bo'lsa, keng `*.vercel.app` ruxsati o'chadi (launchda yoqiladi).
+const extraOrigins = (process.env.ALLOWED_ORIGINS ?? '')
+  .split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+const strictCors = process.env.STRICT_CORS === 'true'
 app.register(cors, {
   origin(origin, cb) {
     // Origin yo'q (native app, curl, server-to-server) → ruxsat
     if (!origin) return cb(null, true)
     try {
       const { hostname } = new URL(origin)
+      const h = hostname.toLowerCase()
       const ok =
-        hostname === 'zyff.uz' ||
-        hostname.endsWith('.zyff.uz') || // www, admin va boshqa subdomenlar
-        hostname.endsWith('.vercel.app') || // Vercel deploylar: web, admin, preview
-        hostname === 'localhost' ||
-        hostname === '127.0.0.1' // lokal dev
+        h === 'zyff.uz' ||
+        h.endsWith('.zyff.uz') || // www, admin va boshqa subdomenlar
+        h === 'localhost' ||
+        h === '127.0.0.1' || // lokal dev
+        extraOrigins.includes(h) || // env'da ruxsat berilgan aniq hostlar
+        (!strictCors && h.endsWith('.vercel.app')) // preview deploylar (STRICT_CORS bilan o'chadi)
       cb(null, ok)
     } catch {
       cb(null, false)
