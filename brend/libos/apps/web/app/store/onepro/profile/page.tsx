@@ -8,7 +8,7 @@ import { Phone, Package, Clock, CheckCircle2, XCircle, AlertCircle, LogOut, Shop
 import { useStore, formatPrice } from '@/lib/onepro/store'
 import { fetchOrdersByPhone, Order, OrderStatus, paymentLabels } from '@/lib/onepro/orders'
 import { PhoneAuthModal } from '@/components/onepro/phone-auth-modal'
-import { Button } from '@/components/onepro/ui/button'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/onepro/utils'
 
 const statusConfig: Record<OrderStatus, { label: string; icon: typeof Clock; color: string }> = {

@@ -7,8 +7,8 @@ import { motion } from 'framer-motion'
 import { Plus, Search, Edit2, Trash2, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { formatPrice, categories, Product } from '@/lib/asma/store'
 import { fetchProducts, deleteProduct } from '@/lib/asma/products'
-import { Button } from '@/components/asma/ui/button'
-import { Input } from '@/components/asma/ui/input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/asma/utils'
 
 export default function AdminProductsPage() {

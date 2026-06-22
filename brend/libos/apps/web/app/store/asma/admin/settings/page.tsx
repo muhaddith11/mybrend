@@ -6,8 +6,8 @@ import { motion } from 'framer-motion'
 import { Save, Loader2, Phone, MapPin, Send, Clock, Truck, CheckCircle2, Upload, ImageIcon, X } from 'lucide-react'
 import { fetchSettings, updateSettings, StoreSettings, defaultSettings } from '@/lib/asma/settings'
 import { uploadImage } from '@/lib/asma/upload'
-import { Button } from '@/components/asma/ui/button'
-import { Input } from '@/components/asma/ui/input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 function ImageUploadField({ label, value, onChange, hint, aspect }: {
   label: string; value: string; onChange: (url: string) => void; hint: string; aspect: string

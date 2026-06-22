@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { Search, ChevronDown, Phone, MapPin, Loader2 } from 'lucide-react'
 import { formatPrice } from '@/lib/asma/store'
 import { fetchOrders, updateOrderStatus, Order, OrderStatus, paymentLabels } from '@/lib/asma/orders'
-import { Input } from '@/components/asma/ui/input'
+import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/asma/utils'
 
 const statusConfig: Record<OrderStatus, { label: string; color: string }> = {

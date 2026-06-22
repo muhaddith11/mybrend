@@ -3,8 +3,8 @@
 import { ProductForm as Shared } from '@/components/shared/product-form'
 import type { Product } from '@/lib/asma/store'
 import { createProduct, updateProduct } from '@/lib/asma/products'
-import { Button } from '@/components/asma/ui/button'
-import { Input } from '@/components/asma/ui/input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 interface ProductFormProps {
   initialData?: Product

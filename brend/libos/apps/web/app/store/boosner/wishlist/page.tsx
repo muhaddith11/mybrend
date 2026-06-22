@@ -7,7 +7,7 @@ import { Heart, Loader2 } from 'lucide-react'
 import { ProductCard } from '@/components/boosner/product-card'
 import { fetchProducts } from '@/lib/boosner/products'
 import { useStore, Product } from '@/lib/boosner/store'
-import { Button } from '@/components/boosner/ui/button'
+import { Button } from '@/components/ui/button'
 
 export default function WishlistPage() {
   const { wishlist } = useStore()

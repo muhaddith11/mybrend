@@ -6,8 +6,8 @@ import { motion } from 'framer-motion'
 import { Save, Loader2, Phone, MapPin, Send, Clock, Truck, CheckCircle2, Upload, ImageIcon, X } from 'lucide-react'
 import { fetchSettings, updateSettings, StoreSettings, defaultSettings } from '@/lib/onepro/settings'
 import { uploadImage } from '@/lib/onepro/upload'
-import { Button } from '@/components/onepro/ui/button'
-import { Input } from '@/components/onepro/ui/input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 function ImageUploadField({ label, value, onChange, hint, aspect }: {
   label: string; value: string; onChange: (url: string) => void; hint: string; aspect: string

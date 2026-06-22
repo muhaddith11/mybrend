@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronLeft, ChevronRight, ShoppingBag, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
-import { Button } from '@/components/onepro/ui/button'
+import { Button } from '@/components/ui/button'
 import { fetchProducts } from '@/lib/onepro/products'
 import { Product, formatPrice, useStore } from '@/lib/onepro/store'
 

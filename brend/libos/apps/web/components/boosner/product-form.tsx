@@ -3,8 +3,8 @@
 import { ProductForm as Shared } from '@/components/shared/product-form'
 import type { Product } from '@/lib/boosner/store'
 import { createProduct, updateProduct } from '@/lib/boosner/products'
-import { Button } from '@/components/boosner/ui/button'
-import { Input } from '@/components/boosner/ui/input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 interface ProductFormProps {
   initialData?: Product

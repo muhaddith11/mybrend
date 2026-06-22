@@ -7,7 +7,7 @@ import { Heart, Loader2 } from 'lucide-react'
 import { ProductCard } from '@/components/onepro/product-card'
 import { fetchProducts } from '@/lib/onepro/products'
 import { useStore, Product } from '@/lib/onepro/store'
-import { Button } from '@/components/onepro/ui/button'
+import { Button } from '@/components/ui/button'
 
 export default function WishlistPage() {
   const { wishlist } = useStore()

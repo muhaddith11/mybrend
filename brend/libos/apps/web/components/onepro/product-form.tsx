@@ -3,8 +3,8 @@
 import { ProductForm as Shared } from '@/components/shared/product-form'
 import type { Product } from '@/lib/onepro/store'
 import { createProduct, updateProduct } from '@/lib/onepro/products'
-import { Button } from '@/components/onepro/ui/button'
-import { Input } from '@/components/onepro/ui/input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 interface ProductFormProps {
   initialData?: Product

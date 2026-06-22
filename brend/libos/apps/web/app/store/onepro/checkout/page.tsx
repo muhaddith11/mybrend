@@ -8,8 +8,8 @@ import { motion } from 'framer-motion'
 import { CheckCircle2, Loader2, ShoppingBag, Banknote, CreditCard, Clock, MapPin, ChevronDown, ChevronUp } from 'lucide-react'
 import { useStore, formatPrice } from '@/lib/onepro/store'
 import { createOrder, PaymentMethod } from '@/lib/onepro/orders'
-import { Button } from '@/components/onepro/ui/button'
-import { Input } from '@/components/onepro/ui/input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/onepro/utils'
 
 // Dynamic import to avoid SSR issues with Leaflet

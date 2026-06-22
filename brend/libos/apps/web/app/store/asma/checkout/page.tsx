@@ -8,8 +8,8 @@ import { motion } from 'framer-motion'
 import { CheckCircle2, Loader2, ShoppingBag, Banknote, CreditCard, Clock, MapPin, ChevronDown, ChevronUp } from 'lucide-react'
 import { useStore, formatPrice } from '@/lib/asma/store'
 import { createOrder, PaymentMethod } from '@/lib/asma/orders'
-import { Button } from '@/components/asma/ui/button'
-import { Input } from '@/components/asma/ui/input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/asma/utils'
 
 // Dynamic import to avoid SSR issues with Leaflet

@@ -6,7 +6,7 @@ import { Navigation } from '@/components/asma/navigation'
 import { Footer } from '@/components/asma/footer'
 import { CartSidebar } from '@/components/asma/cart-sidebar'
 import { DeliveryBanner } from '@/components/asma/delivery-banner'
-import { Toaster } from '@/components/asma/ui/sonner'
+import { Toaster } from '@/components/ui/sonner'
 
 export function SiteChrome({ children }: { children: ReactNode }) {
   return (

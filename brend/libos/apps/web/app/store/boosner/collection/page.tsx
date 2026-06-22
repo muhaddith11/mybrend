@@ -7,7 +7,7 @@ import { Filter, X, ChevronDown } from 'lucide-react'
 import { ProductCard } from '@/components/boosner/product-card'
 import { fetchProducts } from '@/lib/boosner/products'
 import { Product } from '@/lib/boosner/store'
-import { Button } from '@/components/boosner/ui/button'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/boosner/utils'
 
 const sortOptions = [

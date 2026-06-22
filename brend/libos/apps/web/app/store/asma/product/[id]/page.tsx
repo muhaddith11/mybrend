@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { useStore, formatPrice, Product, colorMap } from '@/lib/asma/store'
 import { fetchProducts } from '@/lib/asma/products'
 import { fetchSettings } from '@/lib/asma/settings'
-import { Button } from '@/components/asma/ui/button'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/asma/utils'
 import { ProductCard } from '@/components/asma/product-card'
 

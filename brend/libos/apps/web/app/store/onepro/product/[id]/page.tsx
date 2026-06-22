@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { useStore, formatPrice, Product, colorMap } from '@/lib/onepro/store'
 import { fetchProducts } from '@/lib/onepro/products'
 import { fetchSettings } from '@/lib/onepro/settings'
-import { Button } from '@/components/onepro/ui/button'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/onepro/utils'
 import { ProductCard } from '@/components/onepro/product-card'
 

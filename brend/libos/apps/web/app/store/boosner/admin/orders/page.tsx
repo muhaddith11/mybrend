@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { Search, ChevronDown, Phone, MapPin, Loader2 } from 'lucide-react'
 import { formatPrice } from '@/lib/boosner/store'
 import { fetchOrders, updateOrderStatus, Order, OrderStatus, paymentLabels } from '@/lib/boosner/orders'
-import { Input } from '@/components/boosner/ui/input'
+import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/boosner/utils'
 
 const statusConfig: Record<OrderStatus, { label: string; color: string }> = {

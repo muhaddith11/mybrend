@@ -4,7 +4,7 @@ import { useRef } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowDown, Play } from 'lucide-react'
-import { Button } from '@/components/boosner/ui/button'
+import { Button } from '@/components/ui/button'
 
 export function Hero() {
   const containerRef = useRef<HTMLDivElement>(null)

@@ -8,7 +8,7 @@ import { Phone, Package, Clock, CheckCircle2, XCircle, AlertCircle, LogOut, Shop
 import { useStore, formatPrice } from '@/lib/asma/store'
 import { fetchOrdersByPhone, Order, OrderStatus, paymentLabels } from '@/lib/asma/orders'
 import { PhoneAuthModal } from '@/components/asma/phone-auth-modal'
-import { Button } from '@/components/asma/ui/button'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/asma/utils'
 
 const statusConfig: Record<OrderStatus, { label: string; icon: typeof Clock; color: string }> = {

@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Award, Users, Truck, Heart } from 'lucide-react'
-import { Button } from '@/components/boosner/ui/button'
+import { Button } from '@/components/ui/button'
 import { fetchSettings } from '@/lib/boosner/settings'
 
 const DEFAULT_HERO = 'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=1600&h=686&fit=crop&q=80'

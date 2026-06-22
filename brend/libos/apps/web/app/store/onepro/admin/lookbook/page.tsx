@@ -4,8 +4,8 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { Plus, Upload, Edit2, Trash2, GripVertical, Eye, Image as ImageIcon } from 'lucide-react'
-import { Button } from '@/components/onepro/ui/button'
-import { Input } from '@/components/onepro/ui/input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/onepro/utils'
 
 const lookbookItems = [

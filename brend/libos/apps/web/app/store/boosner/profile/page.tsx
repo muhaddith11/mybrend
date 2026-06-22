@@ -8,7 +8,7 @@ import { Phone, Package, Clock, CheckCircle2, XCircle, AlertCircle, LogOut, Shop
 import { useStore, formatPrice } from '@/lib/boosner/store'
 import { fetchOrdersByPhone, Order, OrderStatus, paymentLabels } from '@/lib/boosner/orders'
 import { PhoneAuthModal } from '@/components/boosner/phone-auth-modal'
-import { Button } from '@/components/boosner/ui/button'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/boosner/utils'
 
 const statusConfig: Record<OrderStatus, { label: string; icon: typeof Clock; color: string }> = {

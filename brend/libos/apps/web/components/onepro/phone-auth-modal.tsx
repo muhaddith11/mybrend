@@ -3,8 +3,8 @@
 import { PhoneAuthModal as Shared } from '@/components/shared/phone-auth-modal'
 import { useStore } from '@/lib/onepro/store'
 import { fetchOrdersByPhone } from '@/lib/onepro/orders'
-import { Button } from '@/components/onepro/ui/button'
-import { Input } from '@/components/onepro/ui/input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 interface PhoneAuthModalProps {
   open: boolean

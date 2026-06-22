@@ -7,8 +7,8 @@ import { motion } from 'framer-motion'
 import { Plus, Search, Edit2, Trash2, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { formatPrice, categories, Product } from '@/lib/boosner/store'
 import { fetchProducts, deleteProduct } from '@/lib/boosner/products'
-import { Button } from '@/components/boosner/ui/button'
-import { Input } from '@/components/boosner/ui/input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/boosner/utils'
 
 export default function AdminProductsPage() {

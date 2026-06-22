@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { MapPin, Phone, Clock, Send, Mail, CheckCircle2 } from 'lucide-react'
-import { Button } from '@/components/onepro/ui/button'
-import { Input } from '@/components/onepro/ui/input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { fetchSettings, defaultSettings, StoreSettings } from '@/lib/onepro/settings'
 
 function InstagramIcon({ className }: { className?: string }) {

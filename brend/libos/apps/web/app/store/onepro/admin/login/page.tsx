@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
-import { Input } from '@/components/onepro/ui/input'
-import { Button } from '@/components/onepro/ui/button'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 

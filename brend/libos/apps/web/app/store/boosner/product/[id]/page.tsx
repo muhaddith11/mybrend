@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { useStore, formatPrice, Product, colorMap } from '@/lib/boosner/store'
 import { fetchProducts } from '@/lib/boosner/products'
 import { fetchSettings } from '@/lib/boosner/settings'
-import { Button } from '@/components/boosner/ui/button'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/boosner/utils'
 import { ProductCard } from '@/components/boosner/product-card'
 

@@ -5,7 +5,7 @@ import { X, Plus, Minus, Trash2, ShoppingBag } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useStore, formatPrice } from '@/lib/boosner/store'
-import { Button } from '@/components/boosner/ui/button'
+import { Button } from '@/components/ui/button'
 
 export function CartSidebar() {
   const { isCartOpen, setCartOpen, cart, removeFromCart, updateQuantity, getCartTotal } = useStore()

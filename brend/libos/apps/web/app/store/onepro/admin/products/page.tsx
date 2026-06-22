@@ -7,8 +7,8 @@ import { motion } from 'framer-motion'
 import { Plus, Search, Edit2, Trash2, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { formatPrice, categories, Product } from '@/lib/onepro/store'
 import { fetchProducts, deleteProduct } from '@/lib/onepro/products'
-import { Button } from '@/components/onepro/ui/button'
-import { Input } from '@/components/onepro/ui/input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/onepro/utils'
 
 export default function AdminProductsPage() {

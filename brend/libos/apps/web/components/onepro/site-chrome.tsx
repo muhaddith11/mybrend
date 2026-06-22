@@ -5,7 +5,7 @@ import { SiteChrome as Shared } from '@/components/shared/site-chrome'
 import { Navigation } from '@/components/onepro/navigation'
 import { Footer } from '@/components/onepro/footer'
 import { CartSidebar } from '@/components/onepro/cart-sidebar'
-import { Toaster } from '@/components/onepro/ui/sonner'
+import { Toaster } from '@/components/ui/sonner'
 
 export function SiteChrome({ children }: { children: ReactNode }) {
   return (

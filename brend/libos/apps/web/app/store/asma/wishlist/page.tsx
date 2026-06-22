@@ -7,7 +7,7 @@ import { Heart, Loader2 } from 'lucide-react'
 import { ProductCard } from '@/components/asma/product-card'
 import { fetchProducts } from '@/lib/asma/products'
 import { useStore, Product } from '@/lib/asma/store'
-import { Button } from '@/components/asma/ui/button'
+import { Button } from '@/components/ui/button'
 
 export default function WishlistPage() {
   const { wishlist } = useStore()

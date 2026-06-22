@@ -8,8 +8,8 @@ import { motion } from 'framer-motion'
 import { CheckCircle2, Loader2, ShoppingBag, Banknote, CreditCard, Clock, MapPin, ChevronDown, ChevronUp } from 'lucide-react'
 import { useStore, formatPrice } from '@/lib/boosner/store'
 import { createOrder, PaymentMethod } from '@/lib/boosner/orders'
-import { Button } from '@/components/boosner/ui/button'
-import { Input } from '@/components/boosner/ui/input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/boosner/utils'
 
 // Dynamic import to avoid SSR issues with Leaflet
