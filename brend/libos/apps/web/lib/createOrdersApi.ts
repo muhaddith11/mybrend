@@ -179,7 +179,7 @@ function toOrder(row: DBOrder): Order {
 export function createOrdersApi(slug: string) {
   const { adminHeaders } = makeAdminAuth(slug)
 
-  async function createOrder(order: OrderInput): Promise<string> {
+  async function createOrder(order: OrderInput): Promise<{ orderId: string; paymentUrl?: string }> {
     const itemsPayload = order.items.map(i => ({
       productId: i.product.id,
       quantity: i.quantity,
@@ -208,9 +208,9 @@ export function createOrdersApi(slug: string) {
       const err = await res.json().catch(() => ({}))
       throw new Error(err.error || 'Order creation failed')
     }
-    // Buyurtma ID (cuid) — mijoz buni kuzatuv havolasi sifatida ishlatadi
+    // Buyurtma ID (cuid) — kuzatuv havolasi. Online to'lovда paymentUrl ham qaytadi.
     const data = await res.json().catch(() => ({}))
-    return (data.orderId as string) ?? ''
+    return { orderId: (data.orderId as string) ?? '', paymentUrl: data.paymentUrl as string | undefined }
   }
 
   // Mehmon buyurtma kuzatuvi — ID (cuid) maxfiy kalit, auth shart emas.

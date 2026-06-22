@@ -141,7 +141,13 @@ export default async function ordersRoutes(app: FastifyInstance) {
       user: { phone, name: body.customerName },
     }).catch((err) => req.log.error({ err, orderId: order.id }, 'Telegram buyurtma xabari yuborilmadi'))
 
-    return reply.status(201).send({ ok: true, orderId: order.id })
+    // Online to'lov tanlangan bo'lsa — to'lov sahifasi URL'ini qaytaramiz.
+    // Mijoz shu manzilga yo'naltiriladi; tasdiqlash provayder webhook'i orqali keladi.
+    let paymentUrl: string | undefined
+    if (body.paymentMethod === 'click') paymentUrl = buildClickPaymentUrl(order)
+    else if (body.paymentMethod === 'payme') paymentUrl = buildPaymePaymentUrl(order)
+
+    return reply.status(201).send({ ok: true, orderId: order.id, paymentUrl })
   })
 
   // Buyurtma yaratish (auth kerak)

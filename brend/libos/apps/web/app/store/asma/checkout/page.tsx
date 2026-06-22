@@ -76,7 +76,7 @@ export default function CheckoutPage() {
     setSubmitting(true)
     setError('')
     try {
-      const newOrderId = await createOrder({
+      const { orderId, paymentUrl } = await createOrder({
         customerName: form.name,
         phone: form.phone.replace(/\s/g, ''),
         address: form.address,
@@ -88,9 +88,16 @@ export default function CheckoutPage() {
         lat: coords?.lat,
         lng: coords?.lng,
       })
-      if (newOrderId) {
-        addOrderId(newOrderId)
-        setTrackId(newOrderId)
+      if (paymentUrl) {
+        // Online to'lov — provayder (Click/Payme) sahifasiga yo'naltiramiz
+        if (orderId) addOrderId(orderId)
+        clearCart()
+        window.location.href = paymentUrl
+        return
+      }
+      if (orderId) {
+        addOrderId(orderId)
+        setTrackId(orderId)
       }
       clearCart()
       setDone(true)
