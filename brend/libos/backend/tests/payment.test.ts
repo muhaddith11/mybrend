@@ -233,6 +233,31 @@ describe('Payme hayot-sikli: Create → Perform → Check', () => {
   })
 })
 
+describe('Payme tranzaksiya muddati (12 soat timeout)', () => {
+  test('12 soatdan oshgan PENDING tranzaksiya CreateTransaction da bekor qilinadi (-31008)', async () => {
+    const fake = paymeSetup()
+    const { app } = await buildPaymentTestApp(fake.prisma)
+    const account = { order_id: 'order_1' }
+    // 1. Tranzaksiya yaratamiz
+    await paymeCall(app, {
+      method: 'CreateTransaction',
+      params: { id: 'ptxTimeout', time: 1700000000000, amount: EXPECTED_TIYIN, account },
+      id: 1,
+    })
+    // 2. create_time'ni 13 soat orqaga suramiz (muddati o'tgan holatni simulyatsiya)
+    fake.payments[0].paymeCreateTime = BigInt(Date.now() - 13 * 60 * 60 * 1000)
+    // 3. Xuddi shu tranzaksiya bilan qayta murojaat → muddati o'tgan → bekor + -31008
+    const again = await paymeCall(app, {
+      method: 'CreateTransaction',
+      params: { id: 'ptxTimeout', time: 1700000000000, amount: EXPECTED_TIYIN, account },
+      id: 2,
+    })
+    assert.equal(again.json().error.code, -31008)
+    assert.equal(fake.payments[0].status, 'CANCELLED')
+    await app.close()
+  })
+})
+
 describe('Payme CancelTransaction', () => {
   test('yaratilgan tranzaksiya bekor qilinadi → state -1', async () => {
     const fake = paymeSetup()

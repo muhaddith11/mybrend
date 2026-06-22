@@ -64,6 +64,10 @@ const CANCEL_REASON = {
   UNKNOWN: 10,
 }
 
+// Payme: tranzaksiya yaratilgach 12 soat ichida bajarilmasa — muddati o'tgan
+// hisoblanadi va bekor qilinadi (rasmiy protokol talabi; sandbox testi tekshiradi).
+const PAYME_TIMEOUT_MS = 12 * 60 * 60 * 1000
+
 function jsonRpcResponse(id: string | number, result: object) {
   return { jsonrpc: '2.0', id, result }
 }
@@ -197,6 +201,23 @@ async function createTransaction(prisma: PrismaClient, id: JsonRpcId, params: Pa
   if (order.payment?.paymeTransId === paymeTransId) {
     if (order.payment.status === 'CANCELLED')
       return jsonRpcError(id, PAYME_ERROR.UNABLE_TO_PERFORM)
+
+    // Muddat tekshiruvi: 12 soatdan oshib hali to'lanmagan bo'lsa — bekor qilamiz
+    // va xato qaytaramiz (Payme protokoli talabi).
+    if (order.payment.status === 'PENDING') {
+      const age = Date.now() - Number(order.payment.paymeCreateTime ?? 0n)
+      if (age > PAYME_TIMEOUT_MS) {
+        await prisma.payment.update({
+          where: { id: order.payment.id },
+          data: {
+            status: 'CANCELLED',
+            paymeCancelTime: BigInt(Date.now()),
+            paymeCancelReason: CANCEL_REASON.TIMEOUT,
+          },
+        })
+        return jsonRpcError(id, PAYME_ERROR.UNABLE_TO_PERFORM)
+      }
+    }
 
     return jsonRpcResponse(id, {
       create_time: Number(order.payment.paymeCreateTime),
