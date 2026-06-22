@@ -1,5 +1,8 @@
 .page {
   min-height: 100vh;
+  /* Kontent kalta bo'lsa ham footer pastга yopishsin (sticky footer) */
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── Hero ─────────────────────────────────────── */
@@ -27,9 +30,10 @@
   position: relative;
   border-radius: 18px;
   overflow: hidden;
-  min-height: 220px;
+  /* Mobilда 3 qatorli sarlavha + badge + tugma sig'sin (avval 220px tor edi) */
+  min-height: 300px;
 }
-@media (min-width: 768px) { .heroSlider { min-height: 300px; } }
+@media (min-width: 768px) { .heroSlider { min-height: 320px; } }
 
 .heroSlide {
   position: absolute;
@@ -41,11 +45,10 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  /* Yuqori padding kattaroq — "ZYFF — Qo'qon" badge sarlavha bilan ustma-ust tushmasin */
-  padding: 3.5rem 2rem 2.5rem;
+  padding: 1.75rem 1.5rem 2rem;
   overflow: hidden;
 }
-@media (min-width: 768px) { .heroSlide { padding: 3rem 3rem 2.5rem; } }
+@media (min-width: 768px) { .heroSlide { padding: 2.5rem 3rem; } }
 
 .heroSlideActive {
   opacity: 1;
@@ -694,7 +697,8 @@
   background: var(--surface);
   border-top: 1px solid var(--border);
   padding: 3rem 0 1.5rem;
-  margin-top: 1rem;
+  /* Sticky footer: kontent kalta bo'lsa pastга suriladi */
+  margin-top: auto;
 }
 
 .footerGrid {

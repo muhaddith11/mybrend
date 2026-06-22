@@ -134,7 +134,7 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
               <div className={styles.floatEl} style={{ width: 120, height: 120, background: 'radial-gradient(circle, rgba(245,158,11,.4) 0%, transparent 70%)', bottom: '-20px', right: '28%', animationDuration: '3.8s', animationDelay: '.7s' }} />
               <div className={styles.floatEl} style={{ width: 80, height: 80, background: 'radial-gradient(circle, rgba(236,72,153,.35) 0%, transparent 70%)', top: '30%', right: '18%', animationDuration: '4.5s', animationDelay: '1.4s' }} />
               <div className={styles.floatEl} style={{ width: 50, height: 50, background: 'radial-gradient(circle, rgba(99,102,241,.45) 0%, transparent 70%)', top: '10%', right: '45%', animationDuration: '6s', animationDelay: '2s' }} />
-              <div className={styles.heroBadge} style={{ position: 'absolute', top: 16, right: 16, zIndex: 2, background: 'rgba(255,255,255,.12)', backdropFilter: 'blur(8px)' }}>✨ ZYFF — Qo'qon</div>
+              <div className={styles.heroBadge} style={{ position: 'relative', zIndex: 2, marginBottom: 12, background: 'rgba(255,255,255,.12)', backdropFilter: 'blur(8px)' }}>✨ ZYFF — Qo'qon</div>
               <h1 className={styles.heroAppTitle}>
                 {tr.heroAppL1}<br />
                 <span style={{ color: '#FBBF24', textShadow: '0 0 30px rgba(251,191,36,.5)' }}>{tr.heroAppHL}</span><br />
