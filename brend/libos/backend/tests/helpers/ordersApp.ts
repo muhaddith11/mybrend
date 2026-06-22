@@ -109,7 +109,11 @@ export async function buildOrdersTestApp(seed: { products: SeedProduct[]; stores
   const app = Fastify()
   const fake = createOrdersFakePrisma(seed)
   app.decorate('prisma', fake.prisma)
-  app.decorate('authenticate', async () => {})
+  // Auth'li route'lar uchun soxta foydalanuvchi — preHandler req.user'ni o'rnatadi
+  // (guest route authenticate'ni umuman chaqirmaydi, shuning uchun ta'sir qilmaydi).
+  app.decorate('authenticate', async (req: any) => {
+    req.user = { userId: 'u_test' }
+  })
   app.setErrorHandler(errorHandler)
   app.register(ordersRoutes, { prefix: '/api/orders' })
   await app.ready()

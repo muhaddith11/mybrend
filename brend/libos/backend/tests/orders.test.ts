@@ -169,3 +169,91 @@ describe('POST /api/orders/guest — narx server tomonda hisoblanadi', () => {
     await app.close()
   })
 })
+
+// Auth'li buyurtma route'i: online to'lov (paymentUrl), paymentMethod va yetkazish
+// narxi mantig'ini qoplaydi (avval umuman test qilinmagan edi).
+describe("POST /api/orders (auth) — online to'lov, paymentMethod, yetkazish narxi", () => {
+  test("CLICK → my.click.uz paymentUrl, paymentMethod=click, yetkazish narxi qo'shiladi", async () => {
+    const { app, fake } = await buildOrdersTestApp(seed)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/orders',
+      headers: json,
+      payload: {
+        storeId: 's1',
+        deliveryType: 'DELIVERY',
+        address: 'Test koʻcha 1',
+        paymentProvider: 'CLICK',
+        items: [{ productId: 'p1', quantity: 1 }],
+      },
+    })
+    assert.equal(res.statusCode, 201)
+    assert.ok(res.json().paymentUrl?.includes('my.click.uz'))
+    const order = fake.createdOrders[0]
+    assert.equal(order.paymentMethod, 'click')
+    assert.equal(order.totalPrice, 25000) // 10000 + 15000 (DELIVERY yetkazish narxi)
+    await app.close()
+  })
+
+  test('PAYME → paycom.uz paymentUrl, paymentMethod=payme, PICKUP yetkazish narxisiz', async () => {
+    const { app, fake } = await buildOrdersTestApp(seed)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/orders',
+      headers: json,
+      payload: {
+        storeId: 's1',
+        deliveryType: 'PICKUP',
+        paymentProvider: 'PAYME',
+        items: [{ productId: 'p1', quantity: 1 }],
+      },
+    })
+    assert.equal(res.statusCode, 201)
+    assert.ok(res.json().paymentUrl?.includes('paycom.uz'))
+    const order = fake.createdOrders[0]
+    assert.equal(order.paymentMethod, 'payme')
+    assert.equal(order.totalPrice, 10000) // PICKUP — yetkazish narxi yo'q
+    await app.close()
+  })
+
+  test("CASH (paymentProvider yo'q) → paymentUrl yo'q, paymentMethod=cash", async () => {
+    const { app, fake } = await buildOrdersTestApp(seed)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/orders',
+      headers: json,
+      payload: {
+        storeId: 's1',
+        deliveryType: 'PICKUP',
+        items: [{ productId: 'p1', quantity: 1 }],
+      },
+    })
+    assert.equal(res.statusCode, 201)
+    assert.equal(res.json().paymentUrl, undefined)
+    assert.equal(fake.createdOrders[0].paymentMethod, 'cash')
+    await app.close()
+  })
+
+  test("narx server tomonda — soxta 'price' eʼtiborsiz, stok kamayadi", async () => {
+    const seedV = {
+      ...seed,
+      variants: [{ id: 'v1', productId: 'p1', size: null, color: null, quantity: 4 }],
+    }
+    const { app, fake } = await buildOrdersTestApp(seedV)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/orders',
+      headers: json,
+      payload: {
+        storeId: 's1',
+        deliveryType: 'PICKUP',
+        paymentProvider: 'CLICK',
+        items: [{ productId: 'p1', quantity: 2, price: 1 }], // soxta price — schema tashlaydi
+      },
+    })
+    assert.equal(res.statusCode, 201)
+    assert.equal(fake.createdOrders[0].totalPrice, 20000) // 10000*2 (PICKUP)
+    assert.equal(fake.variants[0].quantity, 2) // 4 - 2
+    await app.close()
+  })
+})
