@@ -79,6 +79,9 @@ export function createOrdersFakePrisma(seed: { products: SeedProduct[]; stores: 
       },
     },
     order: {
+      async findUnique({ where }: any) {
+        return createdOrders.find((o) => o.id === where.id) ?? null
+      },
       async create({ data }: any) {
         const items = (data.items?.create ?? []).map((it: any, i: number) => ({
           id: 'item' + i,
@@ -91,7 +94,8 @@ export function createOrdersFakePrisma(seed: { products: SeedProduct[]; stores: 
             name: 'X',
             telegramChatId: null,
           }
-        const order = { id: 'order_' + oId++, ...data, items, store }
+        // Prisma schema default'i: status @default(PENDING) — fake ham qo'llaydi
+        const order = { id: 'order_' + oId++, status: 'PENDING', ...data, items, store }
         createdOrders.push(order)
         return order
       },

@@ -44,6 +44,44 @@ export interface OrderInput {
   lng?: number
 }
 
+// Mehmon kuzatuv sahifasi uchun buyurtma shakli (backend /orders/track/:id javobi).
+export type DbOrderStatus =
+  | 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'DELIVERING' | 'DELIVERED' | 'CANCELLED'
+
+export interface TrackedOrder {
+  id: string
+  status: DbOrderStatus
+  deliveryType: string
+  paymentMethod: string | null
+  totalPrice: number
+  address: string | null
+  customerName: string | null
+  note: string | null
+  createdAt: string
+  items: Array<{
+    id: string
+    quantity: number
+    price: number
+    size: string | null
+    color: string | null
+    product: { id: string; name: string; nameUz: string | null; images: string[] }
+  }>
+  store: { name: string; slug: string; logo: string | null; themeColor: string | null }
+}
+
+// Kuzatuv sahifasidagi bosqichlar (CANCELLED alohida ko'rsatiladi).
+export const trackStatusSteps: DbOrderStatus[] = [
+  'PENDING', 'CONFIRMED', 'PREPARING', 'DELIVERING', 'DELIVERED',
+]
+export const trackStatusLabels: Record<DbOrderStatus, string> = {
+  PENDING: 'Qabul qilindi',
+  CONFIRMED: 'Tasdiqlandi',
+  PREPARING: 'Tayyorlanmoqda',
+  DELIVERING: 'Yetkazilmoqda',
+  DELIVERED: 'Yetkazildi',
+  CANCELLED: 'Bekor qilindi',
+}
+
 // DB status → frontend status
 const statusMap: Record<string, OrderStatus> = {
   PENDING: 'pending',
@@ -108,7 +146,7 @@ function toOrder(row: DBOrder): Order {
 export function createOrdersApi(slug: string) {
   const { adminHeaders } = makeAdminAuth(slug)
 
-  async function createOrder(order: OrderInput): Promise<void> {
+  async function createOrder(order: OrderInput): Promise<string> {
     const itemsPayload = order.items.map(i => ({
       productId: i.product.id,
       quantity: i.quantity,
@@ -136,6 +174,16 @@ export function createOrdersApi(slug: string) {
       const err = await res.json().catch(() => ({}))
       throw new Error(err.error || 'Order creation failed')
     }
+    // Buyurtma ID (cuid) — mijoz buni kuzatuv havolasi sifatida ishlatadi
+    const data = await res.json().catch(() => ({}))
+    return (data.orderId as string) ?? ''
+  }
+
+  // Mehmon buyurtma kuzatuvi — ID (cuid) maxfiy kalit, auth shart emas.
+  async function fetchOrderById(orderId: string): Promise<TrackedOrder | null> {
+    const res = await fetch(`${API}/orders/track/${orderId}`)
+    if (!res.ok) return null
+    return (await res.json()) as TrackedOrder
   }
 
   async function fetchOrders(): Promise<Order[]> {
@@ -169,5 +217,5 @@ export function createOrdersApi(slug: string) {
       .map(toOrder)
   }
 
-  return { createOrder, fetchOrders, updateOrderStatus, fetchOrdersByPhone }
+  return { createOrder, fetchOrderById, fetchOrders, updateOrderStatus, fetchOrdersByPhone }
 }

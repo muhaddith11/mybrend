@@ -244,4 +244,35 @@ export default async function ordersRoutes(app: FastifyInstance) {
     if (!order) return reply.status(404).send({ error: 'Buyurtma topilmadi' })
     return reply.send(order)
   })
+
+  // Mehmon buyurtma kuzatuvi — AUTH'SIZ, lekin buyurtma ID (cuid) maxfiy kalit
+  // vazifasini bajaradi (taxmin qilib bo'lmaydi). Mijoz checkout'da olgan havola
+  // orqali faqat O'Z buyurtmasini ko'radi. Telefon/foydalanuvchi ma'lumoti
+  // (telegramChatId, lat/lng) qaytarilmaydi — faqat holat sahifasiga kerakli maydonlar.
+  app.get('/track/:id', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const order = await prisma.order.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        status: true,
+        deliveryType: true,
+        paymentMethod: true,
+        totalPrice: true,
+        address: true,
+        customerName: true,
+        note: true,
+        createdAt: true,
+        items: {
+          select: {
+            id: true, quantity: true, price: true, size: true, color: true,
+            product: { select: { id: true, name: true, nameUz: true, images: true } },
+          },
+        },
+        store: { select: { name: true, slug: true, logo: true, themeColor: true } },
+      },
+    })
+    if (!order) return reply.status(404).send({ error: 'Buyurtma topilmadi' })
+    return reply.send(order)
+  })
 }

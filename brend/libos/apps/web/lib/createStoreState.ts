@@ -102,6 +102,11 @@ export interface StoreState {
   authName: string | null
   setAuth: (phone: string, name: string) => void
   clearAuth: () => void
+
+  // Mehmon buyurtma kuzatuvi: shu qurilmada berilgan buyurtma ID'lari (cuid).
+  // Auth talab qilmaydi — har ID maxfiy kalit, /orders/track/:id orqali ko'riladi.
+  orderIds: string[]
+  addOrderId: (id: string) => void
 }
 
 const defaultFilters: FilterState = {
@@ -190,6 +195,13 @@ export function createStoreState(slug: string) {
         authName: null,
         setAuth: (phone, name) => set({ authPhone: phone, authName: name }),
         clearAuth: () => set({ authPhone: null, authName: null }),
+
+        // Buyurtma kuzatuvi (eng yangi birinchi, dublikatsiz)
+        orderIds: [],
+        addOrderId: (id) =>
+          set((state) => ({
+            orderIds: [id, ...state.orderIds.filter((x) => x !== id)],
+          })),
       }),
       {
         name: `${slug}-design-store`,
@@ -198,6 +210,7 @@ export function createStoreState(slug: string) {
           wishlist: state.wishlist,
           authPhone: state.authPhone,
           authName: state.authName,
+          orderIds: state.orderIds,
         }),
       }
     )

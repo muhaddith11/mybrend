@@ -151,6 +151,34 @@ describe('POST /api/orders/guest — narx server tomonda hisoblanadi', () => {
     await app.close()
   })
 
+  test('GET /track/:id — mehmon o’z buyurtmasini auth’siz ko’radi', async () => {
+    const { app } = await buildOrdersTestApp(seed)
+    const created = await app.inject({
+      method: 'POST',
+      url: '/api/orders/guest',
+      headers: json,
+      payload: {
+        storeSlug: 'asma',
+        customerName: 'Ali',
+        phone: '+998901230055',
+        items: [{ productId: 'p1', quantity: 1 }],
+      },
+    })
+    const orderId = created.json().orderId
+    const res = await app.inject({ method: 'GET', url: `/api/orders/track/${orderId}` })
+    assert.equal(res.statusCode, 200)
+    assert.equal(res.json().id, orderId)
+    assert.equal(res.json().status, 'PENDING')
+    await app.close()
+  })
+
+  test('GET /track/:id — mavjud boʻlmagan ID → 404', async () => {
+    const { app } = await buildOrdersTestApp(seed)
+    const res = await app.inject({ method: 'GET', url: '/api/orders/track/yoq-bunaqa-id' })
+    assert.equal(res.statusCode, 404)
+    await app.close()
+  })
+
   test('bir xil telefon bilan ikki buyurtma → bitta user (dublikat emas)', async () => {
     const { app, fake } = await buildOrdersTestApp(seed)
     const payload = {

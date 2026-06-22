@@ -1,5 +1,5 @@
 export * from '../createOrdersApi'
 import { createOrdersApi } from '../createOrdersApi'
 
-export const { createOrder, fetchOrders, updateOrderStatus, fetchOrdersByPhone } =
+export const { createOrder, fetchOrderById, fetchOrders, updateOrderStatus, fetchOrdersByPhone } =
   createOrdersApi('onepro')

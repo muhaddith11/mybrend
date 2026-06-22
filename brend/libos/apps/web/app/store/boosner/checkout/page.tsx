@@ -35,12 +35,13 @@ const paymentOptions: {
 ]
 
 export default function CheckoutPage() {
-  const { cart, getCartTotal, clearCart, authPhone, authName } = useStore()
+  const { cart, getCartTotal, clearCart, authPhone, authName, addOrderId } = useStore()
   const [form, setForm] = useState({ name: '', phone: '', address: '', note: '' })
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
+  const [trackId, setTrackId] = useState('')
   const [error, setError] = useState('')
   const [showMap, setShowMap] = useState(false)
 
@@ -67,7 +68,7 @@ export default function CheckoutPage() {
     setSubmitting(true)
     setError('')
     try {
-      await createOrder({
+      const newOrderId = await createOrder({
         customerName: form.name,
         phone: form.phone.replace(/\s/g, ''),
         address: form.address,
@@ -78,6 +79,10 @@ export default function CheckoutPage() {
         lat: coords?.lat,
         lng: coords?.lng,
       })
+      if (newOrderId) {
+        addOrderId(newOrderId)
+        setTrackId(newOrderId)
+      }
       clearCart()
       setDone(true)
     } catch (err) {
@@ -105,7 +110,7 @@ export default function CheckoutPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button asChild variant="outline">
-                <Link href="/store/boosner/profile">Buyurtmalarimni ko&apos;rish</Link>
+                <Link href={`/store/boosner/order/${trackId}`}>Buyurtmani kuzatish</Link>
               </Button>
               <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
                 <Link href="/store/boosner/collection">Xaridni davom ettirish</Link>
