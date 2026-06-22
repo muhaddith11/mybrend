@@ -1,5 +1,24 @@
 import type { FastifyInstance } from 'fastify'
 import { PrismaClient } from '@prisma/client'
+import { restoreStock } from '../../lib/stock.js'
+
+// Payme checkout URL'ini quradi. Amount tiyinda (so'm × 100), BigInt — overflow yo'q.
+// `c` (callback) — to'lovdan keyin qaytadigan manzil; web'da davom-etish sahifasi
+// (savatdagi keyingi do'kon to'loviga yo'naltiradi), mobil'da deep-link beriladi.
+export function buildPaymePaymentUrl(
+  order: { id: string; totalPrice: number },
+  opts: { callbackUrl?: string } = {},
+): string {
+  const webUrl = process.env.WEB_URL ?? 'https://zyff.uz'
+  const merchantId = process.env.PAYME_MERCHANT_ID ?? ''
+  const isTest = process.env.PAYME_IS_TEST === 'true'
+  const callback = opts.callbackUrl ?? `${webUrl}/checkout/pay-return`
+  // Payme URL: base64(m=MERCHANT_ID;ac.order_id=ORDER_ID;a=AMOUNT_TIYIN;c=CALLBACK)
+  const params = `m=${merchantId};ac.order_id=${order.id};a=${BigInt(order.totalPrice) * 100n};c=${callback}`
+  const encoded = Buffer.from(params).toString('base64')
+  const baseUrl = isTest ? 'https://checkout.test.paycom.uz' : 'https://checkout.paycom.uz'
+  return `${baseUrl}/${encoded}`
+}
 
 // JSON-RPC so'rovining `id` maydoni — string yoki son bo'lishi mumkin.
 type JsonRpcId = string | number
@@ -119,19 +138,8 @@ export default async function paymeRoutes(app: FastifyInstance) {
     const order = await prisma.order.findFirst({ where: { id: orderId, userId } })
     if (!order) return reply.status(404).send({ error: 'Buyurtma topilmadi' })
 
-    const merchantId = process.env.PAYME_MERCHANT_ID ?? ''
-    const isTest = process.env.PAYME_IS_TEST === 'true'
-
-    // Payme URL: base64(m=MERCHANT_ID;ac.order_id=ORDER_ID;a=AMOUNT_TIYIN)
-    const params = `m=${merchantId};ac.order_id=${order.id};a=${order.totalPrice * 100}`
-    const encoded = Buffer.from(params).toString('base64')
-
-    const baseUrl = isTest
-      ? 'https://checkout.test.paycom.uz'
-      : 'https://checkout.paycom.uz'
-
     return reply.send({
-      url: `${baseUrl}/${encoded}`,
+      url: buildPaymePaymentUrl(order, { callbackUrl: `libos://payment/result?orderId=${order.id}` }),
       orderId: order.id,
     })
   })
@@ -200,7 +208,7 @@ async function createTransaction(prisma: PrismaClient, id: JsonRpcId, params: Pa
       orderId,
       provider: 'PAYME',
       status: 'PENDING',
-      amount,
+      amount: BigInt(expectedAmount), // tasdiqlangan summa (tiyin), BigInt — overflow yo'q
       paymeTransId,
       paymeTime: BigInt(time),
       paymeCreateTime: BigInt(Date.now()),
@@ -239,13 +247,15 @@ async function performTransaction(prisma: PrismaClient, id: JsonRpcId, params: P
 
   const performTime = BigInt(Date.now())
 
-  await prisma.payment.update({
-    where: { id: payment.id },
-    data: { status: 'PAID', paymePerformTime: performTime },
-  })
-  await prisma.order.update({
-    where: { id: payment.orderId },
-    data: { status: 'CONFIRMED' },
+  await prisma.$transaction(async (tx) => {
+    await tx.payment.update({
+      where: { id: payment.id },
+      data: { status: 'PAID', paymePerformTime: performTime },
+    })
+    await tx.order.update({
+      where: { id: payment.orderId },
+      data: { status: 'CONFIRMED' },
+    })
   })
 
   return jsonRpcResponse(id, {
@@ -262,31 +272,47 @@ async function cancelTransaction(prisma: PrismaClient, id: JsonRpcId, params: Pa
   const payment = await prisma.payment.findUnique({ where: { paymeTransId } })
   if (!payment) return jsonRpcError(id, PAYME_ERROR.TRANSACTION_NOT_FOUND)
 
+  // Idempotentlik: allaqachon bekor qilingan bo'lsa, stokni qayta qaytarmasdan
+  // mavjud holatni qaytaramiz (Payme CancelTransaction'ni takror yuborishi mumkin).
+  if (payment.status === 'CANCELLED') {
+    return jsonRpcResponse(id, {
+      transaction: payment.id,
+      cancel_time: Number(payment.paymeCancelTime ?? 0),
+      state: payment.paymePerformTime ? -2 : -1,
+    })
+  }
+
   // Allaqachon to'langan bo'lsa bekor qilib bo'lmaydi (yetkazilgan bo'lsa)
-  if (payment.status === 'PAID') {
+  const wasPaid = payment.status === 'PAID'
+  if (wasPaid) {
     const order = await prisma.order.findUnique({ where: { id: payment.orderId } })
     if (order?.status === 'DELIVERED') return jsonRpcError(id, PAYME_ERROR.UNABLE_TO_PERFORM)
   }
 
   const cancelTime = BigInt(Date.now())
 
-  await prisma.payment.update({
-    where: { id: payment.id },
-    data: {
-      status: 'CANCELLED',
-      paymeCancelTime: cancelTime,
-      paymeCancelReason: reason,
-    },
-  })
-  await prisma.order.update({
-    where: { id: payment.orderId },
-    data: { status: 'CANCELLED' },
+  // Bekor qilish + stokni qaytarish — bitta atomik tranzaksiyada
+  await prisma.$transaction(async (tx) => {
+    await tx.payment.update({
+      where: { id: payment.id },
+      data: {
+        status: 'CANCELLED',
+        paymeCancelTime: cancelTime,
+        paymeCancelReason: reason,
+      },
+    })
+    await tx.order.update({
+      where: { id: payment.orderId },
+      data: { status: 'CANCELLED' },
+    })
+    await restoreStock(tx, payment.orderId)
   })
 
   return jsonRpcResponse(id, {
     transaction: payment.id,
     cancel_time: Number(cancelTime),
-    state: -1,
+    // Bajarilgan (PAID) tranzaksiya bekor qilinsa state -2, aks holda -1
+    state: wasPaid ? -2 : -1,
   })
 }
 
@@ -331,7 +357,7 @@ async function getStatement(prisma: PrismaClient, id: JsonRpcId, params: PaymePa
   const transactions = payments.map(p => ({
     id: p.paymeTransId,
     time: Number(p.paymeTime ?? 0),
-    amount: p.amount,
+    amount: Number(p.amount), // BigInt → Number (Fastify BigInt'ni serialize qilmaydi)
     account: { order_id: p.orderId },
     create_time: Number(p.paymeCreateTime ?? 0),
     perform_time: Number(p.paymePerformTime ?? 0),

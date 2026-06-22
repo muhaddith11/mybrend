@@ -223,7 +223,7 @@ model Payment {
   id         String          @id @default(cuid())
   provider   PaymentProvider
   status     PaymentStatus   @default(PENDING)
-  amount     Int             // tiyin (so'm × 100)
+  amount     BigInt          // tiyin (so'm × 100) — BigInt: yirik buyurtmada int4 overflow bo'lmasin
 
   // Click uchun
   clickTransId   String? @unique

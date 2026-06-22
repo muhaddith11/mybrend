@@ -1,6 +1,26 @@
 import type { FastifyInstance } from 'fastify'
 import { createHash } from 'crypto'
 import { PrismaClient } from '@prisma/client'
+import { restoreStock } from '../../lib/stock.js'
+
+// Click to'lov sahifasi URL'ini quradi. Web (default) va mobil (returnUrl bilan)
+// uchun bir xil. Amount so'mda yuboriladi (Click tiyin emas, so'm kutadi).
+export function buildClickPaymentUrl(
+  order: { id: string; totalPrice: number },
+  opts: { returnUrl?: string } = {},
+): string {
+  const webUrl = process.env.WEB_URL ?? 'https://zyff.uz'
+  const params = new URLSearchParams({
+    service_id: process.env.CLICK_SERVICE_ID ?? '',
+    merchant_id: process.env.CLICK_MERCHANT_ID ?? '',
+    amount: String(order.totalPrice),
+    transaction_param: order.id,
+    // To'lovdan keyin davom-etish sahifasiga qaytadi — u savatdagi keyingi
+    // do'kon to'loviga yo'naltiradi (ko'p-do'konli buyurtma), yoki tugatsa /orders.
+    return_url: opts.returnUrl ?? `${webUrl}/checkout/pay-return`,
+  })
+  return `https://my.click.uz/services/pay?${params}`
+}
 
 // Click webhook action kodlari
 const CLICK_ACTION_PREPARE = 0
@@ -37,7 +57,6 @@ export function checkSign(params: Record<string, string>, secretKey: string, act
 export default async function clickRoutes(app: FastifyInstance) {
   const prisma: PrismaClient = app.prisma
   const SECRET_KEY = process.env.CLICK_SECRET_KEY ?? ''
-  const SERVICE_ID = process.env.CLICK_SERVICE_ID ?? ''
 
   // Click bu endpoint'ga POST so'rov yuboradi
   app.post('/click/webhook', async (req, reply) => {
@@ -48,6 +67,7 @@ export default async function clickRoutes(app: FastifyInstance) {
       service_id,
       click_paydoc_id,
       merchant_trans_id, // bu bizning order.id
+      merchant_prepare_id, // PREPARE bosqichida biz qaytargan ID (COMPLETE'da qaytadi)
       amount,
       action,
       sign_time,
@@ -114,7 +134,7 @@ export default async function clickRoutes(app: FastifyInstance) {
           orderId: order.id,
           provider: 'CLICK',
           status: 'PENDING',
-          amount: order.totalPrice * 100, // tiyinga o'tkazamiz
+          amount: BigInt(order.totalPrice) * 100n, // tiyinga o'tkazamiz (BigInt: overflow yo'q)
           clickTransId: click_trans_id,
           clickPaydocId: click_paydoc_id,
         },
@@ -146,16 +166,39 @@ export default async function clickRoutes(app: FastifyInstance) {
         })
       }
 
-      // Click error yuborsa — bekor qilish
+      // PREPARE bosqichida biz `merchant_prepare_id: order.id` qaytargan edik —
+      // Click COMPLETE'da uni qaytaradi. Mos kelmasa, so'rov yaroqsiz (xavfsizlik).
+      if (merchant_prepare_id && merchant_prepare_id !== order.id) {
+        return reply.send({
+          click_trans_id,
+          merchant_trans_id,
+          error: CLICK_ERROR.INVALID_REQUEST,
+          error_note: 'merchant_prepare_id mos kelmadi',
+        })
+      }
+
+      // Idempotentlik: allaqachon to'langan bo'lsa, qayta yozmaymiz (Click COMPLETE'ni
+      // takror yuborishi mumkin). To'langan buyurtmani keyingi error bilan bekor qilib
+      // pulni yo'qotib qo'ymaslik uchun ham shu yerda to'xtaymiz.
+      if (payment.status === 'PAID') {
+        return reply.send({
+          click_trans_id,
+          merchant_trans_id,
+          merchant_confirm_id: order.id,
+          error: CLICK_ERROR.SUCCESS,
+          error_note: 'Success',
+        })
+      }
+
+      // Click error yuborsa — bekor qilish + stokni qaytarish (faqat bir marta)
       if (Number(error) < 0) {
-        await prisma.payment.update({
-          where: { orderId: order.id },
-          data: { status: 'CANCELLED' },
-        })
-        await prisma.order.update({
-          where: { id: order.id },
-          data: { status: 'CANCELLED' },
-        })
+        if (payment.status !== 'CANCELLED') {
+          await prisma.$transaction(async (tx) => {
+            await tx.payment.update({ where: { orderId: order.id }, data: { status: 'CANCELLED' } })
+            await tx.order.update({ where: { id: order.id }, data: { status: 'CANCELLED' } })
+            await restoreStock(tx, order.id)
+          })
+        }
         return reply.send({
           click_trans_id,
           merchant_trans_id,
@@ -165,14 +208,10 @@ export default async function clickRoutes(app: FastifyInstance) {
         })
       }
 
-      // To'lovni tasdiqlash
-      await prisma.payment.update({
-        where: { orderId: order.id },
-        data: { status: 'PAID' },
-      })
-      await prisma.order.update({
-        where: { id: order.id },
-        data: { status: 'CONFIRMED' },
+      // To'lovni tasdiqlash — payment + order bitta tranzaksiyada
+      await prisma.$transaction(async (tx) => {
+        await tx.payment.update({ where: { orderId: order.id }, data: { status: 'PAID' } })
+        await tx.order.update({ where: { id: order.id }, data: { status: 'CONFIRMED' } })
       })
 
       return reply.send({
@@ -200,16 +239,8 @@ export default async function clickRoutes(app: FastifyInstance) {
     const order = await prisma.order.findFirst({ where: { id: orderId, userId } })
     if (!order) return reply.status(404).send({ error: 'Buyurtma topilmadi' })
 
-    // Click to'lov URL formatı
-    const params = new URLSearchParams({
-      service_id: SERVICE_ID,
-      merchant_id: process.env.CLICK_MERCHANT_ID ?? '',
-      amount: String(order.totalPrice),
-      transaction_param: order.id,
-      return_url: `libos://payment/result?orderId=${order.id}`,
-    })
-
-    const url = `https://my.click.uz/services/pay?${params}`
+    // Mobil ilova uchun deep-link return_url bilan bir xil builder
+    const url = buildClickPaymentUrl(order, { returnUrl: `libos://payment/result?orderId=${order.id}` })
     return reply.send({ url, orderId: order.id })
   })
 }

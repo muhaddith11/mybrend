@@ -1,13 +1,23 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { PrismaClient, Prisma, DeliveryType } from '@prisma/client'
+import { PrismaClient, DeliveryType } from '@prisma/client'
 import { sendOrderNotification } from '../plugins/telegram'
+import { decrementStock } from '../lib/stock.js'
+import { buildClickPaymentUrl } from './payment/click.js'
+import { buildPaymePaymentUrl } from './payment/payme.js'
+
+// Yetkazib berish narxi (asosiy marketplace checkout uchun). Do'kon sahifalaridagi
+// (guest) buyurtmalar bepul, shuning uchun bu faqat auth'li `/` route'iga qo'shiladi.
+// Frontend ham shu qiymatni ko'rsatadi — moslik uchun env'dan boshqarish mumkin.
+const DELIVERY_FEE = Number(process.env.DELIVERY_FEE ?? 15000)
 
 const createOrderSchema = z.object({
   storeId: z.string(),
   deliveryType: z.enum(['DELIVERY', 'PICKUP', 'CASH_ON_DOOR']),
   address: z.string().optional(),
   note: z.string().optional(),
+  // Online to'lov tanlangan bo'lsa — javobda paymentUrl qaytadi
+  paymentProvider: z.enum(['CLICK', 'PAYME']).optional(),
   items: z.array(z.object({
     productId: z.string(),
     quantity: z.number().min(1),
@@ -35,29 +45,6 @@ const guestOrderSchema = z.object({
 
 const storeInclude = {
   select: { id: true, name: true, slug: true, logo: true, themeColor: true },
-}
-
-type OrderLine = { productId: string; quantity: number; size?: string; color?: string }
-
-// Buyurtma qatorlariga mos variant stokini kamaytiradi.
-// Atomik va race-xavfsiz: `quantity: { gte }` sharti DB darajasida tekshiriladi,
-// shuning uchun ikki parallel so'rov bir vaqtda oxirgi mahsulotni olishga
-// urinsa ham stok HECH QACHON manfiyga tushmaydi — faqat biri kamaytira oladi.
-// Variant topilmasa yoki stok yetmasa — jimgina o'tkazib yuboramiz (best-effort:
-// buyurtma stok yetishmovchiligi sababli bloklanmaydi).
-// Buyurtma yaratish bilan bitta tranzaksiyada chaqiriladi — shuning uchun `tx`.
-async function decrementStock(tx: Prisma.TransactionClient, items: OrderLine[]) {
-  for (const it of items) {
-    await tx.productVariant.updateMany({
-      where: {
-        productId: it.productId,
-        size: it.size ?? null,
-        color: it.color ?? null,
-        quantity: { gte: it.quantity },
-      },
-      data: { quantity: { decrement: it.quantity } },
-    })
-  }
 }
 
 export default async function ordersRoutes(app: FastifyInstance) {
@@ -150,10 +137,14 @@ export default async function ordersRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: "Buyurtmada noto'g'ri yoki boshqa do'kon mahsuloti bor" })
     }
 
-    const totalPrice = body.items.reduce((sum, item) => {
+    const itemsTotal = body.items.reduce((sum, item) => {
       const product = products.find(p => p.id === item.productId)
       return sum + (product?.price ?? 0) * item.quantity
     }, 0)
+    // Yetkazib berish narxi summaga kiritiladi — ko'rsatilgan va to'lanadigan
+    // summa bir xil bo'lsin (online to'lov webhook'i ham shu totalPrice'ni tekshiradi).
+    const deliveryFee = body.deliveryType === 'DELIVERY' ? DELIVERY_FEE : 0
+    const totalPrice = itemsTotal + deliveryFee
 
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { phone: true, name: true } })
 
@@ -164,6 +155,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
           userId,
           storeId: body.storeId,
           deliveryType: body.deliveryType as DeliveryType,
+          paymentMethod: body.paymentProvider?.toLowerCase() ?? 'cash',
           address: body.address,
           note: body.note,
           totalPrice,
@@ -193,7 +185,14 @@ export default async function ordersRoutes(app: FastifyInstance) {
       user: user ?? { phone: 'Noma\'lum', name: null },
     }).catch((err) => req.log.error({ err, orderId: order.id }, 'Telegram buyurtma xabari yuborilmadi'))
 
-    return reply.status(201).send(order)
+    // Online to'lov tanlangan bo'lsa — to'lov sahifasi URL'ini qaytaramiz.
+    // Mijoz shu manzilga yo'naltiriladi; haqiqiy tasdiqlash provayder webhook'i
+    // orqali keladi (Click PREPARE/COMPLETE, Payme CreateTransaction/Perform).
+    let paymentUrl: string | undefined
+    if (body.paymentProvider === 'CLICK') paymentUrl = buildClickPaymentUrl(order)
+    else if (body.paymentProvider === 'PAYME') paymentUrl = buildPaymePaymentUrl(order)
+
+    return reply.status(201).send({ ...order, paymentUrl })
   })
 
   // Foydalanuvchi buyurtmalari

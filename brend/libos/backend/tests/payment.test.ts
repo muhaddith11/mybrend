@@ -310,11 +310,34 @@ describe('Click webhook Complete (action=1)', () => {
     const fake = clickSetup()
     const { app } = await buildPaymentTestApp(fake.prisma)
     await clickCall(app, signed({ ...baseClick, action: '0' })) // avval Prepare
-    const res = await clickCall(app, signed({ ...baseClick, action: '1', error: '0' }))
+    const res = await clickCall(app, signed({ ...baseClick, action: '1', error: '0', merchant_prepare_id: 'order_1' }))
     assert.equal(res.json().error, 0)
     assert.equal(res.json().merchant_confirm_id, 'order_1')
     assert.equal(fake.payments[0].status, 'PAID')
     assert.equal(fake.orders[0].status, 'CONFIRMED')
+    await app.close()
+  })
+
+  test('Complete qayta yuborilsa (idempotent) → PAID qoladi, qayta yozilmaydi', async () => {
+    const fake = clickSetup()
+    const { app } = await buildPaymentTestApp(fake.prisma)
+    await clickCall(app, signed({ ...baseClick, action: '0' }))
+    await clickCall(app, signed({ ...baseClick, action: '1', error: '0', merchant_prepare_id: 'order_1' }))
+    // To'langandan keyin error bilan qayta kelsa ham — bekor qilinmaydi (pul yo'qolmaydi)
+    const again = await clickCall(app, signed({ ...baseClick, action: '1', error: '-5', merchant_prepare_id: 'order_1' }))
+    assert.equal(again.json().error, 0)
+    assert.equal(fake.payments[0].status, 'PAID')
+    assert.equal(fake.orders[0].status, 'CONFIRMED')
+    await app.close()
+  })
+
+  test('notoʻgʻri merchant_prepare_id → INVALID_REQUEST (-9)', async () => {
+    const fake = clickSetup()
+    const { app } = await buildPaymentTestApp(fake.prisma)
+    await clickCall(app, signed({ ...baseClick, action: '0' }))
+    const res = await clickCall(app, signed({ ...baseClick, action: '1', error: '0', merchant_prepare_id: 'boshqa_id' }))
+    assert.equal(res.json().error, -9)
+    assert.equal(fake.payments[0].status, 'PENDING') // tasdiqlanmaydi
     await app.close()
   })
 
@@ -330,7 +353,7 @@ describe('Click webhook Complete (action=1)', () => {
     const fake = clickSetup()
     const { app } = await buildPaymentTestApp(fake.prisma)
     await clickCall(app, signed({ ...baseClick, action: '0' }))
-    const res = await clickCall(app, signed({ ...baseClick, action: '1', error: '-5' }))
+    const res = await clickCall(app, signed({ ...baseClick, action: '1', error: '-5', merchant_prepare_id: 'order_1' }))
     assert.equal(res.json().error, 0) // bekor qilish ham muvaffaqiyatli javob
     assert.equal(fake.payments[0].status, 'CANCELLED')
     assert.equal(fake.orders[0].status, 'CANCELLED')

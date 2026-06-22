@@ -62,7 +62,9 @@ export default function CheckoutPage() {
     setLoading(true)
 
     try {
-      // Each store → separate order
+      // Har do'kon → alohida buyurtma. Mijoz har do'kon egasi bilan to'g'ridan-to'g'ri
+      // savdo qiladi, shuning uchun savatdagi har do'kon uchun bittadan buyurtma.
+      const paymentUrls: string[] = []
       for (const storeId of storeIds) {
         const storeItems = byStore[storeId]
         const orderItems = storeItems.map(i => ({
@@ -81,14 +83,17 @@ export default function CheckoutPage() {
           paymentProvider: payment === 'CASH' ? undefined : payment,
         })
 
-        if (payment !== 'CASH' && res.paymentUrl) {
-          // Redirect to payment
-          clearStore(storeId)
-          window.location.href = res.paymentUrl
-          return
-        }
-
         clearStore(storeId)
+        if (payment !== 'CASH' && res.paymentUrl) paymentUrls.push(res.paymentUrl)
+      }
+
+      if (paymentUrls.length > 0) {
+        // Ketma-ket to'lov: birinchi do'kon to'loviga hozir yo'naltiramiz, qolganlarini
+        // navbatga saqlaymiz. Har to'lovdan keyin /checkout/pay-return navbatdagi
+        // do'kon to'lovini ochadi; navbat tugaganda /orders ga o'tadi.
+        sessionStorage.setItem('zyff_payment_queue', JSON.stringify(paymentUrls.slice(1)))
+        window.location.href = paymentUrls[0]
+        return
       }
 
       router.push('/orders?success=1')

@@ -81,6 +81,22 @@ export function createPaymentFakePrisma(seed: { orders: PaymeSeedOrder[] }) {
         return payments.map((p) => ({ ...p }))
       },
     },
+    // Stok qaytarish kodi shu ikkisini chaqiradi. Testlarda buyurtma qatorlari
+    // seed qilinmagan, shuning uchun no-op — biznes-mantiq (status o'zgarishi) tekshiriladi.
+    orderItem: {
+      async findMany() {
+        return []
+      },
+    },
+    productVariant: {
+      async updateMany() {
+        return { count: 0 }
+      },
+    },
+    // Tranzaksiya: soxta prisma uchun shunchaki bir xil obyekt bilan callback'ni chaqiramiz
+    async $transaction(fn: any) {
+      return fn(prisma)
+    },
   }
 
   return { prisma, orders, payments }
