@@ -41,10 +41,11 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  padding: 2rem 2rem 2.5rem;
+  /* Yuqori padding kattaroq — "ZYFF — Qo'qon" badge sarlavha bilan ustma-ust tushmasin */
+  padding: 3.5rem 2rem 2.5rem;
   overflow: hidden;
 }
-@media (min-width: 768px) { .heroSlide { padding: 2.5rem 3rem; } }
+@media (min-width: 768px) { .heroSlide { padding: 3rem 3rem 2.5rem; } }
 
 .heroSlideActive {
   opacity: 1;

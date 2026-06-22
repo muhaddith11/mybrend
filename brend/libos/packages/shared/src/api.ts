@@ -23,7 +23,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers })
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Xatolik' }))
-    throw new Error(err.error ?? 'So\'rov amalga oshmadi')
+    // Xato'ga HTTP status'ni biriktiramiz — chaqiruvchi 401 (auth) ni tarmoq/server
+    // xatosidan ajrata olsin (masalan sessiyani faqat 401'da tugatish uchun).
+    const error = new Error(err.error ?? 'So\'rov amalga oshmadi') as Error & { status?: number }
+    error.status = res.status
+    throw error
   }
   return res.json()
 }

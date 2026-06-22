@@ -221,6 +221,11 @@
   font-family: inherit;
 }
 .searchBtn:hover { background: var(--brand-dark); }
+/* Mobilда qidiruv tugmasi kichikroq — joy tejaladi */
+@media (max-width: 640px) {
+  .searchBtn { padding: 0 12px; font-size: 13px; }
+  .searchInput { font-size: 13px; }
+}
 
 /* Right icons — mobilda yashirin (pastki mobil nav o'rnini bosadi) */
 .navRight {

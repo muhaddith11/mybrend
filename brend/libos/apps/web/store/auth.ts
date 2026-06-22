@@ -46,15 +46,25 @@ export const useAuthStore = create<AuthStore>()(
       init: async () => {
         const { token } = get()
         if (!token) return
+        setToken(token)
+        // Token bor — darhol "kirgan" deb belgilaymiz (sahifa yangilanganда chiqib
+        // ketmasin), keyin foydalanuvchini /me orqali to'ldiramiz.
+        set({ isLoggedIn: true })
         try {
-          setToken(token)
           const user = await api.auth.me()
           set({ user, isLoggedIn: true })
-        } catch {
-          set({ token: null, user: null, isLoggedIn: false })
+        } catch (e) {
+          // Faqat 401 (token yaroqsiz)да sessiyani tugatamiz. Tarmoq/server xatosi
+          // (transient) bo'lsa tokenни saqlaymiz — foydalanuvchi bekorga chiqib ketmasin.
+          const status = (e as { status?: number })?.status
+          if (status === 401) {
+            setToken(null)
+            set({ token: null, user: null, isLoggedIn: false })
+          }
         }
       },
     }),
-    { name: 'libos-auth', partialize: (s) => ({ token: s.token }) }
+    // isLoggedIn ham saqlanadi — qaytib kelganда darhol "kirgan" ko'rinadi (miltillash yo'q)
+    { name: 'libos-auth', partialize: (s) => ({ token: s.token, isLoggedIn: s.isLoggedIn }) }
   )
 )
