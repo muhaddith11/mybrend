@@ -3,8 +3,13 @@ import { z } from 'zod'
 import { PrismaClient, DeliveryType } from '@prisma/client'
 import { sendOrderNotification } from '../plugins/telegram'
 import { decrementStock } from '../lib/stock.js'
+import { phoneSchema } from '../lib/phone.js'
 import { buildClickPaymentUrl } from './payment/click.js'
 import { buildPaymePaymentUrl } from './payment/payme.js'
+
+// Auth'siz guest buyurtma — bitta IP'dan soxta buyurtma bilan stokni tushirib
+// yuborish (inventar DoS) oldini olish uchun tor chegara. (Testlarda e'tiborsiz.)
+const guestOrderRateLimit = { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }
 
 // Yetkazib berish narxi (asosiy marketplace checkout uchun). Do'kon sahifalaridagi
 // (guest) buyurtmalar bepul, shuning uchun bu faqat auth'li `/` route'iga qo'shiladi.
@@ -29,7 +34,7 @@ const createOrderSchema = z.object({
 const guestOrderSchema = z.object({
   storeSlug: z.string(),
   customerName: z.string().min(1),
-  phone: z.string().min(7),
+  phone: phoneSchema,
   address: z.string().optional(),
   lat: z.number().optional(),
   lng: z.number().optional(),
@@ -51,7 +56,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
   const prisma: PrismaClient = app.prisma
 
   // Mehmon (guest) buyurtma — ro'yxatdan o'tmagan mijozlar uchun
-  app.post('/guest', async (req, reply) => {
+  app.post('/guest', guestOrderRateLimit, async (req, reply) => {
     const body = guestOrderSchema.parse(req.body)
 
     const store = await prisma.store.findUnique({ where: { slug: body.storeSlug } })

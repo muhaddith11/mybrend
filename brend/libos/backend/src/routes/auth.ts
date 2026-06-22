@@ -2,9 +2,16 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { PrismaClient } from '@prisma/client'
 import { sendSms } from '../plugins/sms.js'
+import { phoneSchema } from '../lib/phone.js'
 
-const sendOtpSchema = z.object({ phone: z.string().min(9) })
-const verifyOtpSchema = z.object({ phone: z.string(), code: z.string().length(6) })
+const sendOtpSchema = z.object({ phone: phoneSchema })
+const verifyOtpSchema = z.object({ phone: phoneSchema, code: z.string().length(6) })
+
+// Auth'siz endpointlar uchun bitta IP'dan kelishi mumkin bo'lgan so'rovlar chegarasi.
+// Global 300/min'dan tashqari — SMS xarajat hujumi va raqam enumeratsiyasini bloklaydi.
+// (Test ilovalari rate-limit pluginini ro'yxatdan o'tkazmaydi → bu e'tiborsiz qoladi.)
+const sendOtpRateLimit = { config: { rateLimit: { max: 5, timeWindow: '1 minute' } } }
+const verifyOtpRateLimit = { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } }
 
 export default async function authRoutes(app: FastifyInstance) {
   const prisma: PrismaClient = app.prisma
@@ -12,7 +19,7 @@ export default async function authRoutes(app: FastifyInstance) {
   const OTP_COOLDOWN_MS = 60 * 1000 // kodlar orasida kamida 1 daqiqa (SMS spam oldini olish)
   const MAX_OTP_ATTEMPTS = 5 // shuncha noto'g'ri urinishdan keyin yangi kod kerak
 
-  app.post('/send-otp', async (req, reply) => {
+  app.post('/send-otp', sendOtpRateLimit, async (req, reply) => {
     const { phone } = sendOtpSchema.parse(req.body)
 
     // Rate-limit: oxirgi kod yaqinda yuborilgan bo'lsa — kutish
@@ -39,7 +46,7 @@ export default async function authRoutes(app: FastifyInstance) {
     return reply.send({ success: true, message: 'Kod yuborildi' })
   })
 
-  app.post('/verify-otp', async (req, reply) => {
+  app.post('/verify-otp', verifyOtpRateLimit, async (req, reply) => {
     const { phone, code } = verifyOtpSchema.parse(req.body)
 
     // 000000 — universal test kodi (har doim ishlaydi)

@@ -54,8 +54,10 @@ const storeUpdateSchema = z.object({
 export default async function adminRoutes(app: FastifyInstance) {
   const prisma: PrismaClient = app.prisma
 
-  // Do'kon egasi login
-  app.post('/login', async (req, reply) => {
+  // Do'kon egasi login — parol brute-force'ga qarshi tor IP rate-limit
+  // (global 300/min'dan tashqari). Testlarda rate-limit plugini yo'q → e'tiborsiz.
+  const loginRateLimit = { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }
+  app.post('/login', loginRateLimit, async (req, reply) => {
     const { email, password } = loginSchema.parse(req.body)
 
     // Env-var based custom credentials (ADMIN_USERNAME + ADMIN_PASSWORD)
@@ -70,10 +72,13 @@ export default async function adminRoutes(app: FastifyInstance) {
           const token = app.jwt.sign({ ownerId: store.ownerId, role: 'owner' })
           return reply.send({ token, owner: { id: store.ownerId, name: store.name, email: envUser } })
         }
-        return reply.status(401).send({ error: `Do'kon topilmadi: ${envSlug}` })
+        // Sozlama xatosi (env do'koni topilmadi) — tafsilot mijozga oshkor qilinmaydi
+        app.log.error(`Admin env-login: do'kon topilmadi (slug=${envSlug})`)
+        return reply.status(500).send({ error: 'Server xatosi' })
       } catch (e: any) {
-        app.log.error('Admin env-login error: ' + e?.message)
-        return reply.status(500).send({ error: 'Server xatosi: ' + (e?.message ?? 'unknown') })
+        // Ichki xato faqat serverda loglanadi; mijozga umumiy xabar (info leak yo'q)
+        app.log.error({ err: e }, 'Admin env-login xatosi')
+        return reply.status(500).send({ error: 'Server xatosi' })
       }
     }
 
