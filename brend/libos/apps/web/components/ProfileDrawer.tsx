@@ -154,6 +154,16 @@ export function ProfileDrawer() {
                     ))}
                   </div>
                 </div>
+
+                {/* Shahar — mobilда city tanlovi navbarда yo'q, shu yerda ko'rsatamiz */}
+                <div className={styles.langRow}>
+                  <span className={styles.menuIcon}>🏙️</span>
+                  <span className={styles.menuLabel}>{tr.cityLabel}</span>
+                  <div className={styles.langPills}>
+                    <button className={`${styles.langPill} ${styles.langActive}`}>📍 Qo&apos;qon</button>
+                  </div>
+                </div>
+                <div className={styles.citySoonHint}>{tr.otherCitiesSoon}</div>
               </div>
 
               <button className={styles.logoutBtn} onClick={handleLogout}>
