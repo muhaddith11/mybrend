@@ -35,6 +35,8 @@ const guestOrderSchema = z.object({
   storeSlug: z.string(),
   customerName: z.string().min(1),
   phone: phoneSchema,
+  // Yetkazib berish yoki olib ketish (default — yetkazib berish, eski mosligi uchun)
+  deliveryType: z.enum(['DELIVERY', 'PICKUP']).default('DELIVERY'),
   address: z.string().optional(),
   lat: z.number().optional(),
   lng: z.number().optional(),
@@ -61,6 +63,12 @@ export default async function ordersRoutes(app: FastifyInstance) {
 
     const store = await prisma.store.findUnique({ where: { slug: body.storeSlug } })
     if (!store) return reply.status(404).send({ error: 'Do\'kon topilmadi' })
+
+    // Do'kon olib ketishni qo'llab-quvvatlamasa, PICKUP buyurtmani rad etamiz
+    // (UI ham yashiradi, lekin backend ham himoyalanadi).
+    if (body.deliveryType === 'PICKUP' && !store.hasPickup) {
+      return reply.status(400).send({ error: "Bu do'kon olib ketishni qo'llab-quvvatlamaydi" })
+    }
 
     const productIds = body.items.map(i => i.productId)
     // Faqat shu do'konning mahsulotlari — boshqa do'kon yoki mavjud bo'lmagan ID jimgina 0 narx bermasin
@@ -94,7 +102,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
           data: {
             userId: user.id,
             storeId: store.id,
-            deliveryType: 'DELIVERY' as DeliveryType,
+            deliveryType: body.deliveryType as DeliveryType,
             customerName: body.customerName,
             address: body.address,
             lat: body.lat,

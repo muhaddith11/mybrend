@@ -4,7 +4,7 @@ import { errorHandler } from '../../src/errorHandler.js'
 import ordersRoutes from '../../src/routes/orders.js'
 
 type SeedProduct = { id: string; price: number; name?: string; nameUz?: string | null; sku?: string | null }
-type SeedStore = { id: string; slug: string; name?: string; telegramChatId?: string | null }
+type SeedStore = { id: string; slug: string; name?: string; telegramChatId?: string | null; hasPickup?: boolean }
 type SeedVariant = { id: string; productId: string; size?: string | null; color?: string | null; quantity: number }
 
 // orders.ts ishlatadigan prisma metodlarini in-memory taqlid qiladi.

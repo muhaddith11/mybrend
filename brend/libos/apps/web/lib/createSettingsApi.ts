@@ -46,6 +46,19 @@ export function createSettingsApi(slug: string) {
     }
   }
 
+  // Yetkazib berish/olib ketish imkoniyatlari (checkout tanlovini ko'rsatish uchun).
+  // StoreSettings'dan alohida — u faqat matn maydonlari (admin formasi uchun).
+  async function fetchDeliveryOptions(): Promise<{ hasDelivery: boolean; hasPickup: boolean }> {
+    try {
+      const res = await fetch(`${API}/stores/${slug}`)
+      if (!res.ok) return { hasDelivery: true, hasPickup: false }
+      const store = await res.json()
+      return { hasDelivery: store.hasDelivery ?? true, hasPickup: store.hasPickup ?? false }
+    } catch {
+      return { hasDelivery: true, hasPickup: false }
+    }
+  }
+
   async function updateSettings(s: StoreSettings): Promise<void> {
     const token = getAdminToken()
     const res = await fetch(`${API}/admin/store`, {
@@ -71,5 +84,5 @@ export function createSettingsApi(slug: string) {
     }
   }
 
-  return { fetchSettings, updateSettings }
+  return { fetchSettings, updateSettings, fetchDeliveryOptions }
 }

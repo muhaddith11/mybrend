@@ -179,6 +179,45 @@ describe('POST /api/orders/guest — narx server tomonda hisoblanadi', () => {
     await app.close()
   })
 
+  test('PICKUP — doʻkon olib ketishni qoʻllasa buyurtma oʻtadi (deliveryType saqlanadi)', async () => {
+    const seedP = { ...seed, stores: [{ id: 's1', slug: 'asma', name: 'Asma', telegramChatId: null, hasPickup: true }] }
+    const { app, fake } = await buildOrdersTestApp(seedP)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/orders/guest',
+      headers: json,
+      payload: {
+        storeSlug: 'asma',
+        customerName: 'Ali',
+        phone: '+998901230077',
+        deliveryType: 'PICKUP',
+        items: [{ productId: 'p1', quantity: 1 }],
+      },
+    })
+    assert.equal(res.statusCode, 201)
+    assert.equal(fake.createdOrders[0].deliveryType, 'PICKUP')
+    await app.close()
+  })
+
+  test('PICKUP — doʻkon olib ketishni qoʻllamasa → 400', async () => {
+    const { app, fake } = await buildOrdersTestApp(seed)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/orders/guest',
+      headers: json,
+      payload: {
+        storeSlug: 'asma',
+        customerName: 'Ali',
+        phone: '+998901230078',
+        deliveryType: 'PICKUP',
+        items: [{ productId: 'p1', quantity: 1 }],
+      },
+    })
+    assert.equal(res.statusCode, 400)
+    assert.equal(fake.createdOrders.length, 0)
+    await app.close()
+  })
+
   test('bir xil telefon bilan ikki buyurtma → bitta user (dublikat emas)', async () => {
     const { app, fake } = await buildOrdersTestApp(seed)
     const payload = {

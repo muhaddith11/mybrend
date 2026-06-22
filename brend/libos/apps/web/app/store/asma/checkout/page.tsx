@@ -8,6 +8,7 @@ import { motion } from 'framer-motion'
 import { CheckCircle2, Loader2, ShoppingBag, Banknote, CreditCard, Clock, MapPin, ChevronDown, ChevronUp } from 'lucide-react'
 import { useStore, formatPrice } from '@/lib/asma/store'
 import { createOrder, PaymentMethod } from '@/lib/asma/orders'
+import { fetchDeliveryOptions } from '@/lib/asma/settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/asma/utils'
@@ -44,6 +45,13 @@ export default function CheckoutPage() {
   const [trackId, setTrackId] = useState('')
   const [error, setError] = useState('')
   const [showMap, setShowMap] = useState(false)
+  const [deliveryType, setDeliveryType] = useState<'DELIVERY' | 'PICKUP'>('DELIVERY')
+  const [hasPickup, setHasPickup] = useState(false)
+
+  // Do'kon olib ketishni qo'llab-quvvatlasa — tanlov ko'rsatamiz
+  useEffect(() => {
+    fetchDeliveryOptions().then((o) => setHasPickup(o.hasPickup)).catch(() => {})
+  }, [])
 
   // Auto-fill from auth session
   useEffect(() => {
@@ -76,6 +84,7 @@ export default function CheckoutPage() {
         items: cart,
         total,
         paymentMethod,
+        deliveryType,
         lat: coords?.lat,
         lng: coords?.lng,
       })
@@ -178,13 +187,34 @@ export default function CheckoutPage() {
               />
             </div>
 
-            {/* Address + Map */}
+            {hasPickup && (
+              <div className="flex gap-2">
+                {(['DELIVERY', 'PICKUP'] as const).map((val) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setDeliveryType(val)}
+                    className={cn(
+                      'flex-1 rounded border px-4 py-3 text-sm transition-colors',
+                      deliveryType === val
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border text-muted-foreground hover:border-primary'
+                    )}
+                  >
+                    {val === 'DELIVERY' ? 'Yetkazib berish' : 'Olib ketish'}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Address + Map (faqat yetkazib berishда) */}
+            {deliveryType === 'DELIVERY' && (
             <div>
               <label className="block text-sm text-foreground mb-2">
                 Manzil <span className="text-destructive">*</span>
               </label>
               <Input
-                required
+                required={deliveryType === 'DELIVERY'}
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
                 placeholder="Shahar, ko'cha, uy raqami"
@@ -219,6 +249,7 @@ export default function CheckoutPage() {
                 </motion.div>
               )}
             </div>
+            )}
 
             <div>
               <label className="block text-sm text-foreground mb-2">

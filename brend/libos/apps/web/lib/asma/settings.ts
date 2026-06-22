@@ -1,4 +1,4 @@
 export * from '../createSettingsApi'
 import { createSettingsApi } from '../createSettingsApi'
 
-export const { fetchSettings, updateSettings } = createSettingsApi('asma')
+export const { fetchSettings, updateSettings, fetchDeliveryOptions } = createSettingsApi('asma')

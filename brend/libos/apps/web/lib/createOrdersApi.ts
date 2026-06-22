@@ -40,6 +40,7 @@ export interface OrderInput {
   items: CartItem[]
   total: number
   paymentMethod: PaymentMethod
+  deliveryType?: 'DELIVERY' | 'PICKUP'
   lat?: number
   lng?: number
 }
@@ -161,6 +162,7 @@ export function createOrdersApi(slug: string) {
         storeSlug: slug,
         customerName: order.customerName,
         phone: order.phone.replace(/\s/g, ''),
+        deliveryType: order.deliveryType ?? 'DELIVERY',
         address: order.address,
         lat: order.lat,
         lng: order.lng,
