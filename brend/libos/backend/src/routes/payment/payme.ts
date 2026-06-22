@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { PrismaClient } from '@prisma/client'
 import { restoreStock } from '../../lib/stock.js'
+import { safeEqual } from '../../lib/crypto.js'
 
 // Payme checkout URL'ini quradi. Amount tiyinda (so'm × 100), BigInt — overflow yo'q.
 // `c` (callback) — to'lovdan keyin qaytadigan manzil; web'da davom-etish sahifasi
@@ -83,7 +84,10 @@ export function checkAuth(req: AuthLike): boolean {
   const isTest = process.env.PAYME_IS_TEST === 'true'
   const secretKey = isTest ? process.env.PAYME_TEST_SECRET_KEY : process.env.PAYME_SECRET_KEY
 
-  return login === 'Paycom' && password === secretKey
+  // Login maxfiy emas (oddiy solishtirish kifoya); parol esa timing-safe
+  // solishtiriladi. Secret sozlanmagan bo'lsa — hech qachon ruxsat bermaymiz.
+  if (login !== 'Paycom' || !secretKey) return false
+  return safeEqual(password ?? '', secretKey)
 }
 
 export default async function paymeRoutes(app: FastifyInstance) {
@@ -160,9 +164,10 @@ async function checkPerformTransaction(prisma: PrismaClient, id: JsonRpcId, para
 
   if (!order) return jsonRpcError(id, PAYME_ERROR.INVALID_ACCOUNT)
 
-  // Summa tekshirish (Payme tiyin yuboradi, biz so'mda saqlaymiz)
-  const expectedAmount = order.totalPrice * 100
-  if (amount !== expectedAmount) return jsonRpcError(id, PAYME_ERROR.INVALID_AMOUNT)
+  // Summa tekshirish (Payme tiyin yuboradi). BigInt — Click bilan bir xil va overflow yo'q.
+  const expectedAmount = BigInt(order.totalPrice) * 100n
+  if (amount == null || !Number.isInteger(amount) || BigInt(amount) !== expectedAmount)
+    return jsonRpcError(id, PAYME_ERROR.INVALID_AMOUNT)
 
   if (order.payment?.status === 'PAID') return jsonRpcError(id, PAYME_ERROR.ALREADY_DONE)
 
@@ -183,8 +188,10 @@ async function createTransaction(prisma: PrismaClient, id: JsonRpcId, params: Pa
   })
   if (!order) return jsonRpcError(id, PAYME_ERROR.INVALID_ACCOUNT)
 
-  const expectedAmount = order.totalPrice * 100
-  if (amount !== expectedAmount) return jsonRpcError(id, PAYME_ERROR.INVALID_AMOUNT)
+  // Summa tekshirish — BigInt (Click bilan bir xil va overflow yo'q)
+  const expectedAmount = BigInt(order.totalPrice) * 100n
+  if (amount == null || !Number.isInteger(amount) || BigInt(amount) !== expectedAmount)
+    return jsonRpcError(id, PAYME_ERROR.INVALID_AMOUNT)
 
   // Agar bu tranzaksiya allaqachon mavjud bo'lsa
   if (order.payment?.paymeTransId === paymeTransId) {
@@ -208,7 +215,7 @@ async function createTransaction(prisma: PrismaClient, id: JsonRpcId, params: Pa
       orderId,
       provider: 'PAYME',
       status: 'PENDING',
-      amount: BigInt(expectedAmount), // tasdiqlangan summa (tiyin), BigInt — overflow yo'q
+      amount: expectedAmount, // tasdiqlangan summa (tiyin), BigInt — overflow yo'q
       paymeTransId,
       paymeTime: BigInt(time),
       paymeCreateTime: BigInt(Date.now()),

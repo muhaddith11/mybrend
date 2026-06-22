@@ -2,16 +2,33 @@ import type { Prisma } from '@prisma/client'
 
 export type OrderLine = { productId: string; quantity: number; size?: string | null; color?: string | null }
 
+// Stok yetishmaganda tashlanadi — orders route'i buni ushlab 400 qaytaradi
+// (buyurtma tranzaksiyasi rollback bo'ladi, ya'ni buyurtma yaratilmaydi).
+export class InsufficientStockError extends Error {
+  constructor(public readonly productId: string) {
+    super('Mahsulot stokda yetarli emas')
+    this.name = 'InsufficientStockError'
+  }
+}
+
 // Buyurtma qatorlariga mos variant stokini kamaytiradi.
 // Atomik va race-xavfsiz: `quantity: { gte }` sharti DB darajasida tekshiriladi,
 // shuning uchun ikki parallel so'rov bir vaqtda oxirgi mahsulotni olishga
 // urinsa ham stok HECH QACHON manfiyga tushmaydi — faqat biri kamaytira oladi.
-// Variant topilmasa yoki stok yetmasa — jimgina o'tkazib yuboramiz (best-effort:
-// buyurtma stok yetishmovchiligi sababli bloklanmaydi).
+//
+// Variant umuman bo'lmasa (size+color kombinatsiyasi uchun stok kuzatilmaydi) —
+// jimgina o'tkazib yuboramiz (variantsiz mahsulotlar bloklanmaydi). Ammo variant
+// MAVJUD bo'lib stok yetmasa — InsufficientStockError tashlaymiz (overselling
+// oldini olish): bunda butun buyurtma rad etiladi.
 // Buyurtma yaratish bilan bitta tranzaksiyada chaqiriladi — shuning uchun `tx`.
 export async function decrementStock(tx: Prisma.TransactionClient, items: OrderLine[]) {
   for (const it of items) {
-    await tx.productVariant.updateMany({
+    const variant = await tx.productVariant.findFirst({
+      where: { productId: it.productId, size: it.size ?? null, color: it.color ?? null },
+    })
+    if (!variant) continue // stok kuzatilmaydi — ruxsat
+
+    const res = await tx.productVariant.updateMany({
       where: {
         productId: it.productId,
         size: it.size ?? null,
@@ -20,6 +37,8 @@ export async function decrementStock(tx: Prisma.TransactionClient, items: OrderL
       },
       data: { quantity: { decrement: it.quantity } },
     })
+    // count 0 = variant bor, lekin stok yetmadi (yoki poygada tugab qoldi) → rad et
+    if (res.count === 0) throw new InsufficientStockError(it.productId)
   }
 }
 

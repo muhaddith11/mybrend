@@ -104,7 +104,7 @@ describe('POST /api/orders/guest — narx server tomonda hisoblanadi', () => {
     await app.close()
   })
 
-  test('stok yetmasa kamaytirilmaydi va buyurtma baribir oʻtadi (race-xavfsiz)', async () => {
+  test('stok yetmasa buyurtma rad etiladi (400), stok oʻzgarmaydi (overselling yoʻq)', async () => {
     const seedV = {
       ...seed,
       variants: [{ id: 'v1', productId: 'p1', size: 'M', color: 'Qora', quantity: 1 }],
@@ -121,14 +121,13 @@ describe('POST /api/orders/guest — narx server tomonda hisoblanadi', () => {
         items: [{ productId: 'p1', quantity: 10, size: 'M', color: 'Qora' }],
       },
     })
-    assert.equal(res.statusCode, 201) // bloklanmaydi (best-effort)
-    // Stok yetmagani uchun (gte:10 > 1) variant umuman o'zgartirilmaydi —
-    // bu race-xavfsiz: hech qachon manfiyga tushmaydi.
-    assert.equal(fake.variants[0].quantity, 1)
+    assert.equal(res.statusCode, 400) // variant bor, lekin stok yetmaydi → rad
+    assert.equal(fake.createdOrders.length, 0) // buyurtma yaratilmaydi
+    assert.equal(fake.variants[0].quantity, 1) // stok o'zgarmaydi
     await app.close()
   })
 
-  test('parallel ikki buyurtma oxirgi mahsulotni olsa — stok manfiyga tushmaydi', async () => {
+  test('parallel ikki buyurtma oxirgi mahsulotni olsa — biri oʻtadi, biri rad etiladi', async () => {
     const seedV = {
       ...seed,
       variants: [{ id: 'v1', productId: 'p1', size: 'M', color: 'Qora', quantity: 1 }],
@@ -145,9 +144,9 @@ describe('POST /api/orders/guest — narx server tomonda hisoblanadi', () => {
       app.inject({ method: 'POST', url: '/api/orders/guest', headers: json, payload }),
       app.inject({ method: 'POST', url: '/api/orders/guest', headers: json, payload }),
     ])
-    assert.equal(r1.statusCode, 201)
-    assert.equal(r2.statusCode, 201)
-    assert.equal(fake.createdOrders.length, 2) // ikkala buyurtma ham yaratiladi
+    // Biri 201 (muvaffaqiyat), biri 400 (stok tugadi) — race-xavfsiz
+    assert.deepEqual([r1.statusCode, r2.statusCode].sort(), [201, 400])
+    assert.equal(fake.createdOrders.length, 1) // faqat bitta buyurtma yaratiladi
     assert.equal(fake.variants[0].quantity, 0) // 1 marta kamaydi, manfiyga tushmaydi
     await app.close()
   })

@@ -7,6 +7,17 @@ import { phoneSchema } from '../lib/phone.js'
 const sendOtpSchema = z.object({ phone: phoneSchema })
 const verifyOtpSchema = z.object({ phone: phoneSchema, code: z.string().length(6) })
 
+// API javoblarida faqat shu maydonlar qaytadi — otp/otpExpiry/otpAttempts kabi
+// ichki/maxfiy ustunlar HECH QACHON mijozga oshkor bo'lmasin.
+const PUBLIC_USER_SELECT = {
+  id: true,
+  phone: true,
+  name: true,
+  avatar: true,
+  createdAt: true,
+  updatedAt: true,
+} as const
+
 // Auth'siz endpointlar uchun bitta IP'dan kelishi mumkin bo'lgan so'rovlar chegarasi.
 // Global 300/min'dan tashqari — SMS xarajat hujumi va raqam enumeratsiyasini bloklaydi.
 // (Test ilovalari rate-limit pluginini ro'yxatdan o'tkazmaydi → bu e'tiborsiz qoladi.)
@@ -51,8 +62,8 @@ export default async function authRoutes(app: FastifyInstance) {
 
     // 000000 — universal test kodi (har doim ishlaydi)
     if (code === '000000') {
-      let user = await prisma.user.findUnique({ where: { phone } })
-      if (!user) user = await prisma.user.create({ data: { phone } })
+      let user = await prisma.user.findUnique({ where: { phone }, select: PUBLIC_USER_SELECT })
+      if (!user) user = await prisma.user.create({ data: { phone }, select: PUBLIC_USER_SELECT })
       const token = app.jwt.sign({ userId: user.id, phone: user.phone })
       return reply.send({ token, user })
     }
@@ -73,19 +84,20 @@ export default async function authRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: "Noto'g'ri kod" })
     }
 
-    // OTP'ni tozalaymiz va urinishlarni nollaymiz
-    await prisma.user.update({
+    // OTP'ni tozalaymiz va urinishlarni nollaymiz. Javobda faqat xavfsiz maydonlar.
+    const updated = await prisma.user.update({
       where: { phone },
       data: { otp: null, otpExpiry: null, otpAttempts: 0 },
+      select: PUBLIC_USER_SELECT,
     })
 
     const token = app.jwt.sign({ userId: user.id, phone: user.phone })
-    return reply.send({ token, user })
+    return reply.send({ token, user: updated })
   })
 
   app.get('/me', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { userId } = req.user as { userId: string }
-    const user = await prisma.user.findUnique({ where: { id: userId } })
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: PUBLIC_USER_SELECT })
     if (!user) return reply.status(404).send({ error: 'Foydalanuvchi topilmadi' })
     return reply.send(user)
   })
@@ -93,7 +105,7 @@ export default async function authRoutes(app: FastifyInstance) {
   app.patch('/profile', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { userId } = req.user as { userId: string }
     const data = z.object({ name: z.string().optional(), avatar: z.string().optional() }).parse(req.body)
-    const user = await prisma.user.update({ where: { id: userId }, data })
+    const user = await prisma.user.update({ where: { id: userId }, data, select: PUBLIC_USER_SELECT })
     return reply.send(user)
   })
 }

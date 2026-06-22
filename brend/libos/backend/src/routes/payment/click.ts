@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { createHash } from 'crypto'
 import { PrismaClient } from '@prisma/client'
 import { restoreStock } from '../../lib/stock.js'
+import { safeEqual } from '../../lib/crypto.js'
 
 // Click to'lov sahifasi URL'ini quradi. Web (default) va mobil (returnUrl bilan)
 // uchun bir xil. Amount so'mda yuboriladi (Click tiyin emas, so'm kutadi).
@@ -51,7 +52,8 @@ export function checkSign(params: Record<string, string>, secretKey: string, act
     .update(`${click_trans_id}${service_id}${secretKey}${merchant_trans_id}${amount}${action}${sign_time}`)
     .digest('hex')
 
-  return hash === sign_string
+  // Timing-safe solishtirish (oddiy `===` o'rniga) — imzo tekshiruvi maxfiy
+  return safeEqual(hash, sign_string ?? '')
 }
 
 export default async function clickRoutes(app: FastifyInstance) {

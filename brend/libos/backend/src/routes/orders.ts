@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { PrismaClient, DeliveryType } from '@prisma/client'
 import { sendOrderNotification } from '../plugins/telegram'
-import { decrementStock } from '../lib/stock.js'
+import { decrementStock, InsufficientStockError } from '../lib/stock.js'
 import { phoneSchema } from '../lib/phone.js'
 import { buildClickPaymentUrl } from './payment/click.js'
 import { buildPaymePaymentUrl } from './payment/payme.js'
@@ -84,38 +84,46 @@ export default async function ordersRoutes(app: FastifyInstance) {
     }, 0)
 
     // Buyurtma yaratish va stok kamaytirish — bitta atomik tranzaksiyada.
-    // Birortasi xato qilsa, ikkalasi ham bekor bo'ladi (qisman yozuv bo'lmaydi).
-    const order = await prisma.$transaction(async (tx) => {
-      const created = await tx.order.create({
-        data: {
-          userId: user.id,
-          storeId: store.id,
-          deliveryType: 'DELIVERY' as DeliveryType,
-          customerName: body.customerName,
-          address: body.address,
-          lat: body.lat,
-          lng: body.lng,
-          note: body.note,
-          paymentMethod: body.paymentMethod,
-          totalPrice,
-          items: {
-            create: body.items.map(item => ({
-              productId: item.productId,
-              quantity: item.quantity,
-              size: item.size,
-              color: item.color,
-              price: products.find(p => p.id === item.productId)?.price ?? 0,
-            })),
+    // Avval stokni kamaytiramiz: yetmasa InsufficientStockError tashlanadi,
+    // tranzaksiya rollback bo'ladi va buyurtma umuman yaratilmaydi (overselling yo'q).
+    let order
+    try {
+      order = await prisma.$transaction(async (tx) => {
+        await decrementStock(tx, body.items)
+        return tx.order.create({
+          data: {
+            userId: user.id,
+            storeId: store.id,
+            deliveryType: 'DELIVERY' as DeliveryType,
+            customerName: body.customerName,
+            address: body.address,
+            lat: body.lat,
+            lng: body.lng,
+            note: body.note,
+            paymentMethod: body.paymentMethod,
+            totalPrice,
+            items: {
+              create: body.items.map(item => ({
+                productId: item.productId,
+                quantity: item.quantity,
+                size: item.size,
+                color: item.color,
+                price: products.find(p => p.id === item.productId)?.price ?? 0,
+              })),
+            },
           },
-        },
-        include: {
-          items: { include: { product: true } },
-          store: { select: { id: true, name: true, slug: true, logo: true, themeColor: true, telegramChatId: true } },
-        },
+          include: {
+            items: { include: { product: true } },
+            store: { select: { id: true, name: true, slug: true, logo: true, themeColor: true, telegramChatId: true } },
+          },
+        })
       })
-      await decrementStock(tx, body.items)
-      return created
-    })
+    } catch (e) {
+      if (e instanceof InsufficientStockError) {
+        return reply.status(400).send({ error: "Kechirasiz, tanlangan mahsulotlardan ba'zilari hozir yetarli emas" })
+      }
+      throw e
+    }
 
     // Telegram xabari — buyurtmani bloklamaydi (fire-and-forget), lekin xato
     // bo'lsa jimgina yutilmaydi, logga yoziladi (kuzatib turish uchun).
@@ -154,34 +162,42 @@ export default async function ordersRoutes(app: FastifyInstance) {
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { phone: true, name: true } })
 
     // Buyurtma + stok — bitta atomik tranzaksiyada (qisman yozuv bo'lmasin).
-    const order = await prisma.$transaction(async (tx) => {
-      const created = await tx.order.create({
-        data: {
-          userId,
-          storeId: body.storeId,
-          deliveryType: body.deliveryType as DeliveryType,
-          paymentMethod: body.paymentProvider?.toLowerCase() ?? 'cash',
-          address: body.address,
-          note: body.note,
-          totalPrice,
-          items: {
-            create: body.items.map(item => ({
-              productId: item.productId,
-              quantity: item.quantity,
-              size: item.size,
-              color: item.color,
-              price: products.find(p => p.id === item.productId)?.price ?? 0,
-            })),
+    // Avval stok kamaytiriladi: yetmasa rollback + 400 (overselling oldini olish).
+    let order
+    try {
+      order = await prisma.$transaction(async (tx) => {
+        await decrementStock(tx, body.items)
+        return tx.order.create({
+          data: {
+            userId,
+            storeId: body.storeId,
+            deliveryType: body.deliveryType as DeliveryType,
+            paymentMethod: body.paymentProvider?.toLowerCase() ?? 'cash',
+            address: body.address,
+            note: body.note,
+            totalPrice,
+            items: {
+              create: body.items.map(item => ({
+                productId: item.productId,
+                quantity: item.quantity,
+                size: item.size,
+                color: item.color,
+                price: products.find(p => p.id === item.productId)?.price ?? 0,
+              })),
+            },
           },
-        },
-        include: {
-          items: { include: { product: true } },
-          store: { select: { id: true, name: true, slug: true, logo: true, themeColor: true, telegramChatId: true } },
-        },
+          include: {
+            items: { include: { product: true } },
+            store: { select: { id: true, name: true, slug: true, logo: true, themeColor: true, telegramChatId: true } },
+          },
+        })
       })
-      await decrementStock(tx, body.items)
-      return created
-    })
+    } catch (e) {
+      if (e instanceof InsufficientStockError) {
+        return reply.status(400).send({ error: "Kechirasiz, tanlangan mahsulotlardan ba'zilari hozir yetarli emas" })
+      }
+      throw e
+    }
 
     // Telegram xabari — fire-and-forget, xato logga yoziladi
     sendOrderNotification({
