@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { Phone, Package, Clock, CheckCircle2, XCircle, AlertCircle, LogOut, ShoppingBag } from 'lucide-react'
 import { useStore, formatPrice } from '@/lib/asma/store'
-import { fetchOrdersByPhone, Order, OrderStatus, paymentLabels } from '@/lib/asma/orders'
+import { fetchMyOrders, Order, OrderStatus, paymentLabels } from '@/lib/asma/orders'
 import { PhoneAuthModal } from '@/components/asma/phone-auth-modal'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/asma/utils'
@@ -26,7 +26,7 @@ function formatDate(iso: string) {
 }
 
 export default function ProfilePage() {
-  const { authPhone, authName, clearAuth } = useStore()
+  const { authPhone, authName, clearAuth, orderIds } = useStore()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(false)
   const [loginOpen, setLoginOpen] = useState(false)
@@ -34,12 +34,12 @@ export default function ProfilePage() {
   useEffect(() => {
     if (authPhone) {
       setLoading(true)
-      fetchOrdersByPhone(authPhone)
+      fetchMyOrders(orderIds)
         .then(setOrders)
         .catch(() => setOrders([]))
         .finally(() => setLoading(false))
     }
-  }, [authPhone])
+  }, [authPhone, orderIds])
 
   if (!authPhone) {
     return (

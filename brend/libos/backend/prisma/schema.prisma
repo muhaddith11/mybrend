@@ -205,6 +205,11 @@ model Order {
 
   items   OrderItem[]
   payment Payment?
+
+  // So'rovlar userId (/orders/my) va storeId (admin orders/stats) bo'yicha filtrlaydi —
+  // buyurtmalar ko'payganда to'liq jadval skanini oldini olish uchun indeks.
+  @@index([userId])
+  @@index([storeId])
 }
 
 model OrderItem {

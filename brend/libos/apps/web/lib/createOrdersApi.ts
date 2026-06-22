@@ -83,6 +83,38 @@ export const trackStatusLabels: Record<DbOrderStatus, string> = {
   CANCELLED: 'Bekor qilindi',
 }
 
+// TrackedOrder (DB shakli) → profil ko'rsatadigan Order shakli.
+const trackToFrontStatus: Record<DbOrderStatus, OrderStatus> = {
+  PENDING: 'pending',
+  CONFIRMED: 'processing',
+  PREPARING: 'processing',
+  DELIVERING: 'processing',
+  DELIVERED: 'completed',
+  CANCELLED: 'cancelled',
+}
+
+function trackedToOrder(t: TrackedOrder): Order {
+  return {
+    id: t.id,
+    customerName: t.customerName || 'Mijoz',
+    phone: '', // /track telefon qaytarmaydi (maxfiylik)
+    address: t.address ?? '',
+    note: t.note ?? '',
+    items: t.items.map((i) => ({
+      id: i.id,
+      name: i.product.nameUz || i.product.name,
+      price: i.price,
+      quantity: i.quantity,
+      size: i.size ?? '',
+      color: i.color ?? '',
+    })),
+    total: t.totalPrice,
+    status: trackToFrontStatus[t.status] ?? 'pending',
+    paymentMethod: (t.paymentMethod as PaymentMethod) ?? 'cash',
+    createdAt: t.createdAt,
+  }
+}
+
 // DB status → frontend status
 const statusMap: Record<string, OrderStatus> = {
   PENDING: 'pending',
@@ -188,6 +220,14 @@ export function createOrdersApi(slug: string) {
     return (await res.json()) as TrackedOrder
   }
 
+  // Shu qurilmada berilgan buyurtmalar (lokal orderIds) — profil sahifasi uchun.
+  // Har ID auth'siz /track orqali olinadi va profil ko'rsatadigan Order shakliga o'tkaziladi.
+  // O'chirilgan/topilmagan buyurtmalar (null) tashlab yuboriladi.
+  async function fetchMyOrders(ids: string[]): Promise<Order[]> {
+    const results = await Promise.all(ids.map((id) => fetchOrderById(id)))
+    return results.filter((o): o is TrackedOrder => o !== null).map(trackedToOrder)
+  }
+
   async function fetchOrders(): Promise<Order[]> {
     const res = await fetch(`${API}/admin/orders`, {
       headers: adminHeaders(),
@@ -219,5 +259,5 @@ export function createOrdersApi(slug: string) {
       .map(toOrder)
   }
 
-  return { createOrder, fetchOrderById, fetchOrders, updateOrderStatus, fetchOrdersByPhone }
+  return { createOrder, fetchOrderById, fetchMyOrders, fetchOrders, updateOrderStatus, fetchOrdersByPhone }
 }

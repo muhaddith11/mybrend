@@ -69,7 +69,9 @@ export async function sendOrderNotification(order: {
     `📦 <b>Mahsulotlar:</b>`,
     itemLines,
     ``,
-    order.paymentMethod ? esc(PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod) : esc(DELIVERY_LABELS[order.deliveryType] || order.deliveryType),
+    // Yetkazish turi DOIM ko'rsatiladi (pickup/delivery'ni do'kon ko'rishi shart)
+    esc(DELIVERY_LABELS[order.deliveryType] || order.deliveryType),
+    order.paymentMethod ? esc(PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod) : null,
     order.address ? `📍 <b>Manzil:</b> ${esc(order.address)}` : null,
     mapsLink ? `🗺 <a href="${mapsLink}">Xaritada ko'rish</a>` : null,
     order.note ? `📝 <b>Izoh:</b> ${esc(order.note)}` : null,
