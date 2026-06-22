@@ -162,3 +162,18 @@
   margin-bottom: .5rem;
 }
 .hint strong { color: var(--brand); }
+
+/* Mobil: modal qulay markazlashsin va ichidagi element o'ngga toshib ketmasin.
+   Avval 6 ta OTP katak (46px) + modal padding (2rem) tor ekranда modal kengligidan
+   oshib, modalni o'ngga surardi — shu sababli "o'ngga yopishgandek" ko'rinardi. */
+@media (max-width: 480px) {
+  .modal {
+    padding: 1.5rem 1.25rem 1.75rem;
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+  }
+  .otpRow { gap: .4rem; }
+  .otpInput { width: 42px; height: 50px; font-size: 20px; }
+  .prefix { padding: 0 10px; font-size: 14px; }
+  .input { font-size: 15px; }
+}
