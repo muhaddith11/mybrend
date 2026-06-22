@@ -27,6 +27,12 @@ export const t = {
     // Mobile nav
     home: 'Asosiy',
     stores: "Do'konlar",
+    // Hero (ZYFF reklama slaydi)
+    heroAppL1: 'Shahringizdagi barcha',
+    heroAppHL: "kiyim do'konlar",
+    heroAppL3: 'bir joyda',
+    heroAppSub2: "Eng yaxshi do'konlarni toping, narxlarni solishtiring",
+    heroAppCta: "Do'konlarni ko'rish →",
     // Hero
     heroBadge: 'KUZ-QISH · AW26',
     heroTitle: '50% gacha chegirma',
@@ -100,6 +106,12 @@ export const t = {
     brands: 'Бренды',
     home: 'Главная',
     stores: 'Магазины',
+    // Hero (рекламный слайд ZYFF)
+    heroAppL1: 'Все',
+    heroAppHL: 'магазины одежды',
+    heroAppL3: 'в одном месте',
+    heroAppSub2: 'Найдите лучшие магазины, сравните цены',
+    heroAppCta: 'Смотреть магазины →',
     heroBadge: 'ОСЕНЬ-ЗИМА · AW26',
     heroTitle: 'Скидки до 50%',
     heroSub: 'На новую сезонную коллекцию в выбранных магазинах.',
@@ -165,6 +177,12 @@ export const t = {
     brands: 'Brands',
     home: 'Home',
     stores: 'Stores',
+    // Hero (ZYFF promo slide)
+    heroAppL1: 'All clothing',
+    heroAppHL: 'stores',
+    heroAppL3: 'in one place',
+    heroAppSub2: 'Find the best stores, compare prices',
+    heroAppCta: 'Browse stores →',
     heroBadge: 'FALL-WINTER · AW26',
     heroTitle: 'Up to 50% off',
     heroSub: 'On new season clothing at selected stores.',

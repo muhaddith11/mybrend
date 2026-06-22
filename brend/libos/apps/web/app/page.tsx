@@ -136,13 +136,13 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
               <div className={styles.floatEl} style={{ width: 50, height: 50, background: 'radial-gradient(circle, rgba(99,102,241,.45) 0%, transparent 70%)', top: '10%', right: '45%', animationDuration: '6s', animationDelay: '2s' }} />
               <div className={styles.heroBadge} style={{ position: 'absolute', top: 16, right: 16, zIndex: 2, background: 'rgba(255,255,255,.12)', backdropFilter: 'blur(8px)' }}>✨ ZYFF — Qo'qon</div>
               <h1 className={styles.heroAppTitle}>
-                Shahringizdagi barcha<br />
-                <span style={{ color: '#FBBF24', textShadow: '0 0 30px rgba(251,191,36,.5)' }}>kiyim do'konlar</span><br />
-                bir joyda
+                {tr.heroAppL1}<br />
+                <span style={{ color: '#FBBF24', textShadow: '0 0 30px rgba(251,191,36,.5)' }}>{tr.heroAppHL}</span><br />
+                {tr.heroAppL3}
               </h1>
-              <p className={styles.heroAppSub}>Eng yaxshi do'konlarni toping, narxlarni solishtiring</p>
+              <p className={styles.heroAppSub}>{tr.heroAppSub2}</p>
               <Link href="/stores" className={styles.heroBtn} style={{ position: 'relative', zIndex: 2, background: 'linear-gradient(135deg,#F59E0B,#EF4444)', color: '#fff', border: 'none', boxShadow: '0 4px 20px rgba(245,158,11,.45)' }}>
-                Do'konlarni ko'rish →
+                {tr.heroAppCta}
               </Link>
               <div className={styles.heroBg} style={{ color: 'rgba(255,255,255,.025)' }}>Z</div>
             </div>
