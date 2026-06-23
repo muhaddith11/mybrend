@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useCartStore } from '../../store/cart'
 import { useAuthStore } from '../../store/auth'
+import { useLangStore } from '../../store/lang'
+import { useT } from '../../lib/i18n'
 import { api } from '@libos/shared'
 import styles from './page.module.css'
 
@@ -14,6 +16,8 @@ export default function CheckoutPage() {
   const router = useRouter()
   const { items, totalPrice, clearStore } = useCartStore()
   const { isLoggedIn, openLogin } = useAuthStore()
+  const lang = useLangStore(s => s.lang)
+  const tr = useT(lang)
 
   const [delivery, setDelivery] = useState<Delivery>('DELIVERY')
   const [payment, setPayment] = useState<Payment>('CASH')
@@ -38,8 +42,8 @@ export default function CheckoutPage() {
   if (items.length === 0) {
     return (
       <div className={styles.empty}>
-        <p>Savat bo'sh</p>
-        <Link href="/" className={styles.backBtn}>Do'konlarga qaytish</Link>
+        <p>{tr.coEmpty}</p>
+        <Link href="/" className={styles.backBtn}>{tr.coBack}</Link>
       </div>
     )
   }
@@ -47,15 +51,15 @@ export default function CheckoutPage() {
   if (!isLoggedIn) {
     return (
       <div className={styles.empty}>
-        <p>Buyurtma berish uchun kiring</p>
-        <button className={styles.backBtn} onClick={openLogin}>Kirish</button>
+        <p>{tr.coLoginOrder}</p>
+        <button className={styles.backBtn} onClick={openLogin}>{tr.login}</button>
       </div>
     )
   }
 
   async function handleOrder() {
     if (delivery === 'DELIVERY' && !address.trim()) {
-      setError("Manzilni kiriting")
+      setError(tr.coAddressReq)
       return
     }
     setError('')
@@ -109,18 +113,18 @@ export default function CheckoutPage() {
 
   return (
     <div className="container" style={{ padding: '2rem 1rem 5rem' }}>
-      <h1 className={styles.title}>Buyurtma berish</h1>
+      <h1 className={styles.title}>{tr.coTitle}</h1>
 
       <div className={styles.layout}>
         {/* Form */}
         <div className={styles.form}>
           {/* Delivery type */}
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Yetkazib berish</h2>
+            <h2 className={styles.sectionTitle}>{tr.coDeliverySec}</h2>
             <div className={styles.radioGroup}>
               {([
-                { id: 'DELIVERY', label: '🚚 Yetkazib berish', sub: '+15 000 so\'m' },
-                { id: 'PICKUP', label: '🏪 O\'z olib ketish', sub: 'Bepul' },
+                { id: 'DELIVERY', label: tr.coDeliveryOpt, sub: `+15 000 ${tr.som}` },
+                { id: 'PICKUP', label: tr.coPickupOpt, sub: tr.coFree },
               ] as const).map(o => (
                 <label key={o.id} className={`${styles.radio} ${delivery === o.id ? styles.radioActive : ''}`}>
                   <input type="radio" value={o.id} checked={delivery === o.id} onChange={() => setDelivery(o.id)} />
@@ -134,7 +138,7 @@ export default function CheckoutPage() {
             {delivery === 'DELIVERY' && (
               <input
                 className={styles.input}
-                placeholder="Manzilni kiriting (ko'cha, uy raqami)"
+                placeholder={tr.coAddressPh}
                 value={address}
                 onChange={e => setAddress(e.target.value)}
               />
@@ -143,12 +147,12 @@ export default function CheckoutPage() {
 
           {/* Payment */}
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>To'lov usuli</h2>
+            <h2 className={styles.sectionTitle}>{tr.coPayment}</h2>
             <div className={styles.radioGroup}>
               {([
-                { id: 'CASH', label: '💵 Naqd pul', sub: 'Eshikda to\'lash' },
-                { id: 'CLICK', label: '📱 Click', sub: 'Online to\'lov' },
-                { id: 'PAYME', label: '💳 Payme', sub: 'Online to\'lov' },
+                { id: 'CASH', label: tr.coCash, sub: tr.coCashSub },
+                { id: 'CLICK', label: '📱 Click', sub: tr.coOnline },
+                { id: 'PAYME', label: '💳 Payme', sub: tr.coOnline },
               ] as const).map(o => (
                 <label key={o.id} className={`${styles.radio} ${payment === o.id ? styles.radioActive : ''}`}>
                   <input type="radio" value={o.id} checked={payment === o.id} onChange={() => setPayment(o.id)} />
@@ -163,10 +167,10 @@ export default function CheckoutPage() {
 
           {/* Note */}
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Izoh (ixtiyoriy)</h2>
+            <h2 className={styles.sectionTitle}>{tr.coNote}</h2>
             <textarea
               className={styles.textarea}
-              placeholder="Qo'shimcha izoh..."
+              placeholder={tr.coNotePh}
               value={note}
               onChange={e => setNote(e.target.value)}
               rows={3}
@@ -178,7 +182,7 @@ export default function CheckoutPage() {
 
         {/* Summary */}
         <div className={styles.summary}>
-          <h2 className={styles.sectionTitle}>Buyurtma</h2>
+          <h2 className={styles.sectionTitle}>{tr.coSummary}</h2>
 
           {storeIds.map(sid => (
             <div key={sid} className={styles.storeSection}>
@@ -190,7 +194,7 @@ export default function CheckoutPage() {
                     <span className={styles.summaryVariant}>{[item.size, item.color].filter(Boolean).join(', ')}</span>
                   )}
                   <span className={styles.summaryQty}>×{item.quantity}</span>
-                  <span className={styles.summaryPrice}>{(item.price * item.quantity).toLocaleString()} so'm</span>
+                  <span className={styles.summaryPrice}>{(item.price * item.quantity).toLocaleString()} {tr.som}</span>
                 </div>
               ))}
             </div>
@@ -199,18 +203,18 @@ export default function CheckoutPage() {
           <div className={styles.divider} />
           <div className={styles.totals}>
             <div className={styles.totalRow}>
-              <span>Mahsulotlar</span>
-              <span>{totalPrice().toLocaleString()} so'm</span>
+              <span>{tr.coProducts}</span>
+              <span>{totalPrice().toLocaleString()} {tr.som}</span>
             </div>
             {DELIVERY_FEE > 0 && (
               <div className={styles.totalRow}>
-                <span>Yetkazib berish</span>
-                <span>{DELIVERY_FEE.toLocaleString()} so'm</span>
+                <span>{tr.coDeliverySec}</span>
+                <span>{DELIVERY_FEE.toLocaleString()} {tr.som}</span>
               </div>
             )}
             <div className={`${styles.totalRow} ${styles.totalFinal}`}>
-              <span>Jami</span>
-              <strong>{total.toLocaleString()} so'm</strong>
+              <span>{tr.coTotal}</span>
+              <strong>{total.toLocaleString()} {tr.som}</strong>
             </div>
           </div>
 
@@ -219,7 +223,7 @@ export default function CheckoutPage() {
             onClick={handleOrder}
             disabled={loading}
           >
-            {loading ? 'Yuborilmoqda...' : payment === 'CASH' ? 'Buyurtma berish' : 'To\'lovga o\'tish'}
+            {loading ? tr.coSending : payment === 'CASH' ? tr.coTitle : tr.coToPay}
           </button>
         </div>
       </div>

@@ -6,12 +6,15 @@ import Image from 'next/image'
 import { api } from '@libos/shared'
 import type { Product, Store } from '@libos/shared'
 import { useCartStore } from '../../../store/cart'
+import { useLangStore } from '../../../store/lang'
+import { useT } from '../../../lib/i18n'
 import styles from './page.module.css'
 
 type ProductFull = Product & { store?: Store }
 
 export function ProductView({ id, initialProduct }: { id: string; initialProduct: ProductFull | null }) {
   const addItem = useCartStore(s => s.addItem)
+  const tr = useT(useLangStore(s => s.lang))
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
@@ -24,8 +27,8 @@ export function ProductView({ id, initialProduct }: { id: string; initialProduct
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
   const [added, setAdded] = useState(false)
 
-  if (isLoading) return <div className={styles.loading}>Yuklanmoqda...</div>
-  if (!product) return <div className={styles.notFound}>Mahsulot topilmadi</div>
+  if (isLoading) return <div className={styles.loading}>{tr.loading}</div>
+  if (!product) return <div className={styles.notFound}>{tr.prNotFound}</div>
 
   const store = product.store
   const theme = store?.themeColor ?? '#534AB7'
@@ -56,7 +59,7 @@ export function ProductView({ id, initialProduct }: { id: string; initialProduct
     <div className="container" style={{ padding: '2rem 1rem 5rem' }}>
       {/* Breadcrumb */}
       <nav className={styles.breadcrumb}>
-        <Link href="/">Bosh sahifa</Link>
+        <Link href="/">{tr.prHome}</Link>
         {store && <><span>/</span><Link href={`/store/${store.slug}`}>{store.name}</Link></>}
         <span>/</span>
         <span>{product.name}</span>
@@ -97,7 +100,7 @@ export function ProductView({ id, initialProduct }: { id: string; initialProduct
           )}
           <h1 className={styles.name}>{product.name}</h1>
           <p className={styles.price} style={{ color: theme }}>
-            {product.price.toLocaleString()} so'm
+            {product.price.toLocaleString()} {tr.som}
           </p>
 
           {product.description && (
@@ -107,7 +110,7 @@ export function ProductView({ id, initialProduct }: { id: string; initialProduct
           {/* Sizes */}
           {sizes.length > 0 && (
             <div className={styles.variantSection}>
-              <p className={styles.variantLabel}>O'lcham</p>
+              <p className={styles.variantLabel}>{tr.prSize}</p>
               <div className={styles.variantRow}>
                 {sizes.map((s: string) => (
                   <button
@@ -126,7 +129,7 @@ export function ProductView({ id, initialProduct }: { id: string; initialProduct
           {/* Colors */}
           {colors.length > 0 && (
             <div className={styles.variantSection}>
-              <p className={styles.variantLabel}>Rang</p>
+              <p className={styles.variantLabel}>{tr.prColor}</p>
               <div className={styles.variantRow}>
                 {colors.map((c: string) => (
                   <button
@@ -145,8 +148,8 @@ export function ProductView({ id, initialProduct }: { id: string; initialProduct
           {/* Stock */}
           <p className={styles.stock}>
             {(product.inStock ?? true)
-              ? <span className={styles.inStock}>✓ Mavjud</span>
-              : <span className={styles.outStock}>Tugagan</span>}
+              ? <span className={styles.inStock}>{tr.prInStock}</span>
+              : <span className={styles.outStock}>{tr.prSoldOut}</span>}
           </p>
 
           {/* Add to cart */}
@@ -156,7 +159,7 @@ export function ProductView({ id, initialProduct }: { id: string; initialProduct
             onClick={handleAddToCart}
             disabled={product.inStock === false}
           >
-            {added ? '✓ Savatga qo\'shildi!' : '🛍 Savatga qo\'shish'}
+            {added ? `✓ ${tr.addedToCart}` : `🛍 ${tr.addToCart}`}
           </button>
         </div>
       </div>

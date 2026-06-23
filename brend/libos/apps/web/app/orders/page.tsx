@@ -6,15 +6,17 @@ import Link from 'next/link'
 import { api } from '@libos/shared'
 import type { Order } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
+import { useLangStore } from '../../store/lang'
+import { useT } from '../../lib/i18n'
 import styles from './page.module.css'
 
-const STATUS_LABEL: Record<string, { label: string; color: string }> = {
-  PENDING:    { label: 'Kutilmoqda',      color: '#f59e0b' },
-  CONFIRMED:  { label: 'Tasdiqlangan',    color: '#3b82f6' },
-  PREPARING:  { label: 'Tayyorlanmoqda',  color: '#8b5cf6' },
-  SHIPPED:    { label: 'Yetkazilmoqda',   color: '#06b6d4' },
-  DELIVERED:  { label: 'Yetkazildi',      color: '#16a34a' },
-  CANCELLED:  { label: 'Bekor qilindi',   color: '#ef4444' },
+const STATUS_META: Record<string, { trKey: string; color: string }> = {
+  PENDING:    { trKey: 'stPending',    color: '#f59e0b' },
+  CONFIRMED:  { trKey: 'stConfirmed',  color: '#3b82f6' },
+  PREPARING:  { trKey: 'stPreparing',  color: '#8b5cf6' },
+  SHIPPED:    { trKey: 'stDelivering', color: '#06b6d4' },
+  DELIVERED:  { trKey: 'stDelivered',  color: '#16a34a' },
+  CANCELLED:  { trKey: 'stCancelled',  color: '#ef4444' },
 }
 
 export default function OrdersPage() {
@@ -27,6 +29,7 @@ export default function OrdersPage() {
 
 function OrdersContent() {
   const { isLoggedIn, openLogin } = useAuthStore()
+  const tr = useT(useLangStore(s => s.lang))
   const searchParams = useSearchParams()
   const success = searchParams.get('success') === '1'
 
@@ -41,28 +44,28 @@ function OrdersContent() {
   if (!isLoggedIn) {
     return (
       <div className={styles.center}>
-        <p>Buyurtmalarni ko'rish uchun kiring</p>
-        <button className={styles.loginBtn} onClick={openLogin}>Kirish</button>
+        <p>{tr.orLoginView}</p>
+        <button className={styles.loginBtn} onClick={openLogin}>{tr.login}</button>
       </div>
     )
   }
 
   return (
     <div className="container" style={{ padding: '2rem 1rem 5rem' }}>
-      <h1 className={styles.title}>Buyurtmalarim</h1>
+      <h1 className={styles.title}>{tr.ordMine}</h1>
 
       {success && (
         <div className={styles.successBanner}>
-          ✓ Buyurtmangiz qabul qilindi! Do'kon tez orada siz bilan bog'lanadi.
+          {tr.ordSuccess}
         </div>
       )}
 
       {isLoading ? (
-        <div className={styles.loading}>Yuklanmoqda...</div>
+        <div className={styles.loading}>{tr.loading}</div>
       ) : orders.length === 0 ? (
         <div className={styles.empty}>
-          <p>Buyurtmalar yo'q</p>
-          <Link href="/" className={styles.shopBtn}>Do'konlarga o'tish</Link>
+          <p>{tr.noOrders}</p>
+          <Link href="/" className={styles.shopBtn}>{tr.goShopping}</Link>
         </div>
       ) : (
         <div className={styles.list}>
@@ -74,7 +77,10 @@ function OrdersContent() {
 }
 
 function OrderCard({ order }: { order: Order }) {
-  const status = STATUS_LABEL[order.status] ?? { label: order.status, color: '#888' }
+  const tr = useT(useLangStore(s => s.lang))
+  const meta = STATUS_META[order.status]
+  const statusColor = meta?.color ?? '#888'
+  const statusLabel = meta ? (tr as Record<string, string>)[meta.trKey] : order.status
   const total = (order.items ?? []).reduce((s: number, i: any) => s + i.price * i.quantity, 0)
 
   return (
@@ -89,8 +95,8 @@ function OrderCard({ order }: { order: Order }) {
             })}
           </p>
         </div>
-        <span className={styles.badge} style={{ background: `${status.color}20`, color: status.color }}>
-          {status.label}
+        <span className={styles.badge} style={{ background: `${statusColor}20`, color: statusColor }}>
+          {statusLabel}
         </span>
       </div>
 
@@ -105,12 +111,12 @@ function OrderCard({ order }: { order: Order }) {
       <div className={styles.items}>
         {(order.items ?? []).map((item: any, i: number) => (
           <div key={i} className={styles.item}>
-            <span className={styles.itemName}>{item.product?.name ?? 'Mahsulot'}</span>
+            <span className={styles.itemName}>{item.product?.name ?? tr.ordProduct}</span>
             {(item.size || item.color) && (
               <span className={styles.itemVariant}>{[item.size, item.color].filter(Boolean).join(' · ')}</span>
             )}
             <span className={styles.itemQty}>×{item.quantity}</span>
-            <span className={styles.itemPrice}>{(item.price * item.quantity).toLocaleString()} so'm</span>
+            <span className={styles.itemPrice}>{(item.price * item.quantity).toLocaleString()} {tr.som}</span>
           </div>
         ))}
       </div>
@@ -118,10 +124,10 @@ function OrderCard({ order }: { order: Order }) {
       {/* Footer */}
       <div className={styles.cardFoot}>
         <div className={styles.delivery}>
-          {order.deliveryType === 'DELIVERY' ? '🚚 Yetkazib berish' : '🏪 O\'z olib ketish'}
+          {order.deliveryType === 'DELIVERY' ? tr.coDeliveryOpt : tr.coPickupOpt}
           {order.address && <span> — {order.address}</span>}
         </div>
-        <strong className={styles.total}>{total.toLocaleString()} so'm</strong>
+        <strong className={styles.total}>{total.toLocaleString()} {tr.som}</strong>
       </div>
 
       {/* Progress bar */}
@@ -133,6 +139,7 @@ function OrderCard({ order }: { order: Order }) {
 const STEPS = ['PENDING', 'CONFIRMED', 'PREPARING', 'SHIPPED', 'DELIVERED']
 
 function OrderProgress({ status }: { status: string }) {
+  const tr = useT(useLangStore(s => s.lang)) as Record<string, string>
   if (status === 'CANCELLED') return null
   const idx = STEPS.indexOf(status)
 
@@ -142,7 +149,7 @@ function OrderProgress({ status }: { status: string }) {
         <div key={s} className={`${styles.step} ${i <= idx ? styles.stepDone : ''}`}>
           <div className={styles.stepDot} />
           {i < STEPS.length - 1 && <div className={styles.stepLine} />}
-          <span className={styles.stepLabel}>{STATUS_LABEL[s]?.label}</span>
+          <span className={styles.stepLabel}>{tr[STATUS_META[s]?.trKey ?? '']}</span>
         </div>
       ))}
     </div>
