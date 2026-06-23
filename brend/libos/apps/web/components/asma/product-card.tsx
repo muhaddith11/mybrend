@@ -6,8 +6,13 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Heart, ShoppingBag, Eye } from 'lucide-react'
 import { toast } from 'sonner'
-import { Product, useStore, formatPrice, colorMap } from '@/lib/asma/store'
+import { Product, formatPrice, colorMap } from '@/lib/asma/store'
+import { useCartStore } from '@/store/cart'
+import { useWishlistStore } from '@/store/wishlist'
 import { cn } from '@/lib/asma/utils'
+
+const STORE_SLUG = 'asma'
+const STORE_NAME = 'Asma Design'
 
 interface ProductCardProps {
   product: Product
@@ -17,30 +22,45 @@ interface ProductCardProps {
 export function ProductCard({ product, className }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [imageIndex, setImageIndex] = useState(0)
-  const { addToWishlist, removeFromWishlist, isInWishlist, addToCart } = useStore()
+  // ZYFF umumiy savat va sevimli (do'кон saytидан ham shу yagona ro'yxatga tushadi)
+  const addItem = useCartStore((s) => s.addItem)
+  const toggleWishlist = useWishlistStore((s) => s.toggle)
+  const inWishlist = useWishlistStore((s) => s.has(product.id))
 
-  const inWishlist = isInWishlist(product.id)
+  const storeId = product.storeId ?? product.storeSlug ?? STORE_SLUG
+  const storeName = product.storeName ?? STORE_NAME
+  const storeSlug = product.storeSlug ?? STORE_SLUG
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (inWishlist) {
-      removeFromWishlist(product.id)
-    } else {
-      addToWishlist(product.id)
-    }
+    toggleWishlist({
+      productId: product.id,
+      name: product.nameUz || product.name,
+      price: product.price,
+      originalPrice: product.originalPrice,
+      image: product.images[0],
+      storeId,
+      storeName,
+      storeSlug,
+    })
   }
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    addToCart({
-      product,
-      quantity: 1,
-      size: product.sizes[0] ?? '',
-      color: product.colors[0] ?? '',
+    addItem({
+      productId: product.id,
+      name: product.nameUz || product.name,
+      price: product.price,
+      image: product.images[0],
+      storeId,
+      storeName,
+      storeSlug,
+      size: product.sizes[0] ?? undefined,
+      color: product.colors[0] ?? undefined,
     })
-    // Savatga qo'shamiz, lekin savatni OCHMAYMIZ — faqat bildirishnoma
+    // Savatni OCHMAYMIZ — faqat bildirishnoma
     toast.success('Savatga qo\'shildi', { description: product.nameUz })
   }
 

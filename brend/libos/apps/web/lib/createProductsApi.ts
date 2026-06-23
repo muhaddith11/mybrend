@@ -19,7 +19,9 @@ type DBProduct = {
   category: { slug: string; name: string } | null
 }
 
-function toProduct(row: DBProduct): Product {
+type StoreInfo = { id?: string; name?: string; slug?: string }
+
+function toProduct(row: DBProduct, store?: StoreInfo): Product {
   return {
     id: row.id,
     sku: row.sku ?? undefined,
@@ -37,6 +39,10 @@ function toProduct(row: DBProduct): Product {
     inStock: row.inStock,
     featured: row.featured,
     new: row.isNew,
+    // ZYFF umumiy savatи uchun — do'кон ma'lumoti (sub-buyurtма guruhlash)
+    storeId: store?.id,
+    storeName: store?.name,
+    storeSlug: store?.slug,
   }
 }
 
@@ -48,7 +54,8 @@ export function createProductsApi(slug: string) {
     const res = await fetch(`${API}/stores/${slug}`)
     if (!res.ok) throw new Error('Products fetch failed')
     const data = await res.json()
-    return ((data.products ?? []) as DBProduct[]).map(toProduct)
+    const store: StoreInfo = { id: data.id, name: data.name, slug: data.slug ?? slug }
+    return ((data.products ?? []) as DBProduct[]).map((p) => toProduct(p, store))
   }
 
   async function createProduct(product: Omit<Product, 'id'>): Promise<Product> {

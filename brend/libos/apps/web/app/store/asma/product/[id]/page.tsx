@@ -6,7 +6,9 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, Minus, Plus, Share2, Truck, RotateCcw, Shield, ChevronLeft, ChevronRight, X, View, Loader2, Send, HelpCircle } from 'lucide-react'
 import { toast } from 'sonner'
-import { useStore, formatPrice, Product, colorMap } from '@/lib/asma/store'
+import { formatPrice, Product, colorMap } from '@/lib/asma/store'
+import { useCartStore } from '@/store/cart'
+import { useWishlistStore } from '@/store/wishlist'
 import { fetchProducts } from '@/lib/asma/products'
 import { fetchSettings } from '@/lib/asma/settings'
 import { Button } from '@/components/ui/button'
@@ -30,8 +32,10 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [buyPhone, setBuyPhone] = useState('+998 ')
   const [tg, setTg] = useState('')
 
-  const { addToCart, addToWishlist, removeFromWishlist, isInWishlist } = useStore()
-  const inWishlist = isInWishlist(product?.id ?? '')
+  const addItem = useCartStore((s) => s.addItem)
+  const updateQty = useCartStore((s) => s.updateQty)
+  const toggleWishlist = useWishlistStore((s) => s.toggle)
+  const inWishlist = useWishlistStore((s) => (product ? s.has(product.id) : false))
 
   useEffect(() => {
     setLoading(true)
@@ -86,7 +90,18 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
   const handleAddToCart = () => {
     if (!canAdd) return
-    addToCart({ product, quantity, size: selectedSize ?? '', color: selectedColor ?? '' })
+    addItem({
+      productId: product.id,
+      name: product.nameUz || product.name,
+      price: product.price,
+      image: product.images[0],
+      storeId: product.storeId ?? 'asma',
+      storeName: product.storeName ?? 'Asma Design',
+      storeSlug: product.storeSlug ?? 'asma',
+      size: selectedSize ?? undefined,
+      color: selectedColor ?? undefined,
+    })
+    if (quantity > 1) updateQty(product.id, quantity, selectedSize ?? undefined, selectedColor ?? undefined)
     // Savatni ochmaymiz — faqat bildirishnoma
     toast.success('Savatga qo\'shildi', { description: `${product.nameUz} · ${quantity} dona` })
   }
@@ -273,7 +288,16 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     Savatga qo&apos;shish
                   </Button>
                   <button
-                    onClick={() => inWishlist ? removeFromWishlist(product.id) : addToWishlist(product.id)}
+                    onClick={() => toggleWishlist({
+                      productId: product.id,
+                      name: product.nameUz || product.name,
+                      price: product.price,
+                      originalPrice: product.originalPrice,
+                      image: product.images[0],
+                      storeId: product.storeId ?? 'asma',
+                      storeName: product.storeName ?? 'Asma Design',
+                      storeSlug: product.storeSlug ?? 'asma',
+                    })}
                     className={cn(
                       'w-14 h-14 border flex items-center justify-center transition-colors',
                       inWishlist ? 'border-primary text-primary' : 'border-border text-muted-foreground hover:border-primary hover:text-primary'

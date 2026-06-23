@@ -19,6 +19,10 @@ export interface Product {
   inStock: boolean
   featured: boolean
   new: boolean
+  // ZYFF umumiy savatи uchun — mahsulot qaysi do'кондан (sub-buyurtма uchun)
+  storeId?: string
+  storeName?: string
+  storeSlug?: string
 }
 
 export interface CartItem {

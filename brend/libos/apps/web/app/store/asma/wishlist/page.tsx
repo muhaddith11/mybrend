@@ -6,11 +6,13 @@ import { motion } from 'framer-motion'
 import { Heart, Loader2 } from 'lucide-react'
 import { ProductCard } from '@/components/asma/product-card'
 import { fetchProducts } from '@/lib/asma/products'
-import { useStore, Product } from '@/lib/asma/store'
+import { Product } from '@/lib/asma/store'
+import { useWishlistStore } from '@/store/wishlist'
 import { Button } from '@/components/ui/button'
 
 export default function WishlistPage() {
-  const { wishlist } = useStore()
+  // ZYFF umumiy sevimli (do'кон saytи sevimli sahifаси ham shu ro'yxatni ko'rsatadi)
+  const wishlistIds = useWishlistStore((s) => s.items.map((i) => i.productId))
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -21,7 +23,7 @@ export default function WishlistPage() {
     })
   }, [])
 
-  const wishlistProducts = products.filter((p) => wishlist.includes(p.id))
+  const wishlistProducts = products.filter((p) => wishlistIds.includes(p.id))
 
   return (
     <div className="min-h-screen pt-32 pb-20">

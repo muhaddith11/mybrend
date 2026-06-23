@@ -7,6 +7,8 @@ import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, ShoppingBag, Heart, Search, User, ArrowRight, LogIn } from 'lucide-react'
 import { useStore, formatPrice } from '@/lib/asma/store'
+import { useCartStore } from '@/store/cart'
+import { useWishlistStore } from '@/store/wishlist'
 import { fetchProducts } from '@/lib/asma/products'
 import { fetchSettings } from '@/lib/asma/settings'
 import { PhoneAuthModal } from '@/components/asma/phone-auth-modal'
@@ -30,7 +32,11 @@ export function Navigation() {
   const [loginOpen, setLoginOpen] = useState(false)
   const [logo, setLogo] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
-  const { isMenuOpen, setMenuOpen, setCartOpen, getCartCount, wishlist, authPhone } = useStore()
+  const { isMenuOpen, setMenuOpen, authPhone } = useStore()
+  // Savat va sevimli — ZYFF umumiy ro'yxatи
+  const openCart = useCartStore((s) => s.openCart)
+  const cartCount = useCartStore((s) => s.totalCount())
+  const wishlistCount = useWishlistStore((s) => s.items.length)
 
   useEffect(() => {
     fetchSettings().then((s) => { if (s.logo) setLogo(s.logo) }).catch(() => {})
@@ -138,21 +144,21 @@ export function Navigation() {
                 aria-label="Istaklar ro'yxati"
               >
                 <Heart className="w-5 h-5" />
-                {wishlist.length > 0 && (
+                {wishlistCount > 0 && (
                   <span className="absolute top-1 right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center">
-                    {wishlist.length}
+                    {wishlistCount}
                   </span>
                 )}
               </Link>
               <button
-                onClick={() => setCartOpen(true)}
+                onClick={() => openCart()}
                 className="relative flex items-center justify-center w-11 h-11 text-foreground/80 hover:text-primary transition-colors"
                 aria-label="Savat"
               >
                 <ShoppingBag className="w-5 h-5" />
-                {getCartCount() > 0 && (
+                {cartCount > 0 && (
                   <span className="absolute top-1 right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center">
-                    {getCartCount()}
+                    {cartCount}
                   </span>
                 )}
               </button>
