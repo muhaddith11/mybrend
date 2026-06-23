@@ -147,7 +147,7 @@ export default async function paymeRoutes(app: FastifyInstance) {
     if (!order) return reply.status(404).send({ error: 'Buyurtma topilmadi' })
 
     return reply.send({
-      url: buildPaymePaymentUrl(order, { callbackUrl: `libos://payment/result?orderId=${order.id}` }),
+      url: buildPaymePaymentUrl(order, { callbackUrl: `zyff://payment/result?orderId=${order.id}` }),
       orderId: order.id,
     })
   })

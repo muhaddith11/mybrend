@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Libos",
-    "slug": "libos",
+    "name": "ZYFF",
+    "slug": "zyff",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "libos",
+    "scheme": "zyff",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",
@@ -14,14 +14,14 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "uz.libos.app"
+      "bundleIdentifier": "uz.zyff.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#534AB7"
+        "backgroundColor": "#2563EB"
       },
-      "package": "uz.libos.app"
+      "package": "uz.zyff.app"
     },
     "web": {
       "bundler": "metro",

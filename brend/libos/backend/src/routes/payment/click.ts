@@ -242,7 +242,7 @@ export default async function clickRoutes(app: FastifyInstance) {
     if (!order) return reply.status(404).send({ error: 'Buyurtma topilmadi' })
 
     // Mobil ilova uchun deep-link return_url bilan bir xil builder
-    const url = buildClickPaymentUrl(order, { returnUrl: `libos://payment/result?orderId=${order.id}` })
+    const url = buildClickPaymentUrl(order, { returnUrl: `zyff://payment/result?orderId=${order.id}` })
     return reply.send({ url, orderId: order.id })
   })
 }
