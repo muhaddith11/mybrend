@@ -2,13 +2,16 @@
 
 import Link from 'next/link'
 import { Heart } from 'lucide-react'
-import { Product, useStore, formatPrice } from '@/lib/onepro/store'
+import { Product, formatPrice } from '@/lib/onepro/store'
+import { useWishlistStore } from '@/store/wishlist'
 
 const BASE = '/store/onepro'
+const STORE_SLUG = 'onepro'
+const STORE_NAME = 'One Pro'
 
 export function ProductCard({ product }: { product: Product }) {
-  const { wishlist, addToWishlist, removeFromWishlist } = useStore()
-  const liked = wishlist.includes(product.id)
+  const toggleWishlist = useWishlistStore((s) => s.toggle)
+  const liked = useWishlistStore((s) => s.has(product.id))
   const discount =
     product.originalPrice && product.originalPrice > product.price
       ? Math.round((1 - product.price / product.originalPrice) * 100)
@@ -16,7 +19,7 @@ export function ProductCard({ product }: { product: Product }) {
 
   const toggle = (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation()
-    liked ? removeFromWishlist(product.id) : addToWishlist(product.id)
+    toggleWishlist({ productId: product.id, name: product.nameUz || product.name, price: product.price, originalPrice: product.originalPrice, image: product.images[0], storeId: product.storeId ?? STORE_SLUG, storeName: product.storeName ?? STORE_NAME, storeSlug: product.storeSlug ?? STORE_SLUG })
   }
 
   return (

@@ -4,8 +4,13 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Heart, ShoppingBag, Repeat } from 'lucide-react'
 import { toast } from 'sonner'
-import { Product, useStore, formatPrice } from '@/lib/boosner/store'
+import { Product, formatPrice } from '@/lib/boosner/store'
+import { useCartStore } from '@/store/cart'
+import { useWishlistStore } from '@/store/wishlist'
 import { cn } from '@/lib/boosner/utils'
+
+const STORE_SLUG = 'boosner'
+const STORE_NAME = 'Boosner'
 
 interface ProductCardProps {
   product: Product
@@ -13,8 +18,12 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, className }: ProductCardProps) {
-  const { addToWishlist, removeFromWishlist, isInWishlist, addToCart } = useStore()
-  const inWishlist = isInWishlist(product.id)
+  const addItem = useCartStore((s) => s.addItem)
+  const toggleWishlist = useWishlistStore((s) => s.toggle)
+  const inWishlist = useWishlistStore((s) => s.has(product.id))
+  const storeId = product.storeId ?? STORE_SLUG
+  const storeName = product.storeName ?? STORE_NAME
+  const storeSlug = product.storeSlug ?? STORE_SLUG
   const href = `/store/boosner/product/${product.id}`
   const discount = product.originalPrice && product.originalPrice > product.price
     ? Math.round((1 - product.price / product.originalPrice) * 100)
@@ -22,12 +31,12 @@ export function ProductCard({ product, className }: ProductCardProps) {
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation()
-    inWishlist ? removeFromWishlist(product.id) : addToWishlist(product.id)
+    toggleWishlist({ productId: product.id, name: product.nameUz || product.name, price: product.price, originalPrice: product.originalPrice, image: product.images[0], storeId, storeName, storeSlug })
   }
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation()
-    addToCart({ product, quantity: 1, size: product.sizes[0] ?? '', color: product.colors[0] ?? '' })
+    addItem({ productId: product.id, name: product.nameUz || product.name, price: product.price, image: product.images[0], storeId, storeName, storeSlug, size: product.sizes[0] ?? undefined, color: product.colors[0] ?? undefined })
     toast.success('Savatga qo\'shildi', { description: product.nameUz })
   }
 

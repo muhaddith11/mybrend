@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Search, Heart, ShoppingBag, User, Menu, X, ChevronDown, ChevronLeft } from 'lucide-react'
 import { useStore } from '@/lib/boosner/store'
+import { useCartStore } from '@/store/cart'
+import { useWishlistStore } from '@/store/wishlist'
 import { fetchSettings } from '@/lib/boosner/settings'
 import { PhoneAuthModal } from '@/components/boosner/phone-auth-modal'
 
@@ -26,7 +28,10 @@ export function Navigation() {
   const [logo, setLogo] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [loginOpen, setLoginOpen] = useState(false)
-  const { setCartOpen, getCartCount, wishlist, authPhone } = useStore()
+  const { authPhone } = useStore()
+  const openCart = useCartStore((s) => s.openCart)
+  const cartCount = useCartStore((s) => s.totalCount())
+  const wishlistCount = useWishlistStore((s) => s.items.length)
 
   useEffect(() => {
     fetchSettings().then((s) => { if (s.logo) setLogo(s.logo) }).catch(() => {})
@@ -101,10 +106,10 @@ export function Navigation() {
               <button onClick={() => setLoginOpen(true)} className="p-2.5 hover:text-accent transition-colors" aria-label="Kirish"><User className="w-5 h-5" /></button>
             )}
             <Link href={`${BASE}/wishlist`} className="relative p-2.5 hover:text-accent transition-colors" aria-label="Sevimlilar">
-              <Heart className="w-5 h-5" /><Badge n={wishlist.length} />
+              <Heart className="w-5 h-5" /><Badge n={wishlistCount} />
             </Link>
-            <button onClick={() => setCartOpen(true)} className="relative p-2.5 hover:text-accent transition-colors" aria-label="Savat">
-              <ShoppingBag className="w-5 h-5" /><Badge n={getCartCount()} />
+            <button onClick={() => openCart()} className="relative p-2.5 hover:text-accent transition-colors" aria-label="Savat">
+              <ShoppingBag className="w-5 h-5" /><Badge n={cartCount} />
             </button>
           </div>
         </div>

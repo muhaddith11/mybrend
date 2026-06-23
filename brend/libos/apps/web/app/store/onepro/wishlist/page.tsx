@@ -6,11 +6,12 @@ import { motion } from 'framer-motion'
 import { Heart, Loader2 } from 'lucide-react'
 import { ProductCard } from '@/components/onepro/product-card'
 import { fetchProducts } from '@/lib/onepro/products'
-import { useStore, Product } from '@/lib/onepro/store'
+import { Product } from '@/lib/onepro/store'
+import { useWishlistStore } from '@/store/wishlist'
 import { Button } from '@/components/ui/button'
 
 export default function WishlistPage() {
-  const { wishlist } = useStore()
+  const wishlistIds = useWishlistStore((s) => s.items.map((i) => i.productId))
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -21,7 +22,7 @@ export default function WishlistPage() {
     })
   }, [])
 
-  const wishlistProducts = products.filter((p) => wishlist.includes(p.id))
+  const wishlistProducts = products.filter((p) => wishlistIds.includes(p.id))
 
   return (
     <div className="min-h-screen pt-8 pb-20">
