@@ -134,6 +134,7 @@ export default async function adminRoutes(app: FastifyInstance) {
       where: { storeId: store.id },
       include: { category: true, variants: true },
       orderBy: { createdAt: 'desc' },
+      take: 500, // cheksiz yuklanishni oldini olish (eng yangi 500)
     })
     return reply.send(products)
   })
@@ -201,6 +202,7 @@ export default async function adminRoutes(app: FastifyInstance) {
         user: { select: { phone: true, name: true } },
       },
       orderBy: { createdAt: 'desc' },
+      take: 200, // eng yangi 200 buyurtma (cheksiz yuklanmasin; statistika alohida aggregate)
     })
     return reply.send(orders)
   })

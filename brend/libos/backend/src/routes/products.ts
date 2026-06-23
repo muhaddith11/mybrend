@@ -70,6 +70,7 @@ export default async function productsRoutes(app: FastifyInstance) {
       where: { storeId, inStock: true, ...(categoryId ? { categoryId } : {}) },
       include: { category: true, variants: true },
       orderBy: { createdAt: 'desc' },
+      take: 200, // cheksiz yuklanishni oldini olish
     })
     return reply.send(products)
   })
