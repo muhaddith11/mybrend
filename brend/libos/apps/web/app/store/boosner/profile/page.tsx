@@ -6,8 +6,8 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { Phone, Package, Clock, CheckCircle2, XCircle, AlertCircle, LogOut, ShoppingBag } from 'lucide-react'
 import { useStore, formatPrice } from '@/lib/boosner/store'
+import { useAuthStore } from '@/store/auth'
 import { fetchMyOrders, Order, OrderStatus, paymentLabels } from '@/lib/boosner/orders'
-import { PhoneAuthModal } from '@/components/boosner/phone-auth-modal'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/boosner/utils'
 
@@ -26,22 +26,22 @@ function formatDate(iso: string) {
 }
 
 export default function ProfilePage() {
-  const { authPhone, authName, clearAuth, orderIds } = useStore()
+  const { orderIds } = useStore()
+  const { user, isLoggedIn, logout, openLogin } = useAuthStore()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(false)
-  const [loginOpen, setLoginOpen] = useState(false)
 
   useEffect(() => {
-    if (authPhone) {
+    if (isLoggedIn) {
       setLoading(true)
       fetchMyOrders(orderIds)
         .then(setOrders)
         .catch(() => setOrders([]))
         .finally(() => setLoading(false))
     }
-  }, [authPhone, orderIds])
+  }, [isLoggedIn, orderIds])
 
-  if (!authPhone) {
+  if (!isLoggedIn) {
     return (
       <div className="min-h-screen pt-10 pb-20">
         <div className="container mx-auto px-4 lg:px-8 max-w-lg text-center">
@@ -58,7 +58,7 @@ export default function ProfilePage() {
               Buyurtma tarixingizni ko&apos;rish uchun telefon raqamingiz bilan kiring.
             </p>
             <Button
-              onClick={() => setLoginOpen(true)}
+              onClick={() => openLogin()}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <Phone className="w-4 h-4 mr-2" />
@@ -66,7 +66,6 @@ export default function ProfilePage() {
             </Button>
           </motion.div>
         </div>
-        <PhoneAuthModal open={loginOpen} onClose={() => setLoginOpen(false)} />
       </div>
     )
   }
@@ -82,17 +81,17 @@ export default function ProfilePage() {
         >
           <div>
             <h1 className="text-3xl font-serif font-light text-foreground">
-              {authName || 'Profil'}
+              {user?.name || 'Profil'}
             </h1>
             <p className="text-muted-foreground mt-1 flex items-center gap-2">
               <Phone className="w-4 h-4" />
-              {authPhone}
+              {user?.phone}
             </p>
           </div>
           <Button
             variant="outline"
             size="sm"
-            onClick={clearAuth}
+            onClick={logout}
             className="text-muted-foreground"
           >
             <LogOut className="w-4 h-4 mr-2" />

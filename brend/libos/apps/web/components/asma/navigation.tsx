@@ -11,7 +11,7 @@ import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
 import { fetchProducts } from '@/lib/asma/products'
 import { fetchSettings } from '@/lib/asma/settings'
-import { PhoneAuthModal } from '@/components/asma/phone-auth-modal'
+import { useAuthStore } from '@/store/auth'
 import { cn } from '@/lib/asma/utils'
 
 const BASE = '/store/asma'
@@ -29,11 +29,12 @@ export function Navigation() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [allProducts, setAllProducts] = useState<Awaited<ReturnType<typeof fetchProducts>>>([])
-  const [loginOpen, setLoginOpen] = useState(false)
   const [logo, setLogo] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
-  const { isMenuOpen, setMenuOpen, authPhone } = useStore()
-  // Savat va sevimli — ZYFF umumiy ro'yxatи
+  const { isMenuOpen, setMenuOpen } = useStore()
+  // Login — ZYFF (bitta hisob). Savat/sevimli — ZYFF umumiy ro'yxatи
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
+  const openLogin = useAuthStore((s) => s.openLogin)
   const openCart = useCartStore((s) => s.openCart)
   const cartCount = useCartStore((s) => s.totalCount())
   const wishlistCount = useWishlistStore((s) => s.items.length)
@@ -162,7 +163,7 @@ export function Navigation() {
                   </span>
                 )}
               </button>
-              {authPhone ? (
+              {isLoggedIn ? (
                 <Link
                   href="/store/asma/profile"
                   className="relative hidden lg:flex items-center justify-center w-11 h-11 text-foreground/80 hover:text-primary transition-colors"
@@ -173,7 +174,7 @@ export function Navigation() {
                 </Link>
               ) : (
                 <button
-                  onClick={() => setLoginOpen(true)}
+                  onClick={() => openLogin()}
                   className="hidden lg:flex items-center justify-center w-11 h-11 text-foreground/80 hover:text-primary transition-colors"
                   aria-label="Kirish"
                 >
@@ -185,7 +186,6 @@ export function Navigation() {
         </nav>
       </header>
 
-      <PhoneAuthModal open={loginOpen} onClose={() => setLoginOpen(false)} />
 
       {/* Search Modal */}
       <AnimatePresence>
@@ -338,7 +338,7 @@ export function Navigation() {
                 ))}
               </nav>
               <div className="p-8 border-t border-border flex flex-col gap-5">
-                {authPhone ? (
+                {isLoggedIn ? (
                   <Link
                     href="/store/asma/profile"
                     onClick={() => setMenuOpen(false)}
@@ -349,7 +349,7 @@ export function Navigation() {
                   </Link>
                 ) : (
                   <button
-                    onClick={() => { setMenuOpen(false); setLoginOpen(true) }}
+                    onClick={() => { setMenuOpen(false); openLogin() }}
                     className="flex items-center gap-3 text-foreground hover:text-primary transition-colors"
                   >
                     <LogIn className="w-5 h-5" />

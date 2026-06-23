@@ -4,11 +4,10 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Search, Heart, ShoppingBag, User, Menu, X, ChevronDown, ChevronLeft } from 'lucide-react'
-import { useStore } from '@/lib/boosner/store'
+import { useAuthStore } from '@/store/auth'
 import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
 import { fetchSettings } from '@/lib/boosner/settings'
-import { PhoneAuthModal } from '@/components/boosner/phone-auth-modal'
 
 const BASE = '/store/boosner'
 
@@ -27,8 +26,8 @@ export function Navigation() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [logo, setLogo] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
-  const [loginOpen, setLoginOpen] = useState(false)
-  const { authPhone } = useStore()
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
+  const openLogin = useAuthStore((s) => s.openLogin)
   const openCart = useCartStore((s) => s.openCart)
   const cartCount = useCartStore((s) => s.totalCount())
   const wishlistCount = useWishlistStore((s) => s.items.length)
@@ -100,10 +99,10 @@ export function Navigation() {
             <button onClick={() => setSearchOpen((v) => !v)} className="p-2.5 hover:text-accent transition-colors" aria-label="Qidirish">
               <Search className="w-5 h-5" />
             </button>
-            {authPhone ? (
+            {isLoggedIn ? (
               <Link href={`${BASE}/profile`} className="p-2.5 hover:text-accent transition-colors" aria-label="Profil"><User className="w-5 h-5" /></Link>
             ) : (
-              <button onClick={() => setLoginOpen(true)} className="p-2.5 hover:text-accent transition-colors" aria-label="Kirish"><User className="w-5 h-5" /></button>
+              <button onClick={() => openLogin()} className="p-2.5 hover:text-accent transition-colors" aria-label="Kirish"><User className="w-5 h-5" /></button>
             )}
             <Link href={`${BASE}/wishlist`} className="relative p-2.5 hover:text-accent transition-colors" aria-label="Sevimlilar">
               <Heart className="w-5 h-5" /><Badge n={wishlistCount} />
@@ -152,7 +151,6 @@ export function Navigation() {
         </div>
       )}
 
-      <PhoneAuthModal open={loginOpen} onClose={() => setLoginOpen(false)} />
     </header>
   )
 }

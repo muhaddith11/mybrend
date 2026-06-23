@@ -5,10 +5,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Heart, ShoppingBag, User, Menu, X, ChevronLeft } from 'lucide-react'
-import { useStore } from '@/lib/onepro/store'
+import { useAuthStore } from '@/store/auth'
 import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
-import { PhoneAuthModal } from '@/components/onepro/phone-auth-modal'
 
 const BASE = '/store/onepro'
 
@@ -34,8 +33,8 @@ export function Navigation() {
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
-  const [loginOpen, setLoginOpen] = useState(false)
-  const { authPhone } = useStore()
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
+  const openLogin = useAuthStore((s) => s.openLogin)
   const openCart = useCartStore((s) => s.openCart)
   const count = useCartStore((s) => s.totalCount())
   const wishlistCount = useWishlistStore((s) => s.items.length)
@@ -100,10 +99,10 @@ export function Navigation() {
           </form>
 
           <div className="ml-auto flex items-center gap-1">
-            {authPhone ? (
+            {isLoggedIn ? (
               <Link href={`${BASE}/profile`} className="grid h-10 w-10 place-items-center transition-colors hover:bg-[var(--volt)]" aria-label="Profil"><User className="h-5 w-5" /></Link>
             ) : (
-              <button onClick={() => setLoginOpen(true)} className="grid h-10 w-10 place-items-center transition-colors hover:bg-[var(--volt)]" aria-label="Kirish"><User className="h-5 w-5" /></button>
+              <button onClick={() => openLogin()} className="grid h-10 w-10 place-items-center transition-colors hover:bg-[var(--volt)]" aria-label="Kirish"><User className="h-5 w-5" /></button>
             )}
             <Link href={`${BASE}/wishlist`} className="relative grid h-10 w-10 place-items-center transition-colors hover:bg-[var(--volt)]" aria-label="Sevimlilar">
               <Heart className="h-5 w-5" /><Badge n={wishlistCount} />
@@ -169,7 +168,6 @@ export function Navigation() {
         )}
       </AnimatePresence>
 
-      <PhoneAuthModal open={loginOpen} onClose={() => setLoginOpen(false)} />
     </header>
   )
 }
