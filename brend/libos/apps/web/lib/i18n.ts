@@ -50,6 +50,7 @@ export const t = {
     storesSection: "Do'konlar",
     seeAll: 'Barchasi →',
     addToCart: 'Savatga',
+    addedToCart: "Savatga qo'shildi",
     view: "Ko'rish",
     // Promo
     weeklyDeals: 'Haftalik chegirmalar',
@@ -129,6 +130,7 @@ export const t = {
     storesSection: 'Магазины',
     seeAll: 'Все →',
     addToCart: 'В корзину',
+    addedToCart: 'Добавлено в корзину',
     view: 'Смотреть',
     weeklyDeals: 'Еженедельные скидки',
     weeklyDealsSub: 'Лучшие цены — только на этой неделе. Торопитесь!',
@@ -202,6 +204,7 @@ export const t = {
     storesSection: 'Stores',
     seeAll: 'All →',
     addToCart: 'Add to cart',
+    addedToCart: 'Added to cart',
     view: 'View',
     weeklyDeals: 'Weekly deals',
     weeklyDealsSub: 'Best prices — this week only. Hurry up!',

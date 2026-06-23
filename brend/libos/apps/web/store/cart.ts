@@ -47,7 +47,8 @@ export const useCartStore = create<CartStore>()(
         const items = exists
           ? state.items.map(i => key(i.productId, i.size, i.color) === k ? { ...i, quantity: i.quantity + 1 } : i)
           : [...state.items, { ...newItem, quantity: 1 }]
-        return { items, isOpen: true }
+        // Savatni avtomatik OCHMAYMIZ — chaqiruvchi joyда kichik toast ko'rsatiladi
+        return { items }
       }),
 
       removeItem: (productId, size, color) => set(state => ({

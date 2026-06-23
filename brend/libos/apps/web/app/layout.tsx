@@ -9,6 +9,7 @@ import { ProfileDrawer } from '../components/ProfileDrawer'
 import { BodyPadding } from '../components/BodyPadding'
 import { ThemeProvider } from '../components/ThemeProvider'
 import { Onboarding } from '../components/Onboarding'
+import { Toaster } from 'sonner'
 
 // Google Search Console tasdiqlash tokeni.
 // Eng ishonchli: Vercel'da NEXT_PUBLIC_GSC_VERIFICATION ga Google'ning HTML-teg
@@ -91,6 +92,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <LoginModal />
           <ProfileDrawer />
           <Onboarding />
+          <Toaster position="bottom-center" theme="system" />
         </Providers>
       </body>
     </html>

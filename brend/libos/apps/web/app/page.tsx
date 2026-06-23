@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import { toast } from 'sonner'
 import { api } from '@libos/shared'
 import type { Store, Product } from '@libos/shared'
 import { useCartStore } from '../store/cart'
@@ -414,6 +415,8 @@ function ProductCard({ product, colorIdx, tr, cur }: { product: Product; colorId
       storeName: product.store?.name ?? '',
       storeSlug: product.store?.slug ?? '',
     })
+    // Savatni ochmasdan kichik bildirishnoma
+    toast.success(tr.addedToCart ?? "Savatga qo'shildi")
   }
 
   function handleHeart(e: React.MouseEvent) {
