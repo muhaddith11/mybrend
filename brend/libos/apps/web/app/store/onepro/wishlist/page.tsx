@@ -11,7 +11,7 @@ import { useWishlistStore } from '@/store/wishlist'
 import { Button } from '@/components/ui/button'
 
 export default function WishlistPage() {
-  const wishlistIds = useWishlistStore((s) => s.items.map((i) => i.productId))
+  const wishlistIds = useWishlistStore((s) => s.items).map((i) => i.productId)
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
 

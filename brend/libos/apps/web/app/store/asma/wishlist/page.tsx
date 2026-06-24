@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 
 export default function WishlistPage() {
   // ZYFF umumiy sevimli (do'кон saytи sevimli sahifаси ham shu ro'yxatni ko'rsatadi)
-  const wishlistIds = useWishlistStore((s) => s.items.map((i) => i.productId))
+  const wishlistIds = useWishlistStore((s) => s.items).map((i) => i.productId)
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
 
