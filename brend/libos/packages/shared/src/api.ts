@@ -83,6 +83,8 @@ export const api = {
       items: { productId: string; quantity: number; size?: string; color?: string }[]
       deliveryType: 'DELIVERY' | 'PICKUP' | 'CASH_ON_DOOR'
       address?: string
+      lat?: number
+      lng?: number
       note?: string
       paymentProvider?: 'CLICK' | 'PAYME'
     }) => request<Order & { paymentUrl?: string }>('/orders', {

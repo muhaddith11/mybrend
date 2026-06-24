@@ -10,13 +10,23 @@ import { useLangStore } from '../../store/lang'
 import { useT } from '../../lib/i18n'
 import styles from './page.module.css'
 
+// MUHIM: kalitlar backend OrderStatus enum'iga AYNAN mos kelishi shart
+// (DELIVERING — ilgari xato 'SHIPPED' edi, shu sababli yetkazilayotgan buyurtma
+// holati noto'g'ri ko'rsatilardi).
 const STATUS_META: Record<string, { trKey: string; color: string }> = {
   PENDING:    { trKey: 'stPending',    color: '#f59e0b' },
   CONFIRMED:  { trKey: 'stConfirmed',  color: '#3b82f6' },
   PREPARING:  { trKey: 'stPreparing',  color: '#8b5cf6' },
-  SHIPPED:    { trKey: 'stDelivering', color: '#06b6d4' },
+  DELIVERING: { trKey: 'stDelivering', color: '#06b6d4' },
   DELIVERED:  { trKey: 'stDelivered',  color: '#16a34a' },
   CANCELLED:  { trKey: 'stCancelled',  color: '#ef4444' },
+}
+
+// Bosqichlar yetkazish turiga qarab (PICKUP qisqaroq: Qabul → Tasdiq → Olib ketildi)
+function stepsFor(deliveryType?: string): string[] {
+  return deliveryType === 'PICKUP'
+    ? ['PENDING', 'CONFIRMED', 'DELIVERED']
+    : ['PENDING', 'CONFIRMED', 'PREPARING', 'DELIVERING', 'DELIVERED']
 }
 
 export default function OrdersPage() {
@@ -80,7 +90,13 @@ function OrderCard({ order }: { order: Order }) {
   const tr = useT(useLangStore(s => s.lang))
   const meta = STATUS_META[order.status]
   const statusColor = meta?.color ?? '#888'
-  const statusLabel = meta ? (tr as Record<string, string>)[meta.trKey] : order.status
+  const isPickup = order.deliveryType === 'PICKUP'
+  // PICKUP buyurtmasi yetkazilganda "Olib ketildi" deb ko'rsatamiz (DELIVERED enum'i)
+  const statusLabel = meta
+    ? isPickup && order.status === 'DELIVERED'
+      ? (tr as Record<string, string>).stPickedUp
+      : (tr as Record<string, string>)[meta.trKey]
+    : order.status
   const total = (order.items ?? []).reduce((s: number, i: any) => s + i.price * i.quantity, 0)
 
   return (
@@ -131,27 +147,30 @@ function OrderCard({ order }: { order: Order }) {
       </div>
 
       {/* Progress bar */}
-      <OrderProgress status={order.status} />
+      <OrderProgress status={order.status} deliveryType={order.deliveryType} />
     </div>
   )
 }
 
-const STEPS = ['PENDING', 'CONFIRMED', 'PREPARING', 'SHIPPED', 'DELIVERED']
-
-function OrderProgress({ status }: { status: string }) {
+function OrderProgress({ status, deliveryType }: { status: string; deliveryType?: string }) {
   const tr = useT(useLangStore(s => s.lang)) as Record<string, string>
   if (status === 'CANCELLED') return null
-  const idx = STEPS.indexOf(status)
+  const isPickup = deliveryType === 'PICKUP'
+  const steps = stepsFor(deliveryType)
+  const idx = steps.indexOf(status)
 
   return (
     <div className={styles.progress}>
-      {STEPS.map((s, i) => (
-        <div key={s} className={`${styles.step} ${i <= idx ? styles.stepDone : ''}`}>
-          <div className={styles.stepDot} />
-          {i < STEPS.length - 1 && <div className={styles.stepLine} />}
-          <span className={styles.stepLabel}>{tr[STATUS_META[s]?.trKey ?? '']}</span>
-        </div>
-      ))}
+      {steps.map((s, i) => {
+        const label = isPickup && s === 'DELIVERED' ? tr.stPickedUp : tr[STATUS_META[s]?.trKey ?? '']
+        return (
+          <div key={s} className={`${styles.step} ${i <= idx ? styles.stepDone : ''}`}>
+            <div className={styles.stepDot} />
+            {i < steps.length - 1 && <div className={styles.stepLine} />}
+            <span className={styles.stepLabel}>{label}</span>
+          </div>
+        )
+      })}
     </div>
   )
 }

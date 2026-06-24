@@ -12,6 +12,13 @@ import { fetchDeliveryOptions } from '@/lib/onepro/settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/onepro/utils'
+import {
+  AddressForm,
+  EMPTY_ADDRESS,
+  composeAddress,
+  isAddressFilled,
+  type AddressValue,
+} from '@/components/shared/address-form'
 
 // Dynamic import to avoid SSR issues with Leaflet
 const MapPicker = dynamic(
@@ -38,6 +45,7 @@ const paymentOptions: {
 export default function CheckoutPage() {
   const { cart, getCartTotal, clearCart, authPhone, authName, addOrderId } = useStore()
   const [form, setForm] = useState({ name: '', phone: '', address: '', note: '' })
+  const [addr, setAddr] = useState<AddressValue>(EMPTY_ADDRESS)
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
   const [submitting, setSubmitting] = useState(false)
@@ -66,20 +74,26 @@ export default function CheckoutPage() {
 
   const total = getCartTotal()
 
+  // Xaritadan tanlanganda faqat koordinatani saqlaymiz; manzil matni endi
+  // strukturali AddressForm'dan keladi. mahalla bo'sh bo'lsa geokodni unga yozamiz.
   const handleMapSelect = (address: string, lat: number, lng: number) => {
-    setForm((prev) => ({ ...prev, address }))
     setCoords({ lat, lng })
+    setAddr((prev) => (prev.mahalla.trim() ? prev : { ...prev, mahalla: address }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (deliveryType === 'DELIVERY' && !isAddressFilled(addr)) {
+      setError('Iltimos, manzilni to\'ldiring (mahalla va uy/kvartira raqami).')
+      return
+    }
     setSubmitting(true)
     setError('')
     try {
       const { orderId, paymentUrl } = await createOrder({
         customerName: form.name,
         phone: form.phone.replace(/\s/g, ''),
-        address: form.address,
+        address: deliveryType === 'DELIVERY' ? composeAddress(addr) : '',
         note: form.note,
         items: cart,
         total,
@@ -220,13 +234,13 @@ export default function CheckoutPage() {
               <label className="block text-sm text-foreground mb-2">
                 Manzil <span className="text-destructive">*</span>
               </label>
-              <Input
-                required={deliveryType === 'DELIVERY'}
-                value={form.address}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
-                placeholder="Shahar, ko'cha, uy raqami"
-                className="bg-card border-border h-12 mb-2"
-              />
+              <div className="mb-3">
+                <AddressForm
+                  value={addr}
+                  onChange={setAddr}
+                  inputClassName="w-full px-3 py-2 bg-card border border-border rounded text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary h-11"
+                />
+              </div>
 
               {/* Map Toggle */}
               <button
@@ -248,7 +262,7 @@ export default function CheckoutPage() {
                 >
                   <MapPicker
                     onAddressSelect={handleMapSelect}
-                    initialAddress={form.address}
+                    initialAddress={addr.mahalla}
                   />
                   <p className="text-xs text-muted-foreground mt-2">
                     Xaritadan uyingizni bosib belgilang — manzil avtomatik to&apos;ldiriladi

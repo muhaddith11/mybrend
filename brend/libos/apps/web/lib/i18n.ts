@@ -115,6 +115,7 @@ export const t = {
     stPreparing: 'Tayyorlanmoqda',
     stDelivering: 'Yetkazilmoqda',
     stDelivered: 'Yetkazildi',
+    stPickedUp: 'Olib ketildi',
     stCancelled: 'Bekor qilindi',
     orLoginView: "Buyurtmalarni ko'rish uchun kiring",
     // Product
@@ -230,6 +231,7 @@ export const t = {
     stPreparing: 'Готовится',
     stDelivering: 'Доставляется',
     stDelivered: 'Доставлен',
+    stPickedUp: 'Получен',
     stCancelled: 'Отменён',
     orLoginView: 'Войдите, чтобы увидеть заказы',
     // Product
@@ -345,6 +347,7 @@ export const t = {
     stPreparing: 'Preparing',
     stDelivering: 'Delivering',
     stDelivered: 'Delivered',
+    stPickedUp: 'Picked up',
     stCancelled: 'Cancelled',
     orLoginView: 'Sign in to view orders',
     // Product

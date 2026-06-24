@@ -83,6 +83,21 @@ export const trackStatusLabels: Record<DbOrderStatus, string> = {
   CANCELLED: 'Bekor qilindi',
 }
 
+// Bosqichlar yetkazish turiga qarab farq qiladi:
+//  • DELIVERY → Qabul → Tasdiq → Tayyorlanmoqda → Yetkazilmoqda → Yetkazildi
+//  • PICKUP   → Qabul → Tasdiq → Olib ketildi (oraliq tayyorlash/yetkazish yo'q)
+// PICKUP terminal holati DELIVERED enum'ini qayta ishlatadi, faqat yorlig'i boshqa.
+export function trackStatusStepsFor(deliveryType?: string | null): DbOrderStatus[] {
+  return deliveryType === 'PICKUP'
+    ? ['PENDING', 'CONFIRMED', 'DELIVERED']
+    : ['PENDING', 'CONFIRMED', 'PREPARING', 'DELIVERING', 'DELIVERED']
+}
+
+export function trackStatusLabelFor(step: DbOrderStatus, deliveryType?: string | null): string {
+  if (deliveryType === 'PICKUP' && step === 'DELIVERED') return 'Olib ketildi'
+  return trackStatusLabels[step]
+}
+
 // TrackedOrder (DB shakli) → profil ko'rsatadigan Order shakli.
 const trackToFrontStatus: Record<DbOrderStatus, OrderStatus> = {
   PENDING: 'pending',

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useCartStore } from '../../store/cart'
@@ -7,7 +8,20 @@ import { useAuthStore } from '../../store/auth'
 import { useLangStore } from '../../store/lang'
 import { useT } from '../../lib/i18n'
 import { api } from '@libos/shared'
+import {
+  AddressForm,
+  EMPTY_ADDRESS,
+  composeAddress,
+  isAddressFilled,
+  type AddressValue,
+} from '../../components/shared/address-form'
 import styles from './page.module.css'
+
+// Leaflet faqat brauzerda — SSR'siz dinamik yuklaymiz
+const MapPicker = dynamic(
+  () => import('../../components/shared/map-picker').then((m) => m.MapPicker),
+  { ssr: false, loading: () => <div className={styles.mapLoading}>Xarita yuklanmoqda…</div> },
+)
 
 type Delivery = 'DELIVERY' | 'PICKUP'
 type Payment = 'CASH' | 'CLICK' | 'PAYME'
@@ -21,7 +35,8 @@ export default function CheckoutPage() {
 
   const [delivery, setDelivery] = useState<Delivery>('DELIVERY')
   const [payment, setPayment] = useState<Payment>('CASH')
-  const [address, setAddress] = useState('')
+  const [addr, setAddr] = useState<AddressValue>(EMPTY_ADDRESS)
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [note, setNote] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -58,10 +73,11 @@ export default function CheckoutPage() {
   }
 
   async function handleOrder() {
-    if (delivery === 'DELIVERY' && !address.trim()) {
+    if (delivery === 'DELIVERY' && !isAddressFilled(addr)) {
       setError(tr.coAddressReq)
       return
     }
+    const composedAddress = composeAddress(addr)
     setError('')
     setLoading(true)
 
@@ -82,7 +98,9 @@ export default function CheckoutPage() {
           storeId,
           items: orderItems,
           deliveryType: delivery,
-          address: delivery === 'DELIVERY' ? address : undefined,
+          address: delivery === 'DELIVERY' ? composedAddress : undefined,
+          lat: delivery === 'DELIVERY' ? coords?.lat : undefined,
+          lng: delivery === 'DELIVERY' ? coords?.lng : undefined,
           note: note || undefined,
           paymentProvider: payment === 'CASH' ? undefined : payment,
         })
@@ -136,12 +154,19 @@ export default function CheckoutPage() {
               ))}
             </div>
             {delivery === 'DELIVERY' && (
-              <input
-                className={styles.input}
-                placeholder={tr.coAddressPh}
-                value={address}
-                onChange={e => setAddress(e.target.value)}
-              />
+              <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <AddressForm value={addr} onChange={setAddr} inputClassName={styles.input} />
+                {/* Xaritadan aniq joyni belgilash (ixtiyoriy) */}
+                <MapPicker
+                  initialAddress={addr.mahalla}
+                  onAddressSelect={(_a, lat, lng) => setCoords({ lat, lng })}
+                />
+                {coords && (
+                  <p style={{ fontSize: '0.85rem', color: '#16a34a' }}>
+                    📍 Joylashuv belgilandi ({coords.lat.toFixed(4)}, {coords.lng.toFixed(4)})
+                  </p>
+                )}
+              </div>
             )}
           </section>
 

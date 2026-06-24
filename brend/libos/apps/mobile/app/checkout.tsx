@@ -22,8 +22,30 @@ export default function CheckoutScreen() {
 
   const [delivery, setDelivery] = useState<DeliveryType>('DELIVERY')
   const [payment, setPayment] = useState<PaymentType>('CASH')
-  const [address, setAddress] = useState('')
+  // Strukturali manzil: Kvartira (mahalla/dom/padez/etaj/kvartira) yoki Hovli (mahalla/uy)
+  const [addrKind, setAddrKind] = useState<'apartment' | 'house'>('apartment')
+  const [mahalla, setMahalla] = useState('')
+  const [dom, setDom] = useState('')
+  const [padez, setPadez] = useState('')
+  const [etaj, setEtaj] = useState('')
+  const [kvartira, setKvartira] = useState('')
+  const [uy, setUy] = useState('')
   const [note, setNote] = useState('')
+
+  const composeAddress = () => {
+    const parts: string[] = []
+    if (mahalla.trim()) parts.push(`Mahalla: ${mahalla.trim()}`)
+    if (addrKind === 'apartment') {
+      if (dom.trim()) parts.push(`Dom: ${dom.trim()}`)
+      if (padez.trim()) parts.push(`Padez: ${padez.trim()}`)
+      if (etaj.trim()) parts.push(`Etaj: ${etaj.trim()}`)
+      if (kvartira.trim()) parts.push(`Kv: ${kvartira.trim()}`)
+    } else if (uy.trim()) {
+      parts.push(`Uy: ${uy.trim()}`)
+    }
+    return parts.join(', ')
+  }
+  const addrFilled = !!mahalla.trim() && (addrKind === 'apartment' ? !!kvartira.trim() : !!uy.trim())
   const [loading, setLoading] = useState(false)
 
   const items = itemsByStore()[storeId] ?? []
@@ -51,8 +73,8 @@ export default function CheckoutScreen() {
   }
 
   const handleOrder = async () => {
-    if (delivery === 'DELIVERY' && !address.trim()) {
-      Alert.alert('Manzil', 'Yetkazib berish manzilini kiriting')
+    if (delivery === 'DELIVERY' && !addrFilled) {
+      Alert.alert('Manzil', 'Mahalla va uy/kvartira raqamini kiriting')
       return
     }
 
@@ -61,7 +83,7 @@ export default function CheckoutScreen() {
       const order = await api.orders.create({
         storeId,
         deliveryType: delivery,
-        address: address.trim() || undefined,
+        address: delivery === 'DELIVERY' ? composeAddress() : undefined,
         note: note.trim() || undefined,
         items: items.map(i => ({
           productId: i.productId,
@@ -148,19 +170,39 @@ export default function CheckoutScreen() {
           ))}
         </View>
 
-        {/* Manzil (faqat yetkazish uchun) */}
+        {/* Manzil (faqat yetkazish uchun) — strukturali */}
         {delivery === 'DELIVERY' && (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Yetkazish manzili</Text>
-            <TextInput
-              style={styles.textArea}
-              placeholder="Ko'cha, uy, xonadon raqami..."
-              placeholderTextColor="#aaa"
-              value={address}
-              onChangeText={setAddress}
-              multiline
-              numberOfLines={2}
-            />
+
+            {/* Kvartira / Hovli */}
+            <View style={styles.addrToggle}>
+              {(['apartment', 'house'] as const).map((k) => (
+                <TouchableOpacity
+                  key={k}
+                  style={[styles.addrToggleBtn, addrKind === k && styles.addrToggleActive]}
+                  onPress={() => setAddrKind(k)}
+                >
+                  <Text style={[styles.addrToggleText, addrKind === k && styles.addrToggleTextActive]}>
+                    {k === 'apartment' ? '🏢 Kvartira' : '🏠 Hovli'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TextInput style={styles.fieldInput} placeholder="Mahalla" placeholderTextColor="#aaa" value={mahalla} onChangeText={setMahalla} />
+            {addrKind === 'apartment' ? (
+              <>
+                <TextInput style={styles.fieldInput} placeholder="Dom (bino)" placeholderTextColor="#aaa" value={dom} onChangeText={setDom} />
+                <View style={styles.addrRow}>
+                  <TextInput style={[styles.fieldInput, styles.addrHalf]} placeholder="Padez" placeholderTextColor="#aaa" value={padez} onChangeText={setPadez} keyboardType="numeric" />
+                  <TextInput style={[styles.fieldInput, styles.addrHalf]} placeholder="Etaj" placeholderTextColor="#aaa" value={etaj} onChangeText={setEtaj} keyboardType="numeric" />
+                </View>
+                <TextInput style={styles.fieldInput} placeholder="Kvartira raqami" placeholderTextColor="#aaa" value={kvartira} onChangeText={setKvartira} keyboardType="numeric" />
+              </>
+            ) : (
+              <TextInput style={styles.fieldInput} placeholder="Uy raqami" placeholderTextColor="#aaa" value={uy} onChangeText={setUy} />
+            )}
           </View>
         )}
 
@@ -251,6 +293,14 @@ const styles = StyleSheet.create({
   radioActive: { borderColor: '#534AB7' },
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#534AB7' },
   textArea: { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10, padding: 12, fontSize: 14, color: '#1a1a1a', backgroundColor: '#fafafa', minHeight: 60, textAlignVertical: 'top' },
+  addrToggle: { flexDirection: 'row', gap: 8 },
+  addrToggleBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: '#e0e0e0', alignItems: 'center', backgroundColor: '#fafafa' },
+  addrToggleActive: { borderColor: '#534AB7', backgroundColor: '#534AB7' },
+  addrToggleText: { fontSize: 14, color: '#1a1a1a', fontWeight: '500' },
+  addrToggleTextActive: { color: '#fff' },
+  fieldInput: { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10, padding: 12, fontSize: 14, color: '#1a1a1a', backgroundColor: '#fafafa' },
+  addrRow: { flexDirection: 'row', gap: 8 },
+  addrHalf: { flex: 1 },
   footer: { backgroundColor: '#fff', padding: 16, gap: 12, borderTopWidth: 0.5, borderTopColor: '#eee' },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   totalLabel: { fontSize: 15, color: '#666' },

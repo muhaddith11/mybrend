@@ -6,8 +6,8 @@ import { Check, Clock, Loader2, PackageX } from 'lucide-react'
 import { formatPrice } from '@/lib/createStoreState'
 import {
   type TrackedOrder,
-  trackStatusSteps,
-  trackStatusLabels,
+  trackStatusStepsFor,
+  trackStatusLabelFor,
 } from '@/lib/createOrdersApi'
 
 interface OrderTrackingProps {
@@ -60,7 +60,9 @@ export function OrderTracking({ slug, orderId, fetchOrderById }: OrderTrackingPr
   }
 
   const cancelled = order.status === 'CANCELLED'
-  const currentIdx = trackStatusSteps.indexOf(order.status)
+  // Bosqichlar yetkazish turiga bog'liq (PICKUP qisqaroq: Qabul → Tasdiq → Olib ketildi)
+  const steps = trackStatusStepsFor(order.deliveryType)
+  const currentIdx = steps.indexOf(order.status)
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-10 lg:py-16">
@@ -85,7 +87,7 @@ export function OrderTracking({ slug, orderId, fetchOrderById }: OrderTrackingPr
         </div>
       ) : (
         <ol className="mb-10 space-y-4">
-          {trackStatusSteps.map((step, i) => {
+          {steps.map((step, i) => {
             const done = i <= currentIdx
             const active = i === currentIdx
             return (
@@ -98,7 +100,7 @@ export function OrderTracking({ slug, orderId, fetchOrderById }: OrderTrackingPr
                   {done ? <Check className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
                 </span>
                 <span className={`text-sm ${active ? 'font-medium text-foreground' : done ? 'text-foreground' : 'text-muted-foreground'}`}>
-                  {trackStatusLabels[step]}
+                  {trackStatusLabelFor(step, order.deliveryType)}
                 </span>
               </li>
             )

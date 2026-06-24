@@ -6,7 +6,12 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { api } from '@libos/shared'
 
-const STATUS_STEPS = [
+type Step = { key: string; label: string; icon: string }
+
+// Bosqichlar yetkazish turiga qarab farq qiladi:
+//  • DELIVERY → Qabul → Tasdiq → Tayyorlanmoqda → Yo'lda → Yetkazildi
+//  • PICKUP   → Qabul → Tasdiq → Olib ketildi (DELIVERED enum'i, boshqa yorliq)
+const DELIVERY_STEPS: Step[] = [
   { key: 'PENDING',    label: 'Qabul qilindi',   icon: 'checkmark-circle-outline' },
   { key: 'CONFIRMED',  label: 'Tasdiqlandi',      icon: 'storefront-outline' },
   { key: 'PREPARING',  label: 'Tayyorlanmoqda',   icon: 'construct-outline' },
@@ -14,7 +19,15 @@ const STATUS_STEPS = [
   { key: 'DELIVERED',  label: 'Yetkazildi',        icon: 'home-outline' },
 ]
 
-const STATUS_ORDER = ['PENDING','CONFIRMED','PREPARING','DELIVERING','DELIVERED']
+const PICKUP_STEPS: Step[] = [
+  { key: 'PENDING',   label: 'Qabul qilindi', icon: 'checkmark-circle-outline' },
+  { key: 'CONFIRMED', label: 'Tasdiqlandi',    icon: 'storefront-outline' },
+  { key: 'DELIVERED', label: 'Olib ketildi',   icon: 'bag-check-outline' },
+]
+
+function stepsFor(deliveryType?: string): Step[] {
+  return deliveryType === 'PICKUP' ? PICKUP_STEPS : DELIVERY_STEPS
+}
 
 const DELIVERY_LABELS: Record<string, string> = {
   DELIVERY: 'Yetkazib berish',
@@ -42,7 +55,8 @@ export default function OrderScreen() {
     )
   }
 
-  const currentIdx = STATUS_ORDER.indexOf(order.status)
+  const steps = stepsFor(order.deliveryType)
+  const currentIdx = steps.findIndex((s) => s.key === order.status)
   const isCancelled = order.status === 'CANCELLED'
 
   return (
@@ -62,7 +76,7 @@ export default function OrderScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Holat</Text>
             <View style={styles.tracker}>
-              {STATUS_STEPS.map((step, i) => {
+              {steps.map((step, i) => {
                 const done = i <= currentIdx
                 const active = i === currentIdx
                 return (
@@ -79,7 +93,7 @@ export default function OrderScreen() {
                           color={done ? '#fff' : '#ccc'}
                         />
                       </View>
-                      {i < STATUS_STEPS.length - 1 && (
+                      {i < steps.length - 1 && (
                         <View style={[styles.trackerLine, done && i < currentIdx && styles.trackerLineDone]} />
                       )}
                     </View>

@@ -57,6 +57,9 @@ const createOrderSchema = z.object({
   storeId: z.string().max(50),
   deliveryType: z.enum(['DELIVERY', 'PICKUP', 'CASH_ON_DOOR']),
   address: z.string().max(500).optional(),
+  // Xaritadan tanlangan joylashuv (ixtiyoriy) — Order modelda lat/lng ustunlari bor
+  lat: z.number().optional(),
+  lng: z.number().optional(),
   note: z.string().max(1000).optional(),
   // Online to'lov tanlangan bo'lsa — javobda paymentUrl qaytadi
   paymentProvider: z.enum(['CLICK', 'PAYME']).optional(),
@@ -236,6 +239,8 @@ export default async function ordersRoutes(app: FastifyInstance) {
             deliveryType: body.deliveryType as DeliveryType,
             paymentMethod: body.paymentProvider?.toLowerCase() ?? 'cash',
             address: body.address,
+            lat: body.lat,
+            lng: body.lng,
             note: body.note,
             totalPrice,
             items: {
