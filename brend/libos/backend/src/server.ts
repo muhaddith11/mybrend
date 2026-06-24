@@ -22,6 +22,7 @@ import paymeRoutes from './routes/payment/payme.js'
 import adminRoutes from './routes/admin.js'
 import uploadRoutes from './routes/upload.js'
 
+// (deploy trigger: ensure Vercel rebuilds backend after schema + route changes)
 const prisma = new PrismaClient()
 
 const app = Fastify({ logger: { level: 'info' } })
