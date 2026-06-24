@@ -10,6 +10,6 @@
     { "source": "/(.*)", "destination": "/api" }
   ],
   "crons": [
-    { "path": "/api/orders/cleanup-stale", "schedule": "*/30 * * * *" }
+    { "path": "/api/orders/cleanup-stale", "schedule": "0 3 * * *" }
   ]
 }
