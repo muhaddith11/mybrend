@@ -18,7 +18,31 @@ export function createAdminFakePrisma(seed: { owners?: SeedOwner[]; stores?: See
   }))
   const stores = (seed.stores ?? []).map((s) => ({ name: 'Store', ...s }))
 
+  // In-memory login throttle (DB-asosli helper o'rniga test uchun)
+  const throttle = new Map<string, { count: number; windowStart: number }>()
+
   const prisma: any = {
+    loginThrottle: {
+      async findUnique({ where }: any) {
+        const r = throttle.get(where.key)
+        return r ? { key: where.key, count: r.count, windowStart: new Date(r.windowStart) } : null
+      },
+      async upsert({ where, create, update }: any) {
+        const existing = throttle.get(where.key)
+        if (existing) throttle.set(where.key, { count: update.count, windowStart: existing.windowStart })
+        else throttle.set(where.key, { count: create.count, windowStart: create.windowStart.getTime() })
+        return null
+      },
+      async update({ where, data }: any) {
+        const r = throttle.get(where.key)
+        if (r && data.count?.increment) r.count += data.count.increment
+        return null
+      },
+      async deleteMany({ where }: any) {
+        throttle.delete(where.key)
+        return { count: 1 }
+      },
+    },
     storeOwner: {
       async findUnique({ where }: any) {
         return owners.find((o) => o.email === where.email) ?? null

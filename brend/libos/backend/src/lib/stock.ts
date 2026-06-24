@@ -50,7 +50,7 @@ export async function decrementStock(tx: Prisma.TransactionClient, items: OrderL
 export async function restoreStock(tx: Prisma.TransactionClient, orderId: string) {
   const items = await tx.orderItem.findMany({ where: { orderId } })
   for (const it of items) {
-    await tx.productVariant.updateMany({
+    const res = await tx.productVariant.updateMany({
       where: {
         productId: it.productId,
         size: it.size ?? null,
@@ -58,5 +58,19 @@ export async function restoreStock(tx: Prisma.TransactionClient, orderId: string
       },
       data: { quantity: { increment: it.quantity } },
     })
+    // count 0 = mos variant topilmadi. Ikki holatda bo'lishi mumkin:
+    //  (a) mahsulot stok kuzatmaydi (variantsiz) — normal, e'tiborsiz;
+    //  (b) variant buyurtmadan keyin O'CHIRILGAN — stok jimgina yo'qoladi.
+    // (b) ni aniqlash uchun: variantsiz mahsulotda umuman variant bo'lmaydi.
+    if (res.count === 0) {
+      const hasAnyVariant = await tx.productVariant.findFirst({ where: { productId: it.productId } })
+      if (hasAnyVariant) {
+        // Mahsulotda variantlar bor, lekin aynan shu size/color yo'q (o'chirilgan) —
+        // jimgina yutmaymiz, kuzatib turish uchun konsolga yozamiz.
+        console.warn(
+          `[restoreStock] variant topilmadi: order=${orderId} product=${it.productId} size=${it.size ?? '∅'} color=${it.color ?? '∅'} qty=${it.quantity} — stok qaytarilmadi`,
+        )
+      }
+    }
   }
 }

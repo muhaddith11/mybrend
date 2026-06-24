@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { PrismaClient, DeliveryType } from '@prisma/client'
 import { sendOrderNotification } from '../plugins/telegram'
-import { decrementStock, InsufficientStockError } from '../lib/stock.js'
+import { decrementStock, restoreStock, InsufficientStockError } from '../lib/stock.js'
 import { phoneSchema } from '../lib/phone.js'
 import { buildClickPaymentUrl } from './payment/click.js'
 import { buildPaymePaymentUrl } from './payment/payme.js'
@@ -288,5 +288,58 @@ export default async function ordersRoutes(app: FastifyInstance) {
     })
     if (!order) return reply.status(404).send({ error: 'Buyurtma topilmadi' })
     return reply.send(order)
+  })
+
+  // ─── Eskirgan to'lanmagan buyurtmalarni tozalash (cron) ──────────────────────
+  // Stok buyurtma YARATILGANDA kamayadi. Online to'lov (click/payme) tanlangan,
+  // lekin mijoz to'lamay chiqib ketsa — buyurtma PENDING qoladi va stok abadiy
+  // band bo'lib qolardi. Bu endpoint shunday eskirgan buyurtmalarni bekor qilib
+  // stokni qaytaradi. Naqd (cash) buyurtmalar TEGILMAYDI — ular yetkazishni kutadi.
+  //
+  // Vercel Cron yoki tashqi scheduler chaqiradi. CRON_SECRET bilan himoyalangan:
+  // `Authorization: Bearer <CRON_SECRET>` (Vercel cron shu sarlavhani yuboradi).
+  const STALE_AFTER_MS = Number(process.env.STALE_ORDER_MINUTES ?? 30) * 60 * 1000
+  app.get('/cleanup-stale', async (req, reply) => {
+    const secret = process.env.CRON_SECRET
+    const auth = req.headers.authorization ?? ''
+    if (!secret || auth !== `Bearer ${secret}`) {
+      return reply.status(401).send({ error: 'Ruxsat yo\'q' })
+    }
+
+    const cutoff = new Date(Date.now() - STALE_AFTER_MS)
+    const stale = await prisma.order.findMany({
+      where: {
+        status: 'PENDING',
+        paymentMethod: { in: ['click', 'payme'] },
+        createdAt: { lt: cutoff },
+        OR: [{ payment: null }, { payment: { status: { not: 'PAID' } } }],
+      },
+      select: { id: true },
+      take: 200, // bitta yurishda ko'pi bilan 200 ta (cheksiz ish bo'lmasin)
+    })
+
+    let cancelled = 0
+    for (const { id } of stale) {
+      try {
+        await prisma.$transaction(async (tx) => {
+          // Poyga himoyasi: tranzaksiya ichida holatni qayta tekshiramiz —
+          // shu orada to'langan (PAID) bo'lsa, tegmaymiz.
+          const fresh = await tx.order.findUnique({ where: { id }, include: { payment: true } })
+          if (!fresh || fresh.status !== 'PENDING') return
+          if (fresh.payment?.status === 'PAID') return
+
+          await tx.order.update({ where: { id }, data: { status: 'CANCELLED' } })
+          if (fresh.payment) {
+            await tx.payment.update({ where: { id: fresh.payment.id }, data: { status: 'CANCELLED' } })
+          }
+          await restoreStock(tx, id)
+        })
+        cancelled++
+      } catch (err) {
+        req.log.error({ err, orderId: id }, 'Stale buyurtmani tozalashda xato')
+      }
+    }
+
+    return reply.send({ ok: true, scanned: stale.length, cancelled })
   })
 }

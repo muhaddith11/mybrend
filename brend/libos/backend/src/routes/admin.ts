@@ -2,10 +2,14 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { checkLoginThrottle, bumpLoginThrottle, resetLoginThrottle } from '../lib/loginThrottle.js'
 
 // Mavjud bo'lmagan email uchun ham bcrypt.compare chaqiramiz — javob vaqti bir xil
 // qolib, user-enumeration (timing attack) imkonsiz bo'lsin.
 const DUMMY_HASH = '$2a$10$CwTycUXWue0Thq9StjUM0uJ8DvWlZQ3PqQ9YxLk7Yb5Ym0Qe5Hq2'
+
+// Admin tokeni 12 soat amal qiladi (mijoz tokenidan qisqaroq — egalik darajasi yuqori).
+const ADMIN_TOKEN_TTL = '12h'
 
 const loginSchema = z.object({ email: z.string().min(1), password: z.string().min(1) })
 
@@ -51,6 +55,21 @@ const storeUpdateSchema = z.object({
   deliveryText: z.string().optional(),
 })
 
+// categorySlug'ni kategoriya ID'siga aylantiradi. Avval shu do'konning O'Z
+// kategoriyasini qidiradi (storeId mos), topilmasa global (storeId=null) ga tushadi.
+// orderBy storeId desc → store-specific (non-null) global'dan oldin keladi.
+async function resolveCategoryId(
+  prisma: PrismaClient,
+  slug: string,
+  storeId: string,
+): Promise<string | undefined> {
+  const cat = await prisma.category.findFirst({
+    where: { slug, OR: [{ storeId }, { storeId: null }] },
+    orderBy: { storeId: 'desc' },
+  })
+  return cat?.id
+}
+
 export default async function adminRoutes(app: FastifyInstance) {
   const prisma: PrismaClient = app.prisma
 
@@ -59,6 +78,16 @@ export default async function adminRoutes(app: FastifyInstance) {
   const loginRateLimit = { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }
   app.post('/login', loginRateLimit, async (req, reply) => {
     const { email, password } = loginSchema.parse(req.body)
+
+    // DB-asosli throttle (serverless'da in-memory rate-limit yetarli emas).
+    // Email bo'yicha kalitlaymiz — bitta hisobga brute-force qilishni bloklaydi.
+    const throttleKey = `admin:${email.toLowerCase()}`
+    const throttle = await checkLoginThrottle(prisma, throttleKey)
+    if (!throttle.allowed) {
+      return reply.status(429).send({
+        error: `Juda ko'p urinish. ${Math.ceil(throttle.retryAfterSec / 60)} daqiqadan keyin qayta urining.`,
+      })
+    }
 
     // Env-var based custom credentials (ADMIN_USERNAME + ADMIN_PASSWORD)
     const envUser = process.env.ADMIN_USERNAME
@@ -69,7 +98,8 @@ export default async function adminRoutes(app: FastifyInstance) {
         // owner relation kerak emas — store.ownerId ni to'g'ridan ishlatamiz
         const store = await prisma.store.findUnique({ where: { slug: envSlug } })
         if (store) {
-          const token = app.jwt.sign({ ownerId: store.ownerId, role: 'owner' })
+          await resetLoginThrottle(prisma, throttleKey)
+          const token = app.jwt.sign({ ownerId: store.ownerId, role: 'owner' }, { expiresIn: ADMIN_TOKEN_TTL })
           return reply.send({ token, owner: { id: store.ownerId, name: store.name, email: envUser } })
         }
         // Sozlama xatosi (env do'koni topilmadi) — tafsilot mijozga oshkor qilinmaydi
@@ -86,9 +116,11 @@ export default async function adminRoutes(app: FastifyInstance) {
       const owner = await prisma.storeOwner.findUnique({ where: { email } })
       const ok = await bcrypt.compare(password, owner?.password ?? DUMMY_HASH)
       if (!owner || !ok) {
+        await bumpLoginThrottle(prisma, throttleKey)
         return reply.status(401).send({ error: "Login yoki parol noto'g'ri" })
       }
-      const token = app.jwt.sign({ ownerId: owner.id, role: 'owner' })
+      await resetLoginThrottle(prisma, throttleKey)
+      const token = app.jwt.sign({ ownerId: owner.id, role: 'owner' }, { expiresIn: ADMIN_TOKEN_TTL })
       return reply.send({ token, owner: { id: owner.id, name: owner.name, email: owner.email } })
     } catch {
       return reply.status(401).send({ error: "Login yoki parol noto'g'ri" })
@@ -147,8 +179,7 @@ export default async function adminRoutes(app: FastifyInstance) {
     const { variants, categorySlug, categoryId: catId, ...data } = productSchema.parse(req.body)
     let resolvedCategoryId = catId
     if (!resolvedCategoryId && categorySlug) {
-      const cat = await prisma.category.findUnique({ where: { slug: categorySlug } })
-      resolvedCategoryId = cat?.id
+      resolvedCategoryId = await resolveCategoryId(prisma, categorySlug, store.id)
     }
     const product = await prisma.product.create({
       data: { ...data, storeId: store.id, categoryId: resolvedCategoryId, variants: { create: variants } },
@@ -168,8 +199,7 @@ export default async function adminRoutes(app: FastifyInstance) {
     if (!product) return reply.status(404).send({ error: 'Mahsulot topilmadi' })
     let resolvedCategoryId = catId
     if (!resolvedCategoryId && categorySlug) {
-      const cat = await prisma.category.findUnique({ where: { slug: categorySlug } })
-      resolvedCategoryId = cat?.id
+      resolvedCategoryId = await resolveCategoryId(prisma, categorySlug, product.storeId)
     }
     await prisma.productVariant.deleteMany({ where: { productId: id } })
     const updated = await prisma.product.update({
@@ -218,9 +248,15 @@ export default async function adminRoutes(app: FastifyInstance) {
     return reply.send(updated)
   })
 
-  // Kategoriyalar
+  // Kategoriyalar — global (storeId=null) + shu do'konning o'z kategoriyalari.
+  // Boshqa do'konlarning maxsus kategoriyalari ko'rinmaydi.
   app.get('/categories', { preHandler: [adminAuth] }, async (req, reply) => {
-    const cats = await prisma.category.findMany({ orderBy: { name: 'asc' } })
+    const { ownerId } = req.user as { ownerId: string }
+    const store = await prisma.store.findFirst({ where: { ownerId } })
+    const cats = await prisma.category.findMany({
+      where: { OR: [{ storeId: null }, ...(store ? [{ storeId: store.id }] : [])] },
+      orderBy: { name: 'asc' },
+    })
     return reply.send(cats)
   })
 

@@ -78,7 +78,7 @@ describe('GET /api/upload/sign', () => {
     assert.equal(body.cloudName, 'demo')
     assert.equal(body.apiKey, 'key123')
     assert.match(body.signature, /^[a-f0-9]{40}$/)
-    assert.equal(body.folder, 'libos')
+    assert.equal(body.folder, 'zyff')
     assert.ok(body.uploadUrl.includes('demo'))
     await app.close()
   })

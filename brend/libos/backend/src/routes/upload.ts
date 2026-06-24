@@ -19,7 +19,9 @@ export default async function uploadRoutes(app: FastifyInstance) {
     }
 
     const timestamp = String(Math.round(Date.now() / 1000))
-    const folder = 'libos'
+    // Yangi rasmlar `zyff/` papkasiga yuklanadi. Eski `libos/` papkasidagi rasmlar
+    // to'liq URL bilan saqlangani uchun ishlashda davom etadi (ko'chirish shart emas).
+    const folder = process.env.CLOUDINARY_FOLDER ?? 'zyff'
     const signature = cloudinarySign({ timestamp, folder }, apiSecret)
 
     return reply.send({

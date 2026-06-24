@@ -22,7 +22,7 @@ async function getEskizToken(): Promise<string> {
   return eskizToken!
 }
 
-export async function sendSms(phone: string, message: string): Promise<void> {
+export async function sendSms(phone: string, message: string, _retry = 0): Promise<void> {
   // Dev muhitda SMS yuborilmaydi
   if (process.env.NODE_ENV !== 'production' || !process.env.ESKIZ_EMAIL) {
     console.log(`[SMS DEV] ${phone}: ${message}`)
@@ -48,10 +48,11 @@ export async function sendSms(phone: string, message: string): Promise<void> {
 
   if (!res.ok) {
     const err = await res.json()
-    // Token muddati o'tgan bo'lsa, yangilab qayta urinish
-    if (err.message?.includes('token')) {
+    // Token muddati o'tgan bo'lsa, yangilab BIR MARTA qayta urinish.
+    // _retry hisoblagichsiz, token doim "expired" bersa cheksiz rekursiya bo'lardi.
+    if (err.message?.includes('token') && _retry < 1) {
       eskizToken = null
-      return sendSms(phone, message)
+      return sendSms(phone, message, _retry + 1)
     }
     throw new Error(`SMS yuborilmadi: ${err.message}`)
   }

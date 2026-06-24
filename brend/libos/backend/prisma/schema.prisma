@@ -104,9 +104,10 @@ model Store {
   ownerId   String
   owner     StoreOwner @relation(fields: [ownerId], references: [id])
 
-  products  Product[]
-  orders    Order[]
-  favorites FavoriteStore[]
+  products   Product[]
+  orders     Order[]
+  favorites  FavoriteStore[]
+  categories Category[]
 
   @@index([genders])
 }
@@ -126,9 +127,18 @@ model StoreOwner {
 model Category {
   id       String    @id @default(cuid())
   name     String
-  slug     String    @unique
+  slug     String
   gender   Gender
+
+  // Kategoriya endi do'konga tegishli bo'lishi mumkin. storeId NULL bo'lsa —
+  // global (barcha do'konlar ko'radigan) kategoriya, eski xulq bilan mos.
+  // Shu sababli slug global emas, (storeId, slug) juftligi bo'yicha unikal.
+  storeId  String?
+  store    Store?    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
   products Product[]
+
+  @@unique([storeId, slug])
 }
 
 model Product {
@@ -247,6 +257,15 @@ model Payment {
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+// Login brute-force throttle holati (DB'da — serverless instance'lar bo'ylab umumiy).
+// @fastify/rate-limit in-memory bo'lgani uchun Vercel'da yetarli emas edi.
+model LoginThrottle {
+  key         String   @id // masalan "admin:owner@example.com"
+  count       Int      @default(0)
+  windowStart DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model FavoriteStore {

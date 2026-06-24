@@ -9,23 +9,31 @@ async function main() {
   // Barcha test do'kon egalari uchun bitta parol (bcrypt bilan hashlangan)
   const ownerPassword = await bcrypt.hash('secret123', 10)
 
-  // ─── Kategoriyalar ──────────────────────────────────────────
+  // ─── Kategoriyalar (global: storeId=null) ───────────────────
+  // slug endi global unikal emas ((storeId, slug) bo'yicha unikal), shuning uchun
+  // upsert({where:{slug}}) o'rniga idempotent findFirst+create ishlatamiz.
+  const seedGlobalCategory = async (slug: string, name: string, gender: 'MEN' | 'WOMEN' | 'KIDS') => {
+    const existing = await prisma.category.findFirst({ where: { slug, storeId: null } })
+    if (existing) return existing
+    return prisma.category.create({ data: { slug, name, gender, storeId: null } })
+  }
+
   const categories = await Promise.all([
-    prisma.category.upsert({ where: { slug: 'erkak-kurtka' }, update: {}, create: { name: 'Kurtka', slug: 'erkak-kurtka', gender: 'MEN' } }),
-    prisma.category.upsert({ where: { slug: 'erkak-futbolka' }, update: {}, create: { name: 'Futbolka', slug: 'erkak-futbolka', gender: 'MEN' } }),
-    prisma.category.upsert({ where: { slug: 'erkak-shim' }, update: {}, create: { name: 'Shim', slug: 'erkak-shim', gender: 'MEN' } }),
-    prisma.category.upsert({ where: { slug: 'ayol-koyilak' }, update: {}, create: { name: 'Ko\'ylak', slug: 'ayol-koyilak', gender: 'WOMEN' } }),
-    prisma.category.upsert({ where: { slug: 'ayol-palto' }, update: {}, create: { name: 'Palto', slug: 'ayol-palto', gender: 'WOMEN' } }),
-    prisma.category.upsert({ where: { slug: 'bola-kurtka' }, update: {}, create: { name: 'Kurtka', slug: 'bola-kurtka', gender: 'KIDS' } }),
-    prisma.category.upsert({ where: { slug: 'bola-sport' }, update: {}, create: { name: 'Sport kiyim', slug: 'bola-sport', gender: 'KIDS' } }),
-    prisma.category.upsert({ where: { slug: 'erkak-kostyum' }, update: {}, create: { name: 'Kostyum', slug: 'erkak-kostyum', gender: 'MEN' } }),
+    seedGlobalCategory('erkak-kurtka', 'Kurtka', 'MEN'),
+    seedGlobalCategory('erkak-futbolka', 'Futbolka', 'MEN'),
+    seedGlobalCategory('erkak-shim', 'Shim', 'MEN'),
+    seedGlobalCategory('ayol-koyilak', "Ko'ylak", 'WOMEN'),
+    seedGlobalCategory('ayol-palto', 'Palto', 'WOMEN'),
+    seedGlobalCategory('bola-kurtka', 'Kurtka', 'KIDS'),
+    seedGlobalCategory('bola-sport', 'Sport kiyim', 'KIDS'),
+    seedGlobalCategory('erkak-kostyum', 'Kostyum', 'MEN'),
     // Asma Design kategoriyalari
-    prisma.category.upsert({ where: { slug: 'suits' }, update: {}, create: { name: 'Kostyumlar', slug: 'suits', gender: 'MEN' } }),
-    prisma.category.upsert({ where: { slug: 'coats' }, update: {}, create: { name: 'Paltolar', slug: 'coats', gender: 'MEN' } }),
-    prisma.category.upsert({ where: { slug: 'shirts' }, update: {}, create: { name: "Ko'ylaklar", slug: 'shirts', gender: 'MEN' } }),
-    prisma.category.upsert({ where: { slug: 'knitwear' }, update: {}, create: { name: 'Trikotaj', slug: 'knitwear', gender: 'MEN' } }),
-    prisma.category.upsert({ where: { slug: 'shoes' }, update: {}, create: { name: 'Poyafzallar', slug: 'shoes', gender: 'MEN' } }),
-    prisma.category.upsert({ where: { slug: 'accessories' }, update: {}, create: { name: 'Aksessuarlar', slug: 'accessories', gender: 'MEN' } }),
+    seedGlobalCategory('suits', 'Kostyumlar', 'MEN'),
+    seedGlobalCategory('coats', 'Paltolar', 'MEN'),
+    seedGlobalCategory('shirts', "Ko'ylaklar", 'MEN'),
+    seedGlobalCategory('knitwear', 'Trikotaj', 'MEN'),
+    seedGlobalCategory('shoes', 'Poyafzallar', 'MEN'),
+    seedGlobalCategory('accessories', 'Aksessuarlar', 'MEN'),
   ])
 
   console.log(`✅ ${categories.length} ta kategoriya`)

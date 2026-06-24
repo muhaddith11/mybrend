@@ -96,8 +96,8 @@ app.register(uploadRoutes,   { prefix: '/api' })
 // Sog'liq tekshiruvi
 app.get('/health', async () => ({
   status: 'ok',
-  app: 'Libos API',
-  version: '1.0.0',
+  app: 'ZYFF API',
+  version: process.env.APP_VERSION ?? process.env.VERCEL_GIT_COMMIT_SHA ?? 'dev',
   timestamp: new Date().toISOString(),
 }))
 
@@ -114,7 +114,7 @@ if (env.NODE_ENV !== 'production' || process.env.LOCAL_SERVER) {
       await prisma.$connect()
       console.log('✅ PostgreSQL ulandi')
       await app.listen({ port: env.PORT, host: '0.0.0.0' })
-      console.log(`🚀 Libos backend: http://localhost:${env.PORT}`)
+      console.log(`🚀 ZYFF backend: http://localhost:${env.PORT}`)
     } catch (err) {
       app.log.error(err)
       await prisma.$disconnect()

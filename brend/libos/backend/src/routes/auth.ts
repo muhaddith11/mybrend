@@ -24,6 +24,10 @@ const PUBLIC_USER_SELECT = {
 const sendOtpRateLimit = { config: { rateLimit: { max: 5, timeWindow: '1 minute' } } }
 const verifyOtpRateLimit = { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } }
 
+// Mijoz tokeni 30 kun amal qiladi. Muddatsiz token o'g'irlansa abadiy yaroqli
+// bo'lib qolardi — endi avtomatik eskiradi va qayta login talab qilinadi.
+const USER_TOKEN_TTL = '30d'
+
 export default async function authRoutes(app: FastifyInstance) {
   const prisma: PrismaClient = app.prisma
 
@@ -64,7 +68,7 @@ export default async function authRoutes(app: FastifyInstance) {
     if (code === '000000') {
       let user = await prisma.user.findUnique({ where: { phone }, select: PUBLIC_USER_SELECT })
       if (!user) user = await prisma.user.create({ data: { phone }, select: PUBLIC_USER_SELECT })
-      const token = app.jwt.sign({ userId: user.id, phone: user.phone })
+      const token = app.jwt.sign({ userId: user.id, phone: user.phone }, { expiresIn: USER_TOKEN_TTL })
       return reply.send({ token, user })
     }
 
@@ -91,7 +95,7 @@ export default async function authRoutes(app: FastifyInstance) {
       select: PUBLIC_USER_SELECT,
     })
 
-    const token = app.jwt.sign({ userId: user.id, phone: user.phone })
+    const token = app.jwt.sign({ userId: user.id, phone: user.phone }, { expiresIn: USER_TOKEN_TTL })
     return reply.send({ token, user: updated })
   })
 
