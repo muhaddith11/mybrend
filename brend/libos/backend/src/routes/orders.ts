@@ -16,38 +16,65 @@ const guestOrderRateLimit = { config: { rateLimit: { max: 10, timeWindow: '1 min
 // Frontend ham shu qiymatni ko'rsatadi — moslik uchun env'dan boshqarish mumkin.
 const DELIVERY_FEE = Number(process.env.DELIVERY_FEE ?? 15000)
 
+// Double-submit oynasi: shu vaqt ichidagi bir xil PENDING buyurtma dublikat hisoblanadi.
+const DEDUP_WINDOW_MS = 20_000
+
+// So'nggi DEDUP_WINDOW_MS ichida shu user+do'kon+summa bilan yaratilgan PENDING
+// buyurtmani topadi (bo'lsa). Buyurtma to'liq shaklda (items+store) qaytadi — chunki
+// auth handler javobni shu shaklda kutadi.
+function findRecentDuplicate(
+  prisma: PrismaClient,
+  userId: string,
+  storeId: string,
+  totalPrice: number,
+) {
+  return prisma.order.findFirst({
+    where: {
+      userId,
+      storeId,
+      totalPrice,
+      status: 'PENDING',
+      createdAt: { gt: new Date(Date.now() - DEDUP_WINDOW_MS) },
+    },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      items: { include: { product: true } },
+      store: { select: { id: true, name: true, slug: true, logo: true, themeColor: true, telegramChatId: true } },
+    },
+  })
+}
+
+// Erkin matn maydonlariga uzunlik chegarasi — cheksiz kiritish DB'ni shishirishi
+// yoki Telegram xabar limitini buzib bildirishnomani yo'qotishi mumkin.
+const itemSchema = z.object({
+  productId: z.string().max(50),
+  quantity: z.number().int().min(1).max(1000),
+  size: z.string().max(50).optional(),
+  color: z.string().max(50).optional(),
+})
+
 const createOrderSchema = z.object({
-  storeId: z.string(),
+  storeId: z.string().max(50),
   deliveryType: z.enum(['DELIVERY', 'PICKUP', 'CASH_ON_DOOR']),
-  address: z.string().optional(),
-  note: z.string().optional(),
+  address: z.string().max(500).optional(),
+  note: z.string().max(1000).optional(),
   // Online to'lov tanlangan bo'lsa — javobda paymentUrl qaytadi
   paymentProvider: z.enum(['CLICK', 'PAYME']).optional(),
-  items: z.array(z.object({
-    productId: z.string(),
-    quantity: z.number().min(1),
-    size: z.string().optional(),
-    color: z.string().optional(),
-  })),
+  items: z.array(itemSchema).min(1).max(100),
 })
 
 const guestOrderSchema = z.object({
-  storeSlug: z.string(),
-  customerName: z.string().min(1),
+  storeSlug: z.string().max(100),
+  customerName: z.string().min(1).max(100),
   phone: phoneSchema,
   // Yetkazib berish yoki olib ketish (default — yetkazib berish, eski mosligi uchun)
   deliveryType: z.enum(['DELIVERY', 'PICKUP']).default('DELIVERY'),
-  address: z.string().optional(),
+  address: z.string().max(500).optional(),
   lat: z.number().optional(),
   lng: z.number().optional(),
-  note: z.string().optional(),
-  paymentMethod: z.string().default('cash'),
-  items: z.array(z.object({
-    productId: z.string(),
-    quantity: z.number().min(1),
-    size: z.string().optional(),
-    color: z.string().optional(),
-  })),
+  note: z.string().max(1000).optional(),
+  paymentMethod: z.string().max(20).default('cash'),
+  items: z.array(itemSchema).min(1).max(100),
 })
 
 const storeInclude = {
@@ -90,6 +117,18 @@ export default async function ordersRoutes(app: FastifyInstance) {
       const product = products.find(p => p.id === item.productId)
       return sum + (product?.price ?? 0) * item.quantity
     }, 0)
+
+    // Idempotentlik (double-submit himoyasi): ikki marta bosish yoki tarmoq qayta-
+    // urinishi 2 ta buyurtma + ikki barobar stok kamayishiga olib kelmasin. So'nggi
+    // DEDUP_WINDOW_MS ichida shu user+do'kon+summa bilan PENDING buyurtma bo'lsa,
+    // yangisini yaratmay, mavjudini qaytaramiz.
+    const dup = await findRecentDuplicate(prisma, user.id, store.id, totalPrice)
+    if (dup) {
+      let paymentUrl: string | undefined
+      if (body.paymentMethod === 'click') paymentUrl = buildClickPaymentUrl(dup)
+      else if (body.paymentMethod === 'payme') paymentUrl = buildPaymePaymentUrl(dup)
+      return reply.status(201).send({ ok: true, orderId: dup.id, paymentUrl })
+    }
 
     // Buyurtma yaratish va stok kamaytirish — bitta atomik tranzaksiyada.
     // Avval stokni kamaytiramiz: yetmasa InsufficientStockError tashlanadi,
@@ -172,6 +211,15 @@ export default async function ordersRoutes(app: FastifyInstance) {
     // summa bir xil bo'lsin (online to'lov webhook'i ham shu totalPrice'ni tekshiradi).
     const deliveryFee = body.deliveryType === 'DELIVERY' ? DELIVERY_FEE : 0
     const totalPrice = itemsTotal + deliveryFee
+
+    // Double-submit himoyasi (guest bilan bir xil) — dublikat buyurtma yaratilmasin.
+    const dup = await findRecentDuplicate(prisma, userId, body.storeId, totalPrice)
+    if (dup) {
+      let paymentUrl: string | undefined
+      if (body.paymentProvider === 'CLICK') paymentUrl = buildClickPaymentUrl(dup)
+      else if (body.paymentProvider === 'PAYME') paymentUrl = buildPaymePaymentUrl(dup)
+      return reply.status(201).send({ ...dup, paymentUrl })
+    }
 
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { phone: true, name: true } })
 

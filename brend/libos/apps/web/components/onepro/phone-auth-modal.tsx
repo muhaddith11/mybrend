@@ -2,7 +2,6 @@
 
 import { PhoneAuthModal as Shared } from '@/components/shared/phone-auth-modal'
 import { useStore } from '@/lib/onepro/store'
-import { fetchOrdersByPhone } from '@/lib/onepro/orders'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -16,7 +15,6 @@ export function PhoneAuthModal(props: PhoneAuthModalProps) {
     <Shared
       {...props}
       useStore={useStore}
-      fetchOrdersByPhone={fetchOrdersByPhone}
       Button={Button}
       Input={Input}
     />

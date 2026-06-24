@@ -1,4 +1,4 @@
-import { API, makeAdminAuth } from './apiBase'
+import { API, adminFetch } from './apiBase'
 
 export interface StoreSettings {
   phone: string
@@ -24,8 +24,6 @@ export const defaultSettings: StoreSettings = {
 
 /** Do'kon `slug`i uchun sozlamalar API funksiyalarini yaratadi. */
 export function createSettingsApi(slug: string) {
-  const { getAdminToken } = makeAdminAuth(slug)
-
   async function fetchSettings(): Promise<StoreSettings> {
     try {
       const res = await fetch(`${API}/stores/${slug}`)
@@ -60,13 +58,8 @@ export function createSettingsApi(slug: string) {
   }
 
   async function updateSettings(s: StoreSettings): Promise<void> {
-    const token = getAdminToken()
-    const res = await fetch(`${API}/admin/store`, {
+    const res = await adminFetch(slug, '/admin/store', {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token ?? ''}`,
-      },
       body: JSON.stringify({
         phone: s.phone,
         address: s.address,

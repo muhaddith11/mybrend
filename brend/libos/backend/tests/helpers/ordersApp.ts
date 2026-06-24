@@ -82,6 +82,22 @@ export function createOrdersFakePrisma(seed: { products: SeedProduct[]; stores: 
       async findUnique({ where }: any) {
         return createdOrders.find((o) => o.id === where.id) ?? null
       },
+      // Dublikat-buyurtma (double-submit) qidiruvi. Fake buyurtmalarda `createdAt`
+      // yo'q, shuning uchun createdAt.gt sharti hech qachon mos kelmaydi → null
+      // qaytadi (dedupe ishlamaydi, mavjud test xulqi o'zgarmaydi).
+      async findFirst({ where }: any) {
+        return (
+          createdOrders.find(
+            (o) =>
+              (where.userId === undefined || o.userId === where.userId) &&
+              (where.storeId === undefined || o.storeId === where.storeId) &&
+              (where.totalPrice === undefined || o.totalPrice === where.totalPrice) &&
+              (where.status === undefined || o.status === where.status) &&
+              (where.createdAt?.gt === undefined ||
+                (o.createdAt && o.createdAt > where.createdAt.gt))
+          ) ?? null
+        )
+      },
       async create({ data }: any) {
         const items = (data.items?.create ?? []).map((it: any, i: number) => ({
           id: 'item' + i,

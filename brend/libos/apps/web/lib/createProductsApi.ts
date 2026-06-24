@@ -1,5 +1,5 @@
 import { Product } from './createStoreState'
-import { API, makeAdminAuth } from './apiBase'
+import { API, adminFetch } from './apiBase'
 
 type DBProduct = {
   id: string
@@ -48,8 +48,6 @@ function toProduct(row: DBProduct, store?: StoreInfo): Product {
 
 /** Do'kon `slug`i uchun mahsulot API funksiyalarini yaratadi. */
 export function createProductsApi(slug: string) {
-  const { adminHeaders } = makeAdminAuth(slug)
-
   async function fetchProducts(): Promise<Product[]> {
     const res = await fetch(`${API}/stores/${slug}`)
     if (!res.ok) throw new Error('Products fetch failed')
@@ -59,9 +57,8 @@ export function createProductsApi(slug: string) {
   }
 
   async function createProduct(product: Omit<Product, 'id'>): Promise<Product> {
-    const res = await fetch(`${API}/admin/products`, {
+    const res = await adminFetch(slug, '/admin/products', {
       method: 'POST',
-      headers: adminHeaders(),
       body: JSON.stringify({
         sku: product.sku,
         name: product.name,
@@ -87,9 +84,8 @@ export function createProductsApi(slug: string) {
   }
 
   async function updateProduct(id: string, updates: Partial<Omit<Product, 'id'>>): Promise<Product> {
-    const res = await fetch(`${API}/admin/products/${id}`, {
+    const res = await adminFetch(slug, `/admin/products/${id}`, {
       method: 'PUT',
-      headers: adminHeaders(),
       body: JSON.stringify({
         sku: updates.sku,
         name: updates.name ?? '',
@@ -115,10 +111,7 @@ export function createProductsApi(slug: string) {
   }
 
   async function deleteProduct(id: string): Promise<void> {
-    const res = await fetch(`${API}/admin/products/${id}`, {
-      method: 'DELETE',
-      headers: adminHeaders(),
-    })
+    const res = await adminFetch(slug, `/admin/products/${id}`, { method: 'DELETE' })
     if (!res.ok) throw new Error('Delete failed')
   }
 

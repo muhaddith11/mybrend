@@ -108,7 +108,10 @@ export default async function authRoutes(app: FastifyInstance) {
 
   app.patch('/profile', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { userId } = req.user as { userId: string }
-    const data = z.object({ name: z.string().optional(), avatar: z.string().optional() }).parse(req.body)
+    const data = z.object({
+      name: z.string().max(100).optional(),
+      avatar: z.string().max(1000).optional(),
+    }).parse(req.body)
     const user = await prisma.user.update({ where: { id: userId }, data, select: PUBLIC_USER_SELECT })
     return reply.send(user)
   })

@@ -179,9 +179,12 @@ export function createStoreState(slug: string) {
         // Wishlist
         wishlist: [],
         addToWishlist: (productId) =>
-          set((state) => ({
-            wishlist: [...state.wishlist, productId],
-          })),
+          set((state) =>
+            // Dublikat ID qo'shilmasin (aks holda bir mahsulot ro'yxatda ikki marta turardi)
+            state.wishlist.includes(productId)
+              ? state
+              : { wishlist: [...state.wishlist, productId] }
+          ),
         removeFromWishlist: (productId) =>
           set((state) => ({
             wishlist: state.wishlist.filter((id) => id !== productId),

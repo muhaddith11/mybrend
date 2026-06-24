@@ -76,6 +76,13 @@ app.decorate('prisma', prisma)
 app.decorate('authenticate', async (req: any, reply: any) => {
   try {
     await req.jwtVerify()
+    // MUHIM: bu faqat USER endpointlari uchun. Admin/owner tokenida `userId` yo'q
+    // (faqat `ownerId`). Uni o'tkazib yuborsak, `where: { userId: undefined }`
+    // Prisma'da filtrni butunlay olib tashlaydi va BARCHA buyurtmalar sizadi.
+    // Shuning uchun token turini ham tekshiramiz (adminAuth'ning teskarisi).
+    if (!req.user?.userId) {
+      return reply.status(401).send({ error: 'Kirish uchun tizimga kiring' })
+    }
   } catch {
     reply.status(401).send({ error: 'Kirish uchun tizimga kiring' })
   }

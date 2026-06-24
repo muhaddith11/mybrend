@@ -1,5 +1,5 @@
 import { CartItem } from './createStoreState'
-import { API, makeAdminAuth } from './apiBase'
+import { API, adminFetch } from './apiBase'
 
 export type OrderStatus = 'pending' | 'processing' | 'completed' | 'cancelled'
 export type PaymentMethod = 'cash' | 'click' | 'payme'
@@ -177,8 +177,6 @@ function toOrder(row: DBOrder): Order {
 
 /** Do'kon `slug`i uchun buyurtma API funksiyalarini yaratadi. */
 export function createOrdersApi(slug: string) {
-  const { adminHeaders } = makeAdminAuth(slug)
-
   async function createOrder(order: OrderInput): Promise<{ orderId: string; paymentUrl?: string }> {
     const itemsPayload = order.items.map(i => ({
       productId: i.product.id,
@@ -229,9 +227,7 @@ export function createOrdersApi(slug: string) {
   }
 
   async function fetchOrders(): Promise<Order[]> {
-    const res = await fetch(`${API}/admin/orders`, {
-      headers: adminHeaders(),
-    })
+    const res = await adminFetch(slug, '/admin/orders')
     if (!res.ok) throw new Error('Orders fetch failed')
     const data = await res.json()
     return (data as DBOrder[]).map(toOrder)
@@ -239,25 +235,12 @@ export function createOrdersApi(slug: string) {
 
   async function updateOrderStatus(id: string, status: OrderStatus): Promise<void> {
     const dbStatus = statusToDb[status]
-    const res = await fetch(`${API}/admin/orders/${id}/status`, {
+    const res = await adminFetch(slug, `/admin/orders/${id}/status`, {
       method: 'PATCH',
-      headers: adminHeaders(),
       body: JSON.stringify({ status: dbStatus }),
     })
     if (!res.ok) throw new Error('Status update failed')
   }
 
-  async function fetchOrdersByPhone(phone: string): Promise<Order[]> {
-    const clean = phone.replace(/\s/g, '')
-    const res = await fetch(`${API}/orders/my`, {
-      headers: adminHeaders(),
-    })
-    if (!res.ok) return []
-    const data = await res.json()
-    return ((data.orders ?? []) as DBOrder[])
-      .filter(o => o.user?.phone === clean)
-      .map(toOrder)
-  }
-
-  return { createOrder, fetchOrderById, fetchMyOrders, fetchOrders, updateOrderStatus, fetchOrdersByPhone }
+  return { createOrder, fetchOrderById, fetchMyOrders, fetchOrders, updateOrderStatus }
 }

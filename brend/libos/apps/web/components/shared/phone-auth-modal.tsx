@@ -10,14 +10,12 @@ interface PhoneAuthModalProps {
   onClose: () => void
   /** Brendga bog'langan Zustand store hook'i (auth holati shu do'kon uchun saqlanadi). */
   useStore: () => StoreState
-  /** Telefon bo'yicha buyurtmalarni tekshiruvchi (UX uchun) funksiya. */
-  fetchOrdersByPhone: (phone: string) => Promise<unknown>
   /** Brendning UI komponentlari. */
   Button: ElementType
   Input: ElementType
 }
 
-export function PhoneAuthModal({ open, onClose, useStore, fetchOrdersByPhone, Button, Input }: PhoneAuthModalProps) {
+export function PhoneAuthModal({ open, onClose, useStore, Button, Input }: PhoneAuthModalProps) {
   const { setAuth } = useStore()
   const [phone, setPhone] = useState('')
   const [name, setName] = useState('')
@@ -45,25 +43,16 @@ export function PhoneAuthModal({ open, onClose, useStore, fetchOrdersByPhone, Bu
     setError('')
     setStep('loading')
 
-    try {
-      // Check if phone has any orders (just for UX — not real auth)
-      await fetchOrdersByPhone(cleanPhone)
-      setAuth(cleanPhone, name.trim() || 'Mehmon')
-      setStep('done')
-      setTimeout(() => {
-        onClose()
-        setStep('input')
-        setPhone('')
-        setName('')
-      }, 1500)
-    } catch {
-      setAuth(cleanPhone, name.trim() || 'Mehmon')
-      setStep('done')
-      setTimeout(() => {
-        onClose()
-        setStep('input')
-      }, 1500)
-    }
+    // Storefront "login" — bu haqiqiy auth emas, faqat telefon/ismni shu do'kon
+    // sessiyasiga saqlaydi (buyurtmalar lokal orderIds orqali kuzatiladi).
+    setAuth(cleanPhone, name.trim() || 'Mehmon')
+    setStep('done')
+    setTimeout(() => {
+      onClose()
+      setStep('input')
+      setPhone('')
+      setName('')
+    }, 1500)
   }
 
   const handleClose = () => {
