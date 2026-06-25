@@ -131,6 +131,10 @@ export function MapPicker({ onAddressSelect, initialAddress }: MapPickerProps) {
           borderRadius: 12,
           overflow: 'hidden',
           border: '1px solid var(--border)',
+          // Leaflet'ning ichki z-index'lari (400–1000) shu konteyner ichida
+          // qoladi — aks holda sticky header (z-index 100) ustiga chiqib ketadi.
+          zIndex: 0,
+          isolation: 'isolate',
         }}
       >
         <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
