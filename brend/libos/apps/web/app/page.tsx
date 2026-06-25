@@ -211,60 +211,6 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
             </div>
           </div>
 
-          {/* Right: store ads (fallback to info cards) */}
-          <div className={styles.heroCards}>
-            {stores[2] ? (
-              <Link href={`/store/${stores[2].slug}`} className={styles.storeAdCard}
-                style={{ background: stores[2].banner ? '#000' : STORE_GRADIENTS[2] }}>
-                {stores[2].banner && (
-                  <Image src={stores[2].banner} alt={stores[2].name} fill className={styles.storeAdImg} />
-                )}
-                {!stores[2].banner && (
-                  <div className={styles.storeAdDecor}>{stores[2].name.charAt(0)}</div>
-                )}
-                <div className={styles.storeAdOverlay} />
-                <div className={styles.storeAdContent}>
-                  <div className={styles.storeAdName}>{stores[2].name}</div>
-                  {stores[2].address && <div className={styles.storeAdAddr}>📍 {stores[2].address}</div>}
-                  <div className={styles.storeAdBtn}>Ko'rish →</div>
-                </div>
-              </Link>
-            ) : (
-              <div className={styles.infoCard} style={{ background: 'linear-gradient(135deg,#ECFDF5,#D1FAE5)' }}>
-                <div>
-                  <div className={styles.infoTitle}>{tr.freeDelivery}</div>
-                  <div className={styles.infoSub}>{tr.freeDeliverySub}</div>
-                </div>
-                <span className={styles.infoEmoji}>🚚</span>
-              </div>
-            )}
-            {stores[3] ? (
-              <Link href={`/store/${stores[3].slug}`} className={styles.storeAdCard}
-                style={{ background: stores[3].banner ? '#000' : STORE_GRADIENTS[3] }}>
-                {stores[3].banner && (
-                  <Image src={stores[3].banner} alt={stores[3].name} fill className={styles.storeAdImg} />
-                )}
-                {!stores[3].banner && (
-                  <div className={styles.storeAdDecor}>{stores[3].name.charAt(0)}</div>
-                )}
-                <div className={styles.storeAdOverlay} />
-                <div className={styles.storeAdContent}>
-                  <div className={styles.storeAdName}>{stores[3].name}</div>
-                  {stores[3].address && <div className={styles.storeAdAddr}>📍 {stores[3].address}</div>}
-                  <div className={styles.storeAdBtn}>Ko'rish →</div>
-                </div>
-              </Link>
-            ) : (
-              <div className={styles.infoCard} style={{ background: 'linear-gradient(135deg,#FFF7ED,#FFEDD5)' }}>
-                <div>
-                  <div className={styles.infoTitle}>{stores.length > 0 ? `${stores.length}+` : '5+'} {tr.storeCount}</div>
-                  <div className={styles.infoSub}>{tr.topStores}</div>
-                </div>
-                <span className={styles.infoEmoji}>🏬</span>
-              </div>
-            )}
-          </div>
-
         </div>
       </section>
 

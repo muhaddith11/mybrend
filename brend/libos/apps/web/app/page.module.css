@@ -19,7 +19,7 @@
 }
 @media (min-width: 768px) {
   .heroGrid {
-    grid-template-columns: 1fr 340px;
+    grid-template-columns: 1fr;
     gap: 16px;
     align-items: stretch;
   }
@@ -33,7 +33,7 @@
   /* Mobilда 3 qatorli sarlavha + badge + tugma sig'sin (avval 220px tor edi) */
   min-height: 300px;
 }
-@media (min-width: 768px) { .heroSlider { min-height: 320px; } }
+@media (min-width: 768px) { .heroSlider { min-height: 400px; } }
 
 .heroSlide {
   position: absolute;
