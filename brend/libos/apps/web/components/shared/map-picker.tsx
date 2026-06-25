@@ -1,12 +1,22 @@
 'use client'
 
+// Xaritadan aniq joyni belgilash (checkout). Bu komponent ASOSIY ilovada
+// (globals.css) ishlaydi — u yerda Tailwind YO'Q, shuning uchun barcha o'lcham/
+// uslublar inline beriladi (avval `w-full h-full` kabi Tailwind klasslarga
+// tayanardi → checkout'da xarita 0 balandlik bo'lib, bosib bo'lmасdi).
+// Leaflet CSS statik import qilinadi (runtime dynamic import ishonchsiz edi).
+
 import { useEffect, useRef, useState } from 'react'
+import 'leaflet/dist/leaflet.css'
 import { MapPin, Loader2 } from 'lucide-react'
 
 interface MapPickerProps {
   onAddressSelect: (address: string, lat: number, lng: number) => void
   initialAddress?: string
 }
+
+// Qo'qon city center
+const QOQON_CENTER: [number, number] = [40.5282, 70.9428]
 
 export function MapPicker({ onAddressSelect, initialAddress }: MapPickerProps) {
   const mapRef = useRef<HTMLDivElement>(null)
@@ -16,20 +26,15 @@ export function MapPicker({ onAddressSelect, initialAddress }: MapPickerProps) {
   const [selectedAddress, setSelectedAddress] = useState(initialAddress || '')
   const [mapReady, setMapReady] = useState(false)
 
-  // Qo'qon city center
-  const QOQON_CENTER: [number, number] = [40.5282, 70.9428]
-
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return
+    let cancelled = false
 
-    // Dynamic import to avoid SSR issues
-    Promise.all([
-      import('leaflet'),
-      import('leaflet/dist/leaflet.css' as any),
-    ]).then(([L]) => {
-      const Leaflet = L.default || L
+    import('leaflet').then((mod) => {
+      if (cancelled || !mapRef.current || mapInstanceRef.current) return
+      const Leaflet: any = (mod as any).default || mod
 
-      // Fix default marker icon
+      // Fix default marker icon (Leaflet asset paths)
       delete (Leaflet.Icon.Default.prototype as any)._getIconUrl
       Leaflet.Icon.Default.mergeOptions({
         iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -37,7 +42,7 @@ export function MapPicker({ onAddressSelect, initialAddress }: MapPickerProps) {
         shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
       })
 
-      const map = Leaflet.map(mapRef.current!, {
+      const map = Leaflet.map(mapRef.current, {
         center: QOQON_CENTER,
         zoom: 14,
         zoomControl: true,
@@ -50,27 +55,23 @@ export function MapPicker({ onAddressSelect, initialAddress }: MapPickerProps) {
 
       mapInstanceRef.current = map
       setMapReady(true)
+      // Konteyner o'lchami aniqlangach xaritani qayta o'lchaymiz (aks holda
+      // ba'zan kulrang/yarim yuklangan ko'rinadi).
+      setTimeout(() => map.invalidateSize(), 0)
 
       map.on('click', async (e: any) => {
         const { lat, lng } = e.latlng
 
-        // Remove old marker
-        if (markerRef.current) {
-          markerRef.current.remove()
-        }
-
-        // Add new marker
+        if (markerRef.current) markerRef.current.remove()
         markerRef.current = Leaflet.marker([lat, lng]).addTo(map)
 
-        // Reverse geocode
         setLoading(true)
         try {
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uz`,
-            { headers: { 'Accept-Language': 'uz,ru,en' } }
+            { headers: { 'Accept-Language': 'uz,ru,en' } },
           )
           const data = await res.json()
-          const addr = data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`
           const shortAddr = buildShortAddress(data)
           setSelectedAddress(shortAddr)
           onAddressSelect(shortAddr, lat, lng)
@@ -86,6 +87,7 @@ export function MapPicker({ onAddressSelect, initialAddress }: MapPickerProps) {
     })
 
     return () => {
+      cancelled = true
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove()
         mapInstanceRef.current = null
@@ -103,31 +105,79 @@ export function MapPicker({ onAddressSelect, initialAddress }: MapPickerProps) {
     return parts.length > 0 ? parts.join(', ') : data.display_name
   }
 
+  const pill: React.CSSProperties = {
+    position: 'absolute',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    background: 'rgba(255,255,255,0.92)',
+    backdropFilter: 'blur(6px)',
+    padding: '6px 12px',
+    borderRadius: 8,
+    fontSize: 12,
+    color: '#111',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+    zIndex: 500,
+  }
+
   return (
-    <div className="space-y-2">
-      <div className="relative rounded overflow-hidden border border-border" style={{ height: 280 }}>
-        <div ref={mapRef} className="w-full h-full" />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div
+        style={{
+          position: 'relative',
+          height: 280,
+          borderRadius: 12,
+          overflow: 'hidden',
+          border: '1px solid var(--border)',
+        }}
+      >
+        <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
+
         {!mapReady && (
-          <div className="absolute inset-0 flex items-center justify-center bg-muted">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'var(--surface-2, #f5f5f5)',
+              zIndex: 500,
+            }}
+          >
+            <Loader2 size={24} style={{ animation: 'spin 1s linear infinite', color: 'var(--text-3)' }} />
           </div>
         )}
+
         {loading && (
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded text-xs text-foreground flex items-center gap-2">
-            <Loader2 className="w-3 h-3 animate-spin" /> Manzil aniqlanmoqda...
+          <div style={{ ...pill, bottom: 12 }}>
+            <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> Manzil aniqlanmoqda...
           </div>
         )}
+
         {mapReady && !markerRef.current && !loading && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-background/90 backdrop-blur-sm px-3 py-1.5 rounded text-xs text-foreground flex items-center gap-1.5 pointer-events-none">
-            <MapPin className="w-3 h-3 text-primary" />
-            Xaritadan uyingizni tanlang
+          <div style={{ ...pill, top: 12, pointerEvents: 'none' }}>
+            <MapPin size={13} style={{ color: '#534AB7' }} /> Xaritadan uyingizni tanlang
           </div>
         )}
       </div>
+
       {selectedAddress && (
-        <div className="flex items-start gap-2 px-3 py-2 bg-primary/5 border border-primary/20 rounded">
-          <MapPin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-          <p className="text-sm text-foreground">{selectedAddress}</p>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 8,
+            padding: '8px 12px',
+            background: 'rgba(83,74,183,0.06)',
+            border: '1px solid rgba(83,74,183,0.20)',
+            borderRadius: 8,
+          }}
+        >
+          <MapPin size={16} style={{ color: '#534AB7', marginTop: 2, flexShrink: 0 }} />
+          <p style={{ fontSize: 14, color: 'var(--text)', margin: 0 }}>{selectedAddress}</p>
         </div>
       )}
     </div>

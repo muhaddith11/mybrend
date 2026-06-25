@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -40,6 +40,32 @@ export default function CheckoutPage() {
   const [note, setNote] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // ── Manzilni eslab qolish ──────────────────────────────────
+  // Avval kiritilgan manzil + xarita joylashuvini localStorage'da saqlaymiz va
+  // checkout ochilganda qayta tiklaymiz (foydalanuvchi har safar qaytadan
+  // kiritmasligi uchun).
+  const STORAGE_KEY = 'zyff_checkout_addr_v1'
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (!raw) return
+      const saved = JSON.parse(raw)
+      if (saved.addr) setAddr({ ...EMPTY_ADDRESS, ...saved.addr })
+      if (saved.coords && typeof saved.coords.lat === 'number') setCoords(saved.coords)
+      if (saved.delivery === 'DELIVERY' || saved.delivery === 'PICKUP') setDelivery(saved.delivery)
+    } catch {
+      /* eski/buzilgan ma'lumotni e'tiborsiz qoldiramiz */
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ addr, coords, delivery }))
+    } catch {
+      /* localStorage to'la/o'chiq bo'lsa — jim o'tamiz */
+    }
+  }, [addr, coords, delivery])
 
   // itemsByStore() ni selektor ichida chaqirmaymiz — u har renderda yangi obyekt
   // qaytarib useSyncExternalStore'da cheksiz loop / crash keltirib chiqaradi.
