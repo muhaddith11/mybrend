@@ -12,6 +12,7 @@ import { useWishlistStore } from '../store/wishlist'
 import { useLangStore } from '../store/lang'
 import { useT } from '../lib/i18n'
 import { MapSection } from '../components/MapSection'
+import { Reveal } from '../components/Reveal'
 import styles from './page.module.css'
 
 const CARD_COLORS = [
@@ -216,7 +217,7 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
 
       {/* ── Stores ── */}
       <section className={styles.productsSection}>
-        <div className="container">
+        <Reveal className="container">
           <div className={styles.sectionHead}>
             <h2 className={styles.sectionTitle}>{tr.storesSection}</h2>
             <Link href="/stores" className={styles.sectionAll}>{tr.seeAll}</Link>
@@ -227,12 +228,12 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
               : stores.map(s => <StoreListCard key={s.id} store={s} tr={tr} />)
             }
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* ── Popular products ── */}
       <section className={styles.productsSection}>
-        <div className="container">
+        <Reveal className="container">
           <div className={styles.sectionHead}>
             <h2 className={styles.sectionTitle}>{tr.popularProducts}</h2>
             <Link href="/stores" className={styles.sectionAll}>{tr.seeAll}</Link>
@@ -245,12 +246,12 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
                 : stores.slice(0, 5).map((s, i) => <StoreCard key={s.id} store={s} colorIdx={i} tr={tr} />)
             }
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* ── Promo banner ── */}
       <section className={styles.promoBanner}>
-        <div className="container">
+        <Reveal className="container">
           <div className={styles.promoInner}>
             <div className={styles.promoLeft}>
               <span className={styles.promoIcon}>🔥</span>
@@ -261,12 +262,12 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
             </div>
             <Link href="/?sale=true" className={styles.promoBtn}>{tr.seeDeals}</Link>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* ── Discounted products ── */}
       <section className={styles.productsSection}>
-        <div className="container">
+        <Reveal className="container">
           <div className={styles.sectionHead}>
             <h2 className={styles.sectionTitle}>{tr.discountedProducts}</h2>
             <Link href="/?sale=true" className={styles.sectionAll}>{tr.seeAll}</Link>
@@ -279,7 +280,7 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
                 : stores.slice(0, 5).map((s, i) => <StoreCard key={s.id} store={s} colorIdx={i + 5} tr={tr} />)
             }
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* ── Xarita ── */}

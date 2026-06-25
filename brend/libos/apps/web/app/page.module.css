@@ -100,7 +100,6 @@
   margin-bottom: .75rem;
   position: relative;
   z-index: 2;
-  animation: slideUpFade 0.7s ease both;
 }
 @media (min-width: 480px) { .heroAppTitle { font-size: 32px; } }
 @media (min-width: 768px) { .heroAppTitle { font-size: 42px; } }
@@ -113,13 +112,56 @@
   z-index: 2;
   max-width: 320px;
   line-height: 1.5;
-  animation: slideUpFade 0.7s ease 0.15s both;
 }
 @media (min-width: 768px) { .heroAppSub { font-size: 15px; } }
 
 @keyframes slideUpFade {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Hero entrance — stagger the active slide's content (re-fires per slide) ── */
+@keyframes heroIn {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.heroSlideActive .heroBadge { animation: heroIn .6s cubic-bezier(.22,1,.36,1) both; }
+.heroSlideActive .heroAppTitle { animation: heroIn .7s cubic-bezier(.22,1,.36,1) .09s both; }
+.heroSlideActive .heroAppSub { animation: heroIn .7s cubic-bezier(.22,1,.36,1) .18s both; }
+.heroSlideActive .heroBtn { animation: heroIn .7s cubic-bezier(.22,1,.36,1) .27s both; }
+@media (prefers-reduced-motion: reduce) {
+  .heroSlideActive .heroBadge,
+  .heroSlideActive .heroAppTitle,
+  .heroSlideActive .heroAppSub,
+  .heroSlideActive .heroBtn { animation: none; }
+}
+
+/* ── Staggered card reveal (inside a .reveal section) ── */
+:global(.reveal) .storesGrid > *,
+:global(.reveal) .productsGrid > * {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity .55s cubic-bezier(.22,1,.36,1), transform .55s cubic-bezier(.22,1,.36,1);
+}
+:global(.reveal.in) .storesGrid > *,
+:global(.reveal.in) .productsGrid > * {
+  opacity: 1;
+  transform: none;
+}
+:global(.reveal.in) .storesGrid > *:nth-child(2),
+:global(.reveal.in) .productsGrid > *:nth-child(2) { transition-delay: .06s; }
+:global(.reveal.in) .storesGrid > *:nth-child(3),
+:global(.reveal.in) .productsGrid > *:nth-child(3) { transition-delay: .12s; }
+:global(.reveal.in) .storesGrid > *:nth-child(4),
+:global(.reveal.in) .productsGrid > *:nth-child(4) { transition-delay: .18s; }
+:global(.reveal.in) .storesGrid > *:nth-child(5),
+:global(.reveal.in) .productsGrid > *:nth-child(5) { transition-delay: .24s; }
+:global(.reveal.in) .storesGrid > *:nth-child(6),
+:global(.reveal.in) .productsGrid > *:nth-child(6) { transition-delay: .30s; }
+:global(.reveal.in) .storesGrid > *:nth-child(n+7) { transition-delay: .36s; }
+@media (prefers-reduced-motion: reduce) {
+  :global(.reveal) .storesGrid > *,
+  :global(.reveal) .productsGrid > * { opacity: 1; transform: none; transition: none; }
 }
 
 /* Store ad slides */
