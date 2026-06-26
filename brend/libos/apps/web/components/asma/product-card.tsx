@@ -5,9 +5,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Heart, ShoppingBag, Eye } from 'lucide-react'
-import { toast } from 'sonner'
 import { Product, formatPrice, colorMap } from '@/lib/asma/store'
-import { useCartStore } from '@/store/cart'
+import { useProductModal } from '@/store/productModal'
 import { useWishlistStore } from '@/store/wishlist'
 import { cn } from '@/lib/asma/utils'
 
@@ -23,7 +22,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [imageIndex, setImageIndex] = useState(0)
   // ZYFF umumiy savat va sevimli (do'кон saytидан ham shу yagona ro'yxatga tushadi)
-  const addItem = useCartStore((s) => s.addItem)
+  const openModal = useProductModal((s) => s.open)
   const toggleWishlist = useWishlistStore((s) => s.toggle)
   const inWishlist = useWishlistStore((s) => s.has(product.id))
 
@@ -49,7 +48,8 @@ export function ProductCard({ product, className }: ProductCardProps) {
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    addItem({
+    // Rang/o'lcham tanlash oynasini ochamiz (variant bo'lmasa darrov qo'shiladi)
+    openModal({
       productId: product.id,
       name: product.nameUz || product.name,
       price: product.price,
@@ -57,11 +57,9 @@ export function ProductCard({ product, className }: ProductCardProps) {
       storeId,
       storeName,
       storeSlug,
-      size: product.sizes[0] ?? undefined,
-      color: product.colors[0] ?? undefined,
+      sizes: product.sizes ?? [],
+      colors: product.colors ?? [],
     })
-    // Savatni OCHMAYMIZ — faqat bildirishnoma
-    toast.success('Savatga qo\'shildi', { description: product.nameUz })
   }
 
   return (

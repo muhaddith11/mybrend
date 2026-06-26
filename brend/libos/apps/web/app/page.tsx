@@ -4,10 +4,9 @@ import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { toast } from 'sonner'
 import { api } from '@libos/shared'
 import type { Store, Product } from '@libos/shared'
-import { useCartStore } from '../store/cart'
+import { useProductModal } from '../store/productModal'
 import { useWishlistStore } from '../store/wishlist'
 import { useLangStore } from '../store/lang'
 import { useT } from '../lib/i18n'
@@ -344,7 +343,7 @@ export default function HomePage() {
 
 // ── Product Card ──────────────────────────────
 function ProductCard({ product, colorIdx, tr, cur }: { product: Product; colorIdx: number; tr: Record<string, string>; cur: string }) {
-  const addItem = useCartStore(s => s.addItem)
+  const openModal = useProductModal(s => s.open)
   const toggleWishlist = useWishlistStore(s => s.toggle)
   const inWishlist = useWishlistStore(s => s.has(product.id))
   const discount = getDiscount(product.price, product.originalPrice)
@@ -353,7 +352,8 @@ function ProductCard({ product, colorIdx, tr, cur }: { product: Product; colorId
 
   function handleAdd(e: React.MouseEvent) {
     e.preventDefault()
-    addItem({
+    // Rang/o'lcham tanlash oynasini ochamiz (variant bo'lmasa darrov qo'shiladi)
+    openModal({
       productId: product.id,
       name: product.nameUz || product.name,
       price: product.price,
@@ -361,9 +361,10 @@ function ProductCard({ product, colorIdx, tr, cur }: { product: Product; colorId
       storeId: product.storeId ?? product.store?.id ?? '',
       storeName: product.store?.name ?? '',
       storeSlug: product.store?.slug ?? '',
+      sizes: (product as any).sizes ?? [],
+      colors: (product as any).colors ?? [],
+      themeColor: product.store?.themeColor,
     })
-    // Savatni ochmasdan kichik bildirishnoma
-    toast.success(tr.addedToCart ?? "Savatga qo'shildi")
   }
 
   function handleHeart(e: React.MouseEvent) {

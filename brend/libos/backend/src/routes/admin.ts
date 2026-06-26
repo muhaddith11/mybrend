@@ -50,6 +50,10 @@ const storeUpdateSchema = z.object({
   themeColor: z.string().max(20).optional(),
   themeBg: z.string().max(20).optional(),
   telegramChatId: z.string().max(50).optional(),
+  // Bot orqali o'tkazma (TRANSFER) to'lov rekvizitlari
+  cardNumber: z.string().max(30).optional(),
+  cardHolder: z.string().max(100).optional(),
+  paymentQr: z.string().max(1000).optional(),
   instagram: z.string().max(200).optional(),
   workingHours: z.string().max(200).optional(),
   deliveryText: z.string().max(500).optional(),

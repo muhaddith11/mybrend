@@ -9,6 +9,10 @@ export interface StoreSettings {
   deliveryText: string
   logo: string
   banner: string
+  // Bot orqali o'tkazma (TRANSFER) to'lovi rekvizitlari
+  cardNumber: string
+  cardHolder: string
+  paymentQr: string
 }
 
 export const defaultSettings: StoreSettings = {
@@ -20,6 +24,9 @@ export const defaultSettings: StoreSettings = {
   deliveryText: "Qo'qon shahri bo'ylab 2 soat ichida bepul yetkazib beramiz",
   logo: '',
   banner: '',
+  cardNumber: '',
+  cardHolder: '',
+  paymentQr: '',
 }
 
 /** Do'kon `slug`i uchun sozlamalar API funksiyalarini yaratadi. */
@@ -38,6 +45,9 @@ export function createSettingsApi(slug: string) {
         deliveryText: store.deliveryText ?? defaultSettings.deliveryText,
         logo: store.logo ?? '',
         banner: store.banner ?? '',
+        cardNumber: store.cardNumber ?? '',
+        cardHolder: store.cardHolder ?? '',
+        paymentQr: store.paymentQr ?? '',
       }
     } catch {
       return defaultSettings
@@ -69,6 +79,9 @@ export function createSettingsApi(slug: string) {
         deliveryText: s.deliveryText,
         logo: s.logo,
         banner: s.banner,
+        cardNumber: s.cardNumber,
+        cardHolder: s.cardHolder,
+        paymentQr: s.paymentQr,
       }),
     })
     if (!res.ok) {

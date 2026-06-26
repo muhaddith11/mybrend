@@ -6,6 +6,7 @@ import { decrementStock, restoreStock, InsufficientStockError } from '../lib/sto
 import { phoneSchema } from '../lib/phone.js'
 import { buildClickPaymentUrl } from './payment/click.js'
 import { buildPaymePaymentUrl } from './payment/payme.js'
+import { buildBotPaymentUrl } from '../plugins/telegram.js'
 
 // Auth'siz guest buyurtma — bitta IP'dan soxta buyurtma bilan stokni tushirib
 // yuborish (inventar DoS) oldini olish uchun tor chegara. (Testlarda e'tiborsiz.)
@@ -61,8 +62,9 @@ const createOrderSchema = z.object({
   lat: z.number().optional(),
   lng: z.number().optional(),
   note: z.string().max(1000).optional(),
-  // Online to'lov tanlangan bo'lsa — javobda paymentUrl qaytadi
-  paymentProvider: z.enum(['CLICK', 'PAYME']).optional(),
+  // Online to'lov tanlangan bo'lsa — javobda paymentUrl (Click/Payme) yoki
+  // botUrl (TRANSFER — bot orqali karta/QR o'tkazma) qaytadi.
+  paymentProvider: z.enum(['CLICK', 'PAYME', 'TRANSFER']).optional(),
   items: z.array(itemSchema).min(1).max(100),
 })
 
@@ -128,9 +130,11 @@ export default async function ordersRoutes(app: FastifyInstance) {
     const dup = await findRecentDuplicate(prisma, user.id, store.id, totalPrice)
     if (dup) {
       let paymentUrl: string | undefined
+      let botUrl: string | undefined
       if (body.paymentMethod === 'click') paymentUrl = buildClickPaymentUrl(dup)
       else if (body.paymentMethod === 'payme') paymentUrl = buildPaymePaymentUrl(dup)
-      return reply.status(201).send({ ok: true, orderId: dup.id, paymentUrl })
+      else if (body.paymentMethod === 'transfer') botUrl = buildBotPaymentUrl(dup.id)
+      return reply.status(201).send({ ok: true, orderId: dup.id, paymentUrl, botUrl })
     }
 
     // Buyurtma yaratish va stok kamaytirish — bitta atomik tranzaksiyada.
@@ -186,10 +190,12 @@ export default async function ordersRoutes(app: FastifyInstance) {
     // Online to'lov tanlangan bo'lsa — to'lov sahifasi URL'ini qaytaramiz.
     // Mijoz shu manzilga yo'naltiriladi; tasdiqlash provayder webhook'i orqali keladi.
     let paymentUrl: string | undefined
+    let botUrl: string | undefined
     if (body.paymentMethod === 'click') paymentUrl = buildClickPaymentUrl(order)
     else if (body.paymentMethod === 'payme') paymentUrl = buildPaymePaymentUrl(order)
+    else if (body.paymentMethod === 'transfer') botUrl = buildBotPaymentUrl(order.id)
 
-    return reply.status(201).send({ ok: true, orderId: order.id, paymentUrl })
+    return reply.status(201).send({ ok: true, orderId: order.id, paymentUrl, botUrl })
   })
 
   // Buyurtma yaratish (auth kerak)
@@ -219,9 +225,11 @@ export default async function ordersRoutes(app: FastifyInstance) {
     const dup = await findRecentDuplicate(prisma, userId, body.storeId, totalPrice)
     if (dup) {
       let paymentUrl: string | undefined
+      let botUrl: string | undefined
       if (body.paymentProvider === 'CLICK') paymentUrl = buildClickPaymentUrl(dup)
       else if (body.paymentProvider === 'PAYME') paymentUrl = buildPaymePaymentUrl(dup)
-      return reply.status(201).send({ ...dup, paymentUrl })
+      else if (body.paymentProvider === 'TRANSFER') botUrl = buildBotPaymentUrl(dup.id)
+      return reply.status(201).send({ ...dup, paymentUrl, botUrl })
     }
 
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { phone: true, name: true } })
@@ -274,13 +282,15 @@ export default async function ordersRoutes(app: FastifyInstance) {
     }).catch((err) => req.log.error({ err, orderId: order.id }, 'Telegram buyurtma xabari yuborilmadi'))
 
     // Online to'lov tanlangan bo'lsa — to'lov sahifasi URL'ini qaytaramiz.
-    // Mijoz shu manzilga yo'naltiriladi; haqiqiy tasdiqlash provayder webhook'i
-    // orqali keladi (Click PREPARE/COMPLETE, Payme CreateTransaction/Perform).
+    // Click/Payme: provayder webhook'i tasdiqlaydi. TRANSFER: mijoz botga o'tadi,
+    // do'kon egasi chekni qo'lda tasdiqlaydi (telegram webhook).
     let paymentUrl: string | undefined
+    let botUrl: string | undefined
     if (body.paymentProvider === 'CLICK') paymentUrl = buildClickPaymentUrl(order)
     else if (body.paymentProvider === 'PAYME') paymentUrl = buildPaymePaymentUrl(order)
+    else if (body.paymentProvider === 'TRANSFER') botUrl = buildBotPaymentUrl(order.id)
 
-    return reply.status(201).send({ ...order, paymentUrl })
+    return reply.status(201).send({ ...order, paymentUrl, botUrl })
   })
 
   // Foydalanuvchi buyurtmalari
@@ -363,7 +373,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
     const stale = await prisma.order.findMany({
       where: {
         status: 'PENDING',
-        paymentMethod: { in: ['click', 'payme'] },
+        paymentMethod: { in: ['click', 'payme', 'transfer'] },
         createdAt: { lt: cutoff },
         OR: [{ payment: null }, { payment: { status: { not: 'PAID' } } }],
       },

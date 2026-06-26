@@ -13,6 +13,7 @@ enum PaymentProvider {
   CLICK
   PAYME
   CASH
+  TRANSFER // Bot orqali karta/QR o'tkazma — chek do'kon egasi tomonidan qo'lda tasdiqlanadi
 }
 
 enum PaymentStatus {
@@ -84,8 +85,16 @@ model Store {
   lat           Float?
   lng           Float?
 
-  // Telegram xabarnoma
+  // Telegram xabarnoma — buyurtma bildirishnomalari va bot-orqali to'lov tasdig'i
+  // shu chat'ga boradi (do'kon egasining shaxsiy chat ID'si).
   telegramChatId String?
+
+  // Bot orqali o'tkazma (TRANSFER) to'lovi uchun rekvizitlar. Mijoz checkout'da
+  // "Bot orqali" ni tanlasa, bot shu kartani/QR'ni ko'rsatadi va pul to'g'ridan-
+  // to'g'ri egasining kartasiga tushadi (platforma hisobidan o'tmaydi).
+  cardNumber  String? // masalan "8600 1234 5678 9012"
+  cardHolder  String? // karta egasining ismi
+  paymentQr   String? // QR kod rasm URL (Supabase storage)
 
   // Do'kon qo'shimcha ma'lumotlari
   instagram    String?
@@ -251,6 +260,10 @@ model Payment {
   paymePerformTime BigInt?
   paymeCancelTime  BigInt?
   paymeCancelReason Int?
+
+  // Bot orqali o'tkazma (TRANSFER) uchun
+  receiptFileId  String? // mijoz botga yuborgan chek rasmining Telegram file_id
+  customerChatId String? // mijozning bot bilan chat ID'si (tasdiq/rad xabari uchun)
 
   orderId    String  @unique
   order      Order   @relation(fields: [orderId], references: [id])

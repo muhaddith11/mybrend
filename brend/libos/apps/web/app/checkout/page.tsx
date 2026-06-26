@@ -24,7 +24,7 @@ const MapPicker = dynamic(
 )
 
 type Delivery = 'DELIVERY' | 'PICKUP'
-type Payment = 'CASH' | 'CLICK' | 'PAYME'
+type Payment = 'CASH' | 'CLICK' | 'PAYME' | 'TRANSFER'
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -132,7 +132,10 @@ export default function CheckoutPage() {
         })
 
         clearStore(storeId)
-        if (payment !== 'CASH' && res.paymentUrl) paymentUrls.push(res.paymentUrl)
+        // Click/Payme → paymentUrl, TRANSFER (bot orqali) → botUrl. Ikkalasi ham
+        // mijozni tashqi sahifaga/botga yo'naltiradi, shuning uchun bir navbatda.
+        const redirectUrl = res.paymentUrl ?? res.botUrl
+        if (payment !== 'CASH' && redirectUrl) paymentUrls.push(redirectUrl)
       }
 
       if (paymentUrls.length > 0) {
@@ -200,10 +203,16 @@ export default function CheckoutPage() {
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>{tr.coPayment}</h2>
             <div className={styles.radioGroup}>
+              {/*
+                Click/Payme HOZIRCHA YASHIRILGAN (kod va backend integratsiyasi
+                saqlanib qoladi — keyin yana yoqish uchun shu ro'yxatga qaytarish
+                kifoya). Hozir faqat naqd va "Karta" (bot orqali QR/karta o'tkazma).
+              */}
               {([
                 { id: 'CASH', label: tr.coCash, sub: tr.coCashSub },
-                { id: 'CLICK', label: '📱 Click', sub: tr.coOnline },
-                { id: 'PAYME', label: '💳 Payme', sub: tr.coOnline },
+                { id: 'TRANSFER', label: '💳 Karta', sub: 'Bot orqali — QR yoki karta raqami' },
+                // { id: 'CLICK', label: '📱 Click', sub: tr.coOnline },
+                // { id: 'PAYME', label: '💳 Payme', sub: tr.coOnline },
               ] as const).map(o => (
                 <label key={o.id} className={`${styles.radio} ${payment === o.id ? styles.radioActive : ''}`}>
                   <input type="radio" value={o.id} checked={payment === o.id} onChange={() => setPayment(o.id)} />

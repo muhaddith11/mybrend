@@ -86,8 +86,8 @@ export const api = {
       lat?: number
       lng?: number
       note?: string
-      paymentProvider?: 'CLICK' | 'PAYME'
-    }) => request<Order & { paymentUrl?: string }>('/orders', {
+      paymentProvider?: 'CLICK' | 'PAYME' | 'TRANSFER'
+    }) => request<Order & { paymentUrl?: string; botUrl?: string }>('/orders', {
       method: 'POST', body: JSON.stringify(body),
     }),
     myOrders: () => request<{ orders: Order[] }>('/orders/my'),

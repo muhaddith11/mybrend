@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { api } from '@libos/shared'
 import type { Product, Store } from '@libos/shared'
-import { useCartStore } from '../../../store/cart'
+import { useProductModal } from '../../../store/productModal'
 import styles from './page.module.css'
 
 type StoreFull = Store & { products?: Product[] }
@@ -23,7 +23,7 @@ export function StoreView({ slug, initialStore }: { slug: string; initialStore: 
     initialData: initialStore?.products as Product[] | undefined,
   })
 
-  const addItem = useCartStore(s => s.addItem)
+  const openModal = useProductModal(s => s.open)
 
   if (storeLoading) return <StoreSkeleton />
   if (!store) return <div className={styles.notFound}>Do'kon topilmadi</div>
@@ -72,7 +72,7 @@ export function StoreView({ slug, initialStore }: { slug: string; initialStore: 
                 key={p.id}
                 product={p}
                 store={store}
-                onAddCart={() => addItem({
+                onAddCart={() => openModal({
                   productId: p.id,
                   name: p.name,
                   price: p.price,
@@ -80,6 +80,9 @@ export function StoreView({ slug, initialStore }: { slug: string; initialStore: 
                   storeId: store.id,
                   storeName: store.name,
                   storeSlug: store.slug,
+                  sizes: (p as any).sizes ?? [],
+                  colors: (p as any).colors ?? [],
+                  themeColor: store.themeColor,
                 })}
               />
             ))}

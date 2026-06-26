@@ -1,6 +1,60 @@
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 const DEFAULT_CHAT_ID = process.env.TELEGRAM_CHAT_ID
 
+// ─── Telegram Bot API past darajali yordamchilari ────────────────────────────
+// Interaktiv to'lov-boti (TRANSFER) shu funksiyalardan foydalanadi. Hammasi
+// BOT_TOKEN yo'q bo'lsa jimgina no-op qiladi (mahalliy/test muhitida xato bermaydi).
+
+async function tgCall(method: string, body: object): Promise<any> {
+  if (!BOT_TOKEN) return null
+  const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  return res.json().catch(() => null)
+}
+
+export function tgSendMessage(chatId: string | number, text: string, replyMarkup?: object) {
+  return tgCall('sendMessage', {
+    chat_id: chatId,
+    text,
+    parse_mode: 'HTML',
+    ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
+  })
+}
+
+// Chek rasmini (file_id orqali) qayta yuboradi — egaga chekni ko'rsatish uchun.
+export function tgSendPhoto(chatId: string | number, fileId: string, caption: string, replyMarkup?: object) {
+  return tgCall('sendPhoto', {
+    chat_id: chatId,
+    photo: fileId,
+    caption,
+    parse_mode: 'HTML',
+    ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
+  })
+}
+
+// Tugma bosilganda Telegram "loading" holatini yopadi (majburiy, aks holda
+// mijozda tugma muzlab qoladi).
+export function tgAnswerCallback(callbackQueryId: string, text?: string) {
+  return tgCall('answerCallbackQuery', { callback_query_id: callbackQueryId, ...(text ? { text } : {}) })
+}
+
+// Tasdiq/rad bo'lgach egadagi tugmali xabarni tahrirlaydi (qayta bosib bo'lmasin).
+export function tgEditMessageText(chatId: string | number, messageId: number, text: string) {
+  return tgCall('editMessageText', { chat_id: chatId, message_id: messageId, text, parse_mode: 'HTML' })
+}
+
+// Checkout botga yo'naltirish uchun deep-link: t.me/<bot>?start=<orderId>.
+// start payload faqat [A-Za-z0-9_-], 64 belgigacha — cuid mos keladi.
+export function buildBotPaymentUrl(orderId: string): string {
+  const username = process.env.TELEGRAM_BOT_USERNAME ?? ''
+  return `https://t.me/${username}?start=${orderId}`
+}
+
+export { esc }
+
 const DELIVERY_LABELS: Record<string, string> = {
   DELIVERY: '🚚 Yetkazib berish',
   PICKUP: '🏃 Olib ketish',

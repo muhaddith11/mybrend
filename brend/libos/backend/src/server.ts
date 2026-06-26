@@ -21,6 +21,7 @@ import clickRoutes from './routes/payment/click.js'
 import paymeRoutes from './routes/payment/payme.js'
 import adminRoutes from './routes/admin.js'
 import uploadRoutes from './routes/upload.js'
+import telegramRoutes from './routes/telegram.js'
 
 // (deploy trigger: ensure Vercel rebuilds backend after schema + route changes)
 const prisma = new PrismaClient()
@@ -100,6 +101,7 @@ app.register(clickRoutes,    { prefix: '/api/payment' })
 app.register(paymeRoutes,    { prefix: '/api/payment' })
 app.register(adminRoutes,    { prefix: '/api/admin' })
 app.register(uploadRoutes,   { prefix: '/api' })
+app.register(telegramRoutes, { prefix: '/api' })
 
 // Sog'liq tekshiruvi
 app.get('/health', async () => ({

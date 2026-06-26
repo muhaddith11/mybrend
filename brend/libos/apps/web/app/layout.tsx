@@ -4,6 +4,7 @@ import './globals.css'
 import { Providers } from '../components/Providers'
 import { Navbar } from '../components/Navbar'
 import { CartDrawer } from '../components/CartDrawer'
+import { ProductOptionsModal } from '../components/ProductOptionsModal'
 import { LoginModal } from '../components/LoginModal'
 import { ProfileDrawer } from '../components/ProfileDrawer'
 import { BodyPadding } from '../components/BodyPadding'
@@ -89,6 +90,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Navbar />
           <main>{children}</main>
           <CartDrawer />
+          <ProductOptionsModal />
           <LoginModal />
           <ProfileDrawer />
           <Onboarding />

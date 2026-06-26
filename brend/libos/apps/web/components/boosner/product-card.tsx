@@ -3,9 +3,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Heart, ShoppingBag, Repeat } from 'lucide-react'
-import { toast } from 'sonner'
 import { Product, formatPrice } from '@/lib/boosner/store'
-import { useCartStore } from '@/store/cart'
+import { useProductModal } from '@/store/productModal'
 import { useWishlistStore } from '@/store/wishlist'
 import { cn } from '@/lib/boosner/utils'
 
@@ -18,7 +17,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, className }: ProductCardProps) {
-  const addItem = useCartStore((s) => s.addItem)
+  const openModal = useProductModal((s) => s.open)
   const toggleWishlist = useWishlistStore((s) => s.toggle)
   const inWishlist = useWishlistStore((s) => s.has(product.id))
   const storeId = product.storeId ?? STORE_SLUG
@@ -36,8 +35,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation()
-    addItem({ productId: product.id, name: product.nameUz || product.name, price: product.price, image: product.images[0], storeId, storeName, storeSlug, size: product.sizes[0] ?? undefined, color: product.colors[0] ?? undefined })
-    toast.success('Savatga qo\'shildi', { description: product.nameUz })
+    openModal({ productId: product.id, name: product.nameUz || product.name, price: product.price, image: product.images[0], storeId, storeName, storeSlug, sizes: product.sizes ?? [], colors: product.colors ?? [] })
   }
 
   return (

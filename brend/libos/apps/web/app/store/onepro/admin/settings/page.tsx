@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Save, Loader2, Phone, MapPin, Send, Clock, Truck, CheckCircle2, Upload, ImageIcon, X } from 'lucide-react'
+import { Save, Loader2, Phone, MapPin, Send, Clock, Truck, CheckCircle2, Upload, ImageIcon, X, CreditCard, User } from 'lucide-react'
 import { fetchSettings, updateSettings, StoreSettings, defaultSettings } from '@/lib/onepro/settings'
 import { uploadImage } from '@/lib/onepro/upload'
 import { Button } from '@/components/ui/button'
@@ -83,6 +83,8 @@ const fields: { key: keyof StoreSettings; label: string; placeholder: string; ic
   { key: 'instagram', label: 'Instagram (havola)', placeholder: 'https://instagram.com/...', icon: Send },
   { key: 'workingHours', label: 'Ish vaqti', placeholder: 'Har kuni: 09:00 - 21:00', icon: Clock },
   { key: 'deliveryText', label: 'Yetkazib berish matni', placeholder: 'Yetkazib berish haqida...', icon: Truck },
+  { key: 'cardNumber', label: 'Karta raqami (bot to\'lovi)', placeholder: '8600 1234 5678 9012', icon: CreditCard },
+  { key: 'cardHolder', label: 'Karta egasi', placeholder: 'ISM FAMILIYA', icon: User },
 ]
 
 export default function AdminSettingsPage() {
@@ -180,6 +182,13 @@ export default function AdminSettingsPage() {
             onChange={(url) => set('banner', url)}
             hint="«Biz haqimizda» sahifasidagi katta rasm sifatida ishlatiladi."
             aspect="aspect-[4/3]"
+          />
+          <ImageUploadField
+            label="To'lov QR kodi (bot orqali to'lov)"
+            value={form.paymentQr}
+            onChange={(url) => set('paymentQr', url)}
+            hint="Mijoz checkout'da «Bot orqali» tanlasa, bot shu QR'ni ko'rsatadi. Click/Payme/bank ilovasidagi shaxsiy QR'ingizni yuklang."
+            aspect="aspect-square"
           />
         </div>
 
