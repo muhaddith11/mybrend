@@ -1,7 +1,7 @@
 'use client'
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, Suspense } from 'react'
 import dynamic from 'next/dynamic'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useCartStore } from '../../store/cart'
 import { useAuthStore } from '../../store/auth'
@@ -26,9 +26,11 @@ const MapPicker = dynamic(
 type Delivery = 'DELIVERY' | 'PICKUP'
 type Payment = 'CASH' | 'CLICK' | 'PAYME' | 'TRANSFER'
 
-export default function CheckoutPage() {
+function CheckoutInner() {
   const router = useRouter()
-  const { items, totalPrice, clearStore } = useCartStore()
+  const searchParams = useSearchParams()
+  const targetStore = searchParams.get('store')
+  const { items, clearStore } = useCartStore()
   const { isLoggedIn, openLogin } = useAuthStore()
   const lang = useLangStore(s => s.lang)
   const tr = useT(lang)
@@ -79,6 +81,10 @@ export default function CheckoutPage() {
     return r
   }, [items])
   const storeIds = Object.keys(byStore)
+  // Savatda har do'kon alohida "Buyurtma berish" qiladi (?store=<id>). Shu sabab
+  // checkout faqat o'sha do'kon mahsulotlarini rasmiylashtiradi — pul/bot QR o'sha
+  // do'konga ketadi. Param bo'lmasa yoki savatda yo'q bo'lsa — barcha do'konlar.
+  const activeStoreIds = targetStore && byStore[targetStore] ? [targetStore] : storeIds
 
   if (items.length === 0) {
     return (
@@ -111,7 +117,7 @@ export default function CheckoutPage() {
       // Har do'kon → alohida buyurtma. Mijoz har do'kon egasi bilan to'g'ridan-to'g'ri
       // savdo qiladi, shuning uchun savatdagi har do'kon uchun bittadan buyurtma.
       const paymentUrls: string[] = []
-      for (const storeId of storeIds) {
+      for (const storeId of activeStoreIds) {
         const storeItems = byStore[storeId]
         const orderItems = storeItems.map(i => ({
           productId: i.productId,
@@ -156,7 +162,12 @@ export default function CheckoutPage() {
   }
 
   const DELIVERY_FEE = delivery === 'DELIVERY' ? 15000 : 0
-  const total = totalPrice() + DELIVERY_FEE
+  // Faqat tanlangan do'kon(lar) summasi (umumiy savat emas).
+  const activeItemsTotal = activeStoreIds.reduce(
+    (sum, id) => sum + (byStore[id] ?? []).reduce((s, i) => s + i.price * i.quantity, 0),
+    0,
+  )
+  const total = activeItemsTotal + DELIVERY_FEE
 
   return (
     <div className="container" style={{ padding: '2rem 1rem 5rem' }}>
@@ -244,7 +255,7 @@ export default function CheckoutPage() {
         <div className={styles.summary}>
           <h2 className={styles.sectionTitle}>{tr.coSummary}</h2>
 
-          {storeIds.map(sid => (
+          {activeStoreIds.map(sid => (
             <div key={sid} className={styles.storeSection}>
               <p className={styles.storeName}>{byStore[sid][0].storeName}</p>
               {byStore[sid].map(item => (
@@ -264,7 +275,7 @@ export default function CheckoutPage() {
           <div className={styles.totals}>
             <div className={styles.totalRow}>
               <span>{tr.coProducts}</span>
-              <span>{totalPrice().toLocaleString()} {tr.som}</span>
+              <span>{activeItemsTotal.toLocaleString()} {tr.som}</span>
             </div>
             {DELIVERY_FEE > 0 && (
               <div className={styles.totalRow}>
@@ -288,5 +299,14 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// useSearchParams Suspense ichida bo'lishi shart (Next.js build talabi).
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={null}>
+      <CheckoutInner />
+    </Suspense>
   )
 }

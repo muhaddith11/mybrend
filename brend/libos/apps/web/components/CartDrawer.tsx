@@ -34,14 +34,17 @@ export function CartDrawer() {
               <p>Savat bo'sh</p>
             </div>
           ) : (
-            storeIds.map(storeId => (
+            storeIds.map(storeId => {
+              const group = byStore[storeId]
+              const subtotal = group.reduce((s, i) => s + i.price * i.quantity, 0)
+              return (
               <div key={storeId} className={styles.storeGroup}>
                 <p className={styles.storeName}>
-                  <Link href={`/store/${byStore[storeId][0].storeSlug}`} onClick={closeCart}>
-                    {byStore[storeId][0].storeName}
+                  <Link href={`/store/${group[0].storeSlug}`} onClick={closeCart}>
+                    {group[0].storeName}
                   </Link>
                 </p>
-                {byStore[storeId].map(item => (
+                {group.map(item => (
                   <div key={`${item.productId}-${item.size}-${item.color}`} className={styles.item}>
                     {item.image ? (
                       <Image src={item.image} alt={item.name} width={64} height={64} className={styles.img} />
@@ -67,8 +70,18 @@ export function CartDrawer() {
                     </button>
                   </div>
                 ))}
+                <div className={styles.storeFooter}>
+                  <div className={styles.storeSubtotal}>
+                    <span>Jami:</span>
+                    <strong>{subtotal.toLocaleString()} so'm</strong>
+                  </div>
+                  <Link href={`/checkout?store=${storeId}`} className={styles.storeOrderBtn} onClick={closeCart}>
+                    Buyurtma berish
+                  </Link>
+                </div>
               </div>
-            ))
+              )
+            })
           )}
         </div>
 
@@ -76,12 +89,9 @@ export function CartDrawer() {
         {items.length > 0 && (
           <div className={styles.footer}>
             <div className={styles.total}>
-              <span>Jami:</span>
+              <span>Umumiy:</span>
               <strong>{totalPrice().toLocaleString()} so'm</strong>
             </div>
-            <Link href="/checkout" className={styles.checkoutBtn} onClick={closeCart}>
-              Buyurtma berish
-            </Link>
           </div>
         )}
       </aside>

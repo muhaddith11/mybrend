@@ -159,3 +159,30 @@
   transition: background .15s;
 }
 .checkoutBtn:hover { background: var(--brand-dark); }
+
+/* Har do'kon guruhi tagidagi subtotal + buyurtma tugmasi */
+.storeFooter {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  padding-top: .25rem;
+}
+.storeSubtotal {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+.storeSubtotal strong { font-weight: 700; color: var(--brand); }
+.storeOrderBtn {
+  display: block;
+  text-align: center;
+  background: var(--brand);
+  color: #fff;
+  padding: 11px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background .15s;
+}
+.storeOrderBtn:hover { background: var(--brand-dark); }
