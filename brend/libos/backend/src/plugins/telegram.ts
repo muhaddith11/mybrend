@@ -46,11 +46,34 @@ export function tgEditMessageText(chatId: string | number, messageId: number, te
   return tgCall('editMessageText', { chat_id: chatId, message_id: messageId, text, parse_mode: 'HTML' })
 }
 
+// Bot @username — deep-link uchun kerak (token o'zi yetmaydi). Avval env (qo'lda
+// override), bo'lmasa MAVJUD bot tokenidan `getMe` orqali avtomatik olamiz va
+// keshlaymiz. Shu sabab qo'shimcha env sozlash shart emas — bot allaqachon bor.
+let cachedUsername: string | null = null
+export async function getBotUsername(): Promise<string> {
+  if (process.env.TELEGRAM_BOT_USERNAME) return process.env.TELEGRAM_BOT_USERNAME
+  if (cachedUsername) return cachedUsername
+  const me = await tgCall('getMe', {})
+  const u = me?.result?.username
+  if (u) cachedUsername = u // faqat muvaffaqiyatda keshlaymiz (xatoda qayta urinadi)
+  return u ?? ''
+}
+
 // Checkout botga yo'naltirish uchun deep-link: t.me/<bot>?start=<orderId>.
 // start payload faqat [A-Za-z0-9_-], 64 belgigacha — cuid mos keladi.
-export function buildBotPaymentUrl(orderId: string): string {
-  const username = process.env.TELEGRAM_BOT_USERNAME ?? ''
+export async function buildBotPaymentUrl(orderId: string): Promise<string> {
+  const username = await getBotUsername()
   return `https://t.me/${username}?start=${orderId}`
+}
+
+// Telegram webhook'ini o'rnatadi — bot interaktiv bo'lishi (xabar/tugma qabul
+// qilishi) uchun. Idempotent: bir xil URL'ni qayta o'rnatish xavfsiz.
+export async function setBotWebhook(url: string, secretToken?: string): Promise<any> {
+  return tgCall('setWebhook', {
+    url,
+    ...(secretToken ? { secret_token: secretToken } : {}),
+    allowed_updates: ['message', 'callback_query'],
+  })
 }
 
 export { esc }

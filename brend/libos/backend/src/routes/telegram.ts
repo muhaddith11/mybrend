@@ -7,24 +7,26 @@ import {
   tgSendPhoto,
   tgAnswerCallback,
   tgEditMessageText,
+  setBotWebhook,
   esc,
 } from '../plugins/telegram.js'
 
-// Bot orqali o'tkazma (TRANSFER) to'lov oqimi:
-//   1. Mijoz checkout'da "Bot orqali" tanlaydi → t.me/<bot>?start=<orderId> ochiladi
-//   2. /start <orderId> → bot do'kon kartasi/QR'ini ko'rsatadi, mijoz chatId saqlanadi
-//   3. Mijoz chek RASMINI yuboradi → file_id saqlanadi, egaga tugmalar bilan jo'natiladi
-//   4. Ega "✅ Tasdiqlash" bossa → buyurtma CONFIRMED; "❌ Rad etish" → CANCELLED + stok qaytadi
-//   5. Mijozga natija xabari boradi
+// Bot orqali o'tkazma (TRANSFER) to'lov oqimi (mavjud bot, ko'p funksiyali):
+//   1. Mijoz checkout'da "Karta" tanlaydi → t.me/<bot>?start=<orderId> ochiladi
+//   2. /start <orderId> → bot TELEFON RAQAMINI so'raydi
+//   3. Mijoz raqam yuboradi → bot do'kon kartasi/QR'ini ko'rsatadi
+//   4. Mijoz chek RASMINI yuboradi → egaga tasdiq/rad tugmalari bilan jo'natiladi
+//   5. Ega "✅ Tasdiqlash" bossa → buyurtma CONFIRMED, mijozga bot xabari + SMS
+//   6. "❌ Rad etish" → CANCELLED + stok qaytadi
 //
 // Pul to'g'ridan-to'g'ri egasining kartasiga tushadi — platforma hisobidan o'tmaydi.
 
-// Telegram Update'ning bizga keladigan qismlari (minimal tip — faqat ishlatadiganlarimiz).
 type TgUpdate = {
   message?: {
     chat: { id: number }
     text?: string
     photo?: Array<{ file_id: string }>
+    contact?: { phone_number?: string }
   }
   callback_query?: {
     id: string
@@ -34,13 +36,37 @@ type TgUpdate = {
   }
 }
 
+// Telefon so'rash uchun "kontaktni ulashish" tugmasi (bir martalik klaviatura).
+const PHONE_KEYBOARD = {
+  keyboard: [[{ text: '📱 Raqamni yuborish', request_contact: true }]],
+  resize_keyboard: true,
+  one_time_keyboard: true,
+}
+
 export default async function telegramRoutes(app: FastifyInstance) {
   const prisma: PrismaClient = app.prisma
   const WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET
 
+  // ─── Webhook'ni yoqish (bir martalik, CRON_SECRET bilan himoyalangan) ────────
+  // Token serverda qoladi: backend o'z manzilini so'rovdan oladi va Telegram'ga
+  // setWebhook qiladi. Foydalanish:
+  //   curl -H "Authorization: Bearer <CRON_SECRET>" https://<backend>/api/telegram/set-webhook
+  app.get('/telegram/set-webhook', async (req, reply) => {
+    const secret = process.env.CRON_SECRET
+    const auth = req.headers.authorization ?? ''
+    if (!secret || auth !== `Bearer ${secret}`) {
+      return reply.status(401).send({ error: 'Ruxsat yo\'q' })
+    }
+    const proto = (req.headers['x-forwarded-proto'] as string) || 'https'
+    const host = req.headers.host
+    const url = `${proto}://${host}/api/telegram/webhook`
+    const result = await setBotWebhook(url, WEBHOOK_SECRET)
+    return reply.send({ ok: true, url, telegram: result })
+  })
+
+  // ─── Telegram update'lari ────────────────────────────────────────────────────
   app.post('/telegram/webhook', async (req, reply) => {
-    // Xavfsizlik: faqat Telegram'dan kelgan so'rovlarni qabul qilamiz. setWebhook
-    // chaqirilganda o'rnatilgan secret_token har so'rovda shu sarlavhada qaytadi.
+    // Xavfsizlik: faqat Telegram'dan kelgan so'rovlar (setWebhook secret_token).
     if (WEBHOOK_SECRET) {
       const got = req.headers['x-telegram-bot-api-secret-token']
       if (got !== WEBHOOK_SECRET) return reply.status(401).send({ ok: false })
@@ -51,14 +77,22 @@ export default async function telegramRoutes(app: FastifyInstance) {
     try {
       if (update.callback_query) {
         await handleCallback(prisma, app, update.callback_query)
-      } else if (update.message?.text?.startsWith('/start')) {
-        await handleStart(prisma, update.message)
-      } else if (update.message?.photo?.length) {
-        await handleReceiptPhoto(prisma, update.message)
+      } else if (update.message) {
+        const m = update.message
+        const chatId = m.chat.id
+        if (m.text?.startsWith('/start')) {
+          await handleStart(prisma, chatId, m.text)
+        } else if (m.contact?.phone_number) {
+          await handlePhone(prisma, chatId, m.contact.phone_number)
+        } else if (m.photo?.length) {
+          await handleReceiptPhoto(prisma, chatId, m.photo[m.photo.length - 1].file_id)
+        } else if (m.text) {
+          // Matn — agar mijoz telefon kutilayotgan bo'lsa, raqam sifatida qabul qilamiz.
+          await handlePhone(prisma, chatId, m.text)
+        }
       }
     } catch (err) {
-      // Telegram 200 olmasa update'ni qayta-qayta yuboradi — shuning uchun har doim
-      // 200 qaytaramiz, xatoni faqat logga yozamiz.
+      // Telegram 200 olmasa update'ni qayta yuboradi — har doim 200, xato logga.
       app.log.error({ err }, 'Telegram webhook xatosi')
     }
 
@@ -66,13 +100,9 @@ export default async function telegramRoutes(app: FastifyInstance) {
   })
 }
 
-// ─── /start <orderId> ────────────────────────────────────────────────────────
-async function handleStart(
-  prisma: PrismaClient,
-  message: NonNullable<TgUpdate['message']>,
-) {
-  const chatId = message.chat.id
-  const orderId = (message.text ?? '').split(/\s+/)[1]?.trim()
+// ─── /start <orderId> → telefon so'rash ──────────────────────────────────────
+async function handleStart(prisma: PrismaClient, chatId: number, text: string) {
+  const orderId = text.split(/\s+/)[1]?.trim()
 
   if (!orderId) {
     await tgSendMessage(chatId, '👋 Salom! To\'lov uchun ilovadagi buyurtma havolasidan keling.')
@@ -101,26 +131,71 @@ async function handleStart(
     return
   }
 
-  // Payment yozuvini yaratamiz/yangilaymiz va mijoz chat'ini bog'laymiz (chek
-  // kelganda va tasdiq/rad xabarida shu chatId ishlatiladi). Chek hali yo'q.
-  await prisma.payment.upsert({
+  // Payment yozuvi: mijoz chat'ini bog'laymiz (chek + tasdiq xabari uchun).
+  const payment = await prisma.payment.upsert({
     where: { orderId: order.id },
     create: {
       orderId: order.id,
       provider: 'TRANSFER',
       status: 'PENDING',
-      amount: BigInt(order.totalPrice) * 100n, // tiyin (Click/Payme bilan bir xil)
+      amount: BigInt(order.totalPrice) * 100n,
       customerChatId: String(chatId),
     },
     update: { customerChatId: String(chatId), status: 'PENDING' },
   })
 
+  // Telefon allaqachon olingan bo'lsa (qayta /start) — to'g'ridan-to'g'ri rekvizit.
+  if (payment.customerPhone) {
+    await sendPaymentDetails(chatId, order)
+    return
+  }
+
+  await tgSendMessage(
+    chatId,
+    [
+      `🛍 <b>${esc(order.store.name)}</b> — buyurtma to'lovi`,
+      `💰 Summa: <b>${order.totalPrice.toLocaleString()} so'm</b>`,
+      ``,
+      `📞 Davom etish uchun, iltimos, <b>telefon raqamingizni</b> yuboring.`,
+      `Pastdagi tugmani bosing yoki raqamni yozing.`,
+    ].join('\n'),
+    PHONE_KEYBOARD,
+  )
+}
+
+// ─── Mijoz telefon raqamini yubordi → rekvizitni ko'rsatamiz ─────────────────
+async function handlePhone(prisma: PrismaClient, chatId: number, raw: string) {
+  // Telefon hali kutilayotgan (customerPhone yo'q) eng so'nggi buyurtma.
+  const payment = await prisma.payment.findFirst({
+    where: { provider: 'TRANSFER', status: 'PENDING', customerChatId: String(chatId), customerPhone: null },
+    orderBy: { createdAt: 'desc' },
+    include: { order: { include: { store: true, items: { include: { product: true } } } } },
+  })
+  if (!payment) return // telefon kutilmayapti — erkin matnga javob bermaymiz (shovqin yo'q)
+
+  const phone = raw.replace(/[^\d+]/g, '').slice(0, 20)
+  if (phone.replace(/\D/g, '').length < 7) {
+    await tgSendMessage(chatId, '❌ Telefon raqami noto\'g\'ri. Iltimos qaytadan yuboring.', PHONE_KEYBOARD)
+    return
+  }
+
+  await prisma.payment.update({ where: { id: payment.id }, data: { customerPhone: phone } })
+  // Klaviaturani olib tashlaymiz va rekvizitni ko'rsatamiz.
+  await tgSendMessage(chatId, '✅ Rahmat! Endi to\'lovni amalga oshiring 👇', { remove_keyboard: true })
+  await sendPaymentDetails(chatId, payment.order)
+}
+
+// Do'kon kartasi/QR + ko'rsatma (telefon olingach yuboriladi).
+async function sendPaymentDetails(
+  chatId: number,
+  order: { totalPrice: number; store: { name: string; cardNumber: string | null; cardHolder: string | null; paymentQr: string | null }; items: Array<{ quantity: number; price: number; product: { name: string; nameUz: string | null } }> },
+) {
   const itemLines = order.items
-    .map(i => `  • ${esc(i.product.nameUz || i.product.name)} ×${i.quantity} — ${i.price.toLocaleString()} so'm`)
+    .map((i) => `  • ${esc(i.product.nameUz || i.product.name)} ×${i.quantity} — ${i.price.toLocaleString()} so'm`)
     .join('\n')
 
   const lines = [
-    `🛍 <b>${esc(order.store.name)}</b> — buyurtma to'lovi`,
+    `🛍 <b>${esc(order.store.name)}</b>`,
     ``,
     itemLines,
     ``,
@@ -134,24 +209,16 @@ async function handleStart(
   ].filter(Boolean).join('\n')
 
   await tgSendMessage(chatId, lines)
-  // QR bo'lsa alohida rasm sifatida ham yuboramiz (skanerlash uchun qulay).
   if (order.store.paymentQr) {
     await tgSendPhoto(chatId, order.store.paymentQr, '📷 QR orqali to\'lash')
   }
 }
 
 // ─── Mijoz chek rasmini yubordi ──────────────────────────────────────────────
-async function handleReceiptPhoto(
-  prisma: PrismaClient,
-  message: NonNullable<TgUpdate['message']>,
-) {
-  const chatId = message.chat.id
-  // Telegram bir rasmni bir necha o'lchamda yuboradi — eng kattasi (oxirgisi) sifatli.
-  const fileId = message.photo![message.photo!.length - 1].file_id
-
-  // Shu chat bog'langan, hali chek kutilayotgan eng so'nggi TRANSFER to'lovini topamiz.
+async function handleReceiptPhoto(prisma: PrismaClient, chatId: number, fileId: string) {
+  // Shu chat bog'langan, hali chek kutilayotgan eng so'nggi TRANSFER to'lovi.
   const payment = await prisma.payment.findFirst({
-    where: { provider: 'TRANSFER', status: 'PENDING', customerChatId: String(chatId) },
+    where: { provider: 'TRANSFER', status: 'PENDING', customerChatId: String(chatId), receiptFileId: null },
     orderBy: { createdAt: 'desc' },
     include: { order: { include: { store: true, items: { include: { product: true } } } } },
   })
@@ -160,18 +227,21 @@ async function handleReceiptPhoto(
     await tgSendMessage(chatId, 'ℹ️ Avval ilovadagi havola orqali to\'lovni boshlang, keyin chek rasmini yuboring.')
     return
   }
+  if (!payment.customerPhone) {
+    await tgSendMessage(chatId, '📞 Avval telefon raqamingizni yuboring, keyin chek rasmini yuboring.', PHONE_KEYBOARD)
+    return
+  }
 
   await prisma.payment.update({ where: { id: payment.id }, data: { receiptFileId: fileId } })
-
   await tgSendMessage(chatId, '✅ Chek qabul qilindi! Do\'kon to\'lovni tasdiqlashini kuting.')
 
   // Egaga chekni + buyurtmani tugmalar bilan yuboramiz.
   const order = payment.order
   const ownerChat = order.store.telegramChatId
-  if (!ownerChat) return // ega chat sozlamagan — tasdiq imkonsiz, lekin mijoz xabar oldi
+  if (!ownerChat) return
 
   const itemLines = order.items
-    .map(i => `  • ${esc(i.product.nameUz || i.product.name)} ×${i.quantity}`)
+    .map((i) => `  • ${esc(i.product.nameUz || i.product.name)} ×${i.quantity}`)
     .join('\n')
 
   const caption = [
@@ -179,10 +249,12 @@ async function handleReceiptPhoto(
     ``,
     itemLines,
     `💰 <b>Summa:</b> ${order.totalPrice.toLocaleString()} so'm`,
+    `📞 <b>Mijoz:</b> ${esc(payment.customerPhone)}`,
+    order.address ? `📍 ${esc(order.address)}` : null,
     `🔖 <code>${esc(order.id.slice(-8))}</code>`,
     ``,
     `To'lov to'g'rimi?`,
-  ].join('\n')
+  ].filter(Boolean).join('\n')
 
   const keyboard = {
     inline_keyboard: [[
@@ -218,7 +290,6 @@ async function handleCallback(
   }
 
   // Xavfsizlik: faqat shu do'kon egasining chat'i tasdiqlay/rad eta oladi.
-  // Shaxsiy chatda from.id == chat.id (foydalanuvchi ID'si).
   if (String(cb.from.id) !== (payment.order.store.telegramChatId ?? '')) {
     await tgAnswerCallback(cb.id, 'Ruxsat yo\'q')
     return
@@ -245,15 +316,13 @@ async function handleCallback(
     if (payment.customerChatId) {
       await tgSendMessage(payment.customerChatId, '✅ To\'lovingiz tasdiqlandi! Buyurtmangiz qabul qilindi.')
     }
-    // Mijozga SMS ham — bot xabaridan tashqari (mijoz botni ochmagan bo'lishi mumkin).
-    // Buyurtmani bloklamaydi: xato bo'lsa faqat logga yoziladi.
-    const phone = payment.order.user?.phone
+    // Mijozga SMS ham (botni ochmagan bo'lishi mumkin). Buyurtmani bloklamaydi.
+    const phone = payment.customerPhone || payment.order.user?.phone
     if (phone) {
       sendSms(phone, `ZYFF: to'lovingiz tasdiqlandi, buyurtmangiz qabul qilindi. Rahmat!`)
         .catch((err) => app.log.error({ err, orderId: payment.orderId }, 'Tasdiq SMS yuborilmadi'))
     }
   } else {
-    // Rad etish — buyurtma bekor, stok qaytadi (bitta atomik tranzaksiyada).
     await prisma.$transaction(async (tx) => {
       await tx.payment.update({ where: { id: payment.id }, data: { status: 'CANCELLED' } })
       await tx.order.update({ where: { id: payment.orderId }, data: { status: 'CANCELLED' } })

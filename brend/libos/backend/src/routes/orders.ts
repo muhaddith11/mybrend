@@ -133,7 +133,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
       let botUrl: string | undefined
       if (body.paymentMethod === 'click') paymentUrl = buildClickPaymentUrl(dup)
       else if (body.paymentMethod === 'payme') paymentUrl = buildPaymePaymentUrl(dup)
-      else if (body.paymentMethod === 'transfer') botUrl = buildBotPaymentUrl(dup.id)
+      else if (body.paymentMethod === 'transfer') botUrl = await buildBotPaymentUrl(dup.id)
       return reply.status(201).send({ ok: true, orderId: dup.id, paymentUrl, botUrl })
     }
 
@@ -193,7 +193,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
     let botUrl: string | undefined
     if (body.paymentMethod === 'click') paymentUrl = buildClickPaymentUrl(order)
     else if (body.paymentMethod === 'payme') paymentUrl = buildPaymePaymentUrl(order)
-    else if (body.paymentMethod === 'transfer') botUrl = buildBotPaymentUrl(order.id)
+    else if (body.paymentMethod === 'transfer') botUrl = await buildBotPaymentUrl(order.id)
 
     return reply.status(201).send({ ok: true, orderId: order.id, paymentUrl, botUrl })
   })
@@ -228,7 +228,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
       let botUrl: string | undefined
       if (body.paymentProvider === 'CLICK') paymentUrl = buildClickPaymentUrl(dup)
       else if (body.paymentProvider === 'PAYME') paymentUrl = buildPaymePaymentUrl(dup)
-      else if (body.paymentProvider === 'TRANSFER') botUrl = buildBotPaymentUrl(dup.id)
+      else if (body.paymentProvider === 'TRANSFER') botUrl = await buildBotPaymentUrl(dup.id)
       return reply.status(201).send({ ...dup, paymentUrl, botUrl })
     }
 
@@ -288,7 +288,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
     let botUrl: string | undefined
     if (body.paymentProvider === 'CLICK') paymentUrl = buildClickPaymentUrl(order)
     else if (body.paymentProvider === 'PAYME') paymentUrl = buildPaymePaymentUrl(order)
-    else if (body.paymentProvider === 'TRANSFER') botUrl = buildBotPaymentUrl(order.id)
+    else if (body.paymentProvider === 'TRANSFER') botUrl = await buildBotPaymentUrl(order.id)
 
     return reply.status(201).send({ ...order, paymentUrl, botUrl })
   })

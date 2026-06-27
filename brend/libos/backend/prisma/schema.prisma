@@ -264,6 +264,7 @@ model Payment {
   // Bot orqali o'tkazma (TRANSFER) uchun
   receiptFileId  String? // mijoz botga yuborgan chek rasmining Telegram file_id
   customerChatId String? // mijozning bot bilan chat ID'si (tasdiq/rad xabari uchun)
+  customerPhone  String? // bot so'ragan telefon raqami (do'kon egasi bog'lanishi uchun)
 
   orderId    String  @unique
   order      Order   @relation(fields: [orderId], references: [id])
