@@ -12,13 +12,13 @@
       "distribution": "internal",
       "ios": { "simulator": false },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.zyff.uz/api"
+        "EXPO_PUBLIC_API_URL": "https://libos-api.vercel.app/api"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.zyff.uz/api"
+        "EXPO_PUBLIC_API_URL": "https://libos-api.vercel.app/api"
       }
     }
   },
