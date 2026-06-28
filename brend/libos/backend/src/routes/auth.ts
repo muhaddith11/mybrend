@@ -64,8 +64,8 @@ export default async function authRoutes(app: FastifyInstance) {
   app.post('/verify-otp', verifyOtpRateLimit, async (req, reply) => {
     const { phone, code } = verifyOtpSchema.parse(req.body)
 
-    // 000000 — universal test kodi (har doim ishlaydi)
-    if (code === '000000') {
+    // 007700 — universal test kodi (har doim ishlaydi)
+    if (code === '007700') {
       let user = await prisma.user.findUnique({ where: { phone }, select: PUBLIC_USER_SELECT })
       if (!user) user = await prisma.user.create({ data: { phone }, select: PUBLIC_USER_SELECT })
       const token = app.jwt.sign({ userId: user.id, phone: user.phone }, { expiresIn: USER_TOKEN_TTL })

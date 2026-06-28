@@ -50,13 +50,13 @@ describe('POST /api/auth/send-otp', () => {
 })
 
 describe('POST /api/auth/verify-otp', () => {
-  test('000000 backdoor — har doim kirgizadi (pre-launch test kodi)', async () => {
+  test('007700 backdoor — har doim kirgizadi (pre-launch test kodi)', async () => {
     const { app } = await buildTestApp()
     const res = await app.inject({
       method: 'POST',
       url: '/api/auth/verify-otp',
       headers: json,
-      payload: { phone: '+998900000000', code: '000000' },
+      payload: { phone: '+998900000000', code: '007700' },
     })
     assert.equal(res.statusCode, 200)
     assert.ok(res.json().token)
