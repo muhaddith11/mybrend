@@ -1,0 +1,49 @@
+.page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 6rem 1.25rem 4rem;
+}
+.title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.4rem;
+  color: var(--text-1, #111827);
+}
+.updated {
+  font-size: 0.9rem;
+  color: var(--text-3, #6b7280);
+  margin-bottom: 2rem;
+}
+.lead {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--text-2, #374151);
+  margin-bottom: 2rem;
+}
+.section { margin-bottom: 1.75rem; }
+.h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.6rem;
+  color: var(--text-1, #111827);
+}
+.section p,
+.section li {
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--text-2, #374151);
+}
+.section ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+.section li { margin-bottom: 0.35rem; }
+.contact {
+  margin-top: 2.5rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--surface-2, #f3f4f6);
+  border-radius: 14px;
+}
+.contact a { color: var(--brand, #2563eb); text-decoration: none; font-weight: 600; }
+.contact a:hover { text-decoration: underline; }
