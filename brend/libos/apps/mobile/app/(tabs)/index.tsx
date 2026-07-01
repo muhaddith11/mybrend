@@ -6,8 +6,9 @@ import {
 import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@libos/shared'
-import type { Gender, Product, Store } from '@libos/shared'
+import type { Gender, Product } from '@libos/shared'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { StoreCard } from '../../components/StoreCard'
 
 const TABS: { label: string; value: Gender }[] = [
   { label: 'Erkaklar', value: 'MEN' },
@@ -110,38 +111,6 @@ export default function HomeScreen() {
   )
 }
 
-function StoreCard({ store, onPress }: { store: Store; onPress: () => void }) {
-  return (
-    <TouchableOpacity style={styles.storeCard} onPress={onPress}>
-      <View style={[styles.storeAvatar, { backgroundColor: store.themeBg }]}>
-        {store.logo ? (
-          <Image source={{ uri: store.logo }} style={styles.storeLogoImg} resizeMode="cover" />
-        ) : (
-          <Text style={{ fontSize: 28 }}>🏪</Text>
-        )}
-      </View>
-      <View style={styles.storeInfo}>
-        <Text style={styles.storeName}>{store.name}</Text>
-        <Text style={styles.storeAddr}>{store.address}</Text>
-        <View style={styles.storeTags}>
-          {store.hasDelivery && <Tag label="Yetkazish" color="#E1F5EE" textColor="#0F6E56" />}
-          {store.hasPickup && <Tag label="Bron" color="#EEEDFE" textColor="#3C3489" />}
-          {store.hasCashOnDoor && <Tag label="Naqd" color="#FAEEDA" textColor="#633806" />}
-        </View>
-      </View>
-      <View style={styles.storeRight}>
-        <Text style={styles.rating}>⭐ {store.rating.toFixed(1)}</Text>
-        <Text style={styles.itemCount}>{store._count.products} mahsulot</Text>
-        <View style={[styles.openBadge, { backgroundColor: store.isOpen ? '#EAF3DE' : '#FCEBEB' }]}>
-          <Text style={{ fontSize: 10, color: store.isOpen ? '#3B6D11' : '#A32D2D' }}>
-            {store.isOpen ? 'Ochiq' : 'Yopiq'}
-          </Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  )
-}
-
 function ProductRow({
   title, products, onPressProduct,
 }: {
@@ -183,14 +152,6 @@ function ProductRow({
   )
 }
 
-function Tag({ label, color, textColor }: { label: string; color: string; textColor: string }) {
-  return (
-    <View style={[styles.tag, { backgroundColor: color }]}>
-      <Text style={{ fontSize: 10, color: textColor }}>{label}</Text>
-    </View>
-  )
-}
-
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#fff' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
@@ -209,18 +170,6 @@ const styles = StyleSheet.create({
   tabText: { fontSize: 14, color: '#888780', fontWeight: '500' },
   tabTextActive: { color: '#534AB7' },
   list: { paddingBottom: 24, gap: 10 },
-  storeCard: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12, borderWidth: 0.5, borderColor: '#D3D1C7', padding: 12, marginHorizontal: 16, alignItems: 'center', gap: 12 },
-  storeAvatar: { width: 52, height: 52, borderRadius: 10, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  storeLogoImg: { width: '100%', height: '100%' },
-  storeInfo: { flex: 1 },
-  storeName: { fontSize: 14, fontWeight: '500', color: '#1a1a1a', marginBottom: 2 },
-  storeAddr: { fontSize: 12, color: '#888780', marginBottom: 6 },
-  storeTags: { flexDirection: 'row', gap: 4, flexWrap: 'wrap' },
-  tag: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 20 },
-  storeRight: { alignItems: 'flex-end', gap: 2 },
-  rating: { fontSize: 13, fontWeight: '500', color: '#1a1a1a' },
-  itemCount: { fontSize: 11, color: '#888780' },
-  openBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 20, marginTop: 2 },
   empty: { textAlign: 'center', color: '#888780', marginTop: 40, fontSize: 14 },
   section: { marginBottom: 16 },
   sectionTitle: { fontSize: 15, fontWeight: '600', color: '#1a1a1a', marginBottom: 10, marginHorizontal: 16 },
