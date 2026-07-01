@@ -8,8 +8,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { api } from '@libos/shared'
-import type { Product } from '@libos/shared'
+import type { Product, Store } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
+import { WishlistHeartButton } from '../../components/WishlistHeartButton'
 
 const { width } = Dimensions.get('window')
 const CARD_WIDTH = (width - 48) / 2
@@ -168,6 +169,7 @@ export default function StoreScreen() {
         renderItem={({ item }) => (
           <ProductCard
             product={item}
+            store={store}
             themeColor={theme.primary}
             onPress={() => router.push(`/product/${item.id}`)}
           />
@@ -181,9 +183,10 @@ export default function StoreScreen() {
 }
 
 function ProductCard({
-  product, themeColor, onPress,
+  product, store, themeColor, onPress,
 }: {
   product: Product
+  store: Store
   themeColor: string
   onPress: () => void
 }) {
@@ -197,6 +200,7 @@ function ProductCard({
             <Ionicons name="shirt-outline" size={36} color={themeColor} />
           </View>
         )}
+        <WishlistHeartButton product={product} store={store} size={14} />
       </View>
       <View style={styles.cardBody}>
         <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>

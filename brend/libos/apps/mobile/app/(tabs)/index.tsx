@@ -9,6 +9,7 @@ import { api } from '@libos/shared'
 import type { Gender, Product } from '@libos/shared'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { StoreCard } from '../../components/StoreCard'
+import { WishlistHeartButton } from '../../components/WishlistHeartButton'
 
 const TABS: { label: string; value: Gender }[] = [
   { label: 'Erkaklar', value: 'MEN' },
@@ -137,6 +138,7 @@ function ProductRow({
                   </Text>
                 </View>
               )}
+              <WishlistHeartButton product={product} size={14} />
             </View>
             <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
             <View style={styles.productPriceRow}>

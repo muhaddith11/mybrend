@@ -9,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { api } from '@libos/shared'
 import { useCartStore } from '../../store/cart'
+import { useWishlistStore } from '../../store/wishlist'
 
 const { width } = Dimensions.get('window')
 
@@ -17,6 +18,8 @@ export default function ProductScreen() {
   const router = useRouter()
   const addToCart = useCartStore(s => s.addItem)
   const cartCount = useCartStore(s => s.totalCount())
+  const wishlistHas = useWishlistStore(s => s.has)
+  const wishlistToggle = useWishlistStore(s => s.toggle)
 
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
@@ -35,6 +38,21 @@ export default function ProductScreen() {
   const themeColor = (product as any).store?.themeColor ?? '#534AB7'
   const sizes = [...new Set(product.variants.map(v => v.size).filter(Boolean))]
   const colors = [...new Set(product.variants.map(v => v.color).filter(Boolean))]
+
+  const isWishlisted = wishlistHas(product.id)
+  const handleToggleWishlist = () => {
+    wishlistToggle({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      originalPrice: product.originalPrice,
+      image: product.images[0],
+      storeId: product.storeId,
+      storeName: (product as any).store?.name ?? '',
+      storeSlug: (product as any).store?.slug ?? '',
+      themeBg: (product as any).store?.themeBg,
+    })
+  }
 
   const handleAddToCart = () => {
     addToCart({
@@ -58,17 +76,26 @@ export default function ProductScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
         </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => router.push('/cart')}
-          style={styles.cartBtn}
-        >
-          <Ionicons name="bag-outline" size={22} color="#1a1a1a" />
-          {cartCount > 0 && (
-            <View style={[styles.badge, { backgroundColor: themeColor }]}>
-              <Text style={styles.badgeText}>{cartCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity onPress={handleToggleWishlist} style={styles.heartBtn}>
+            <Ionicons
+              name={isWishlisted ? 'heart' : 'heart-outline'}
+              size={22}
+              color={isWishlisted ? '#ef4444' : '#1a1a1a'}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push('/cart')}
+            style={styles.cartBtn}
+          >
+            <Ionicons name="bag-outline" size={22} color="#1a1a1a" />
+            {cartCount > 0 && (
+              <View style={[styles.badge, { backgroundColor: themeColor }]}>
+                <Text style={styles.badgeText}>{cartCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -87,9 +114,16 @@ export default function ProductScreen() {
           {/* Nom va narx */}
           <View style={styles.titleRow}>
             <Text style={styles.name}>{product.name}</Text>
-            <Text style={[styles.price, { color: themeColor }]}>
-              {product.price.toLocaleString()} so'm
-            </Text>
+            <View style={styles.priceRow}>
+              <Text style={[styles.price, { color: themeColor }]}>
+                {product.price.toLocaleString()} so'm
+              </Text>
+              {!!product.originalPrice && product.originalPrice > product.price && (
+                <Text style={styles.originalPrice}>
+                  {product.originalPrice.toLocaleString()} so'm
+                </Text>
+              )}
+            </View>
           </View>
 
           {/* Do'kon nomi */}
@@ -179,6 +213,8 @@ const styles = StyleSheet.create({
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
   backBtn: { padding: 6 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  heartBtn: { padding: 6 },
   cartBtn: { padding: 6, position: 'relative' },
   badge: { position: 'absolute', top: 0, right: 0, width: 16, height: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   badgeText: { fontSize: 10, color: '#fff', fontWeight: '600' },
@@ -188,7 +224,9 @@ const styles = StyleSheet.create({
   content: { padding: 20 },
   titleRow: { marginBottom: 8 },
   name: { fontSize: 20, fontWeight: '600', color: '#1a1a1a', marginBottom: 6 },
+  priceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
   price: { fontSize: 22, fontWeight: '700' },
+  originalPrice: { fontSize: 14, color: '#aaa', textDecorationLine: 'line-through' },
   storeRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 20, paddingBottom: 20, borderBottomWidth: 0.5, borderBottomColor: '#f0f0f0' },
   storeName: { fontSize: 13, color: '#666', flex: 1 },
   section: { marginBottom: 20 },
