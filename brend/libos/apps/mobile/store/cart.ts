@@ -1,4 +1,6 @@
 import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 export interface CartItem {
   productId: string
@@ -29,66 +31,75 @@ function itemKey(productId: string, size?: string, color?: string) {
   return `${productId}__${size ?? ''}__${color ?? ''}`
 }
 
-export const useCartStore = create<CartStore>((set, get) => ({
-  items: [],
+export const useCartStore = create<CartStore>()(
+  persist(
+    (set, get) => ({
+      items: [],
 
-  addItem: (newItem) => {
-    set(state => {
-      const key = itemKey(newItem.productId, newItem.size, newItem.color)
-      const existing = state.items.find(
-        i => itemKey(i.productId, i.size, i.color) === key
-      )
-      if (existing) {
-        return {
-          items: state.items.map(i =>
-            itemKey(i.productId, i.size, i.color) === key
-              ? { ...i, quantity: i.quantity + 1 }
-              : i
-          ),
+      addItem: (newItem) => {
+        set(state => {
+          const key = itemKey(newItem.productId, newItem.size, newItem.color)
+          const existing = state.items.find(
+            i => itemKey(i.productId, i.size, i.color) === key
+          )
+          if (existing) {
+            return {
+              items: state.items.map(i =>
+                itemKey(i.productId, i.size, i.color) === key
+                  ? { ...i, quantity: i.quantity + 1 }
+                  : i
+              ),
+            }
+          }
+          return { items: [...state.items, { ...newItem, quantity: 1 }] }
+        })
+      },
+
+      removeItem: (productId, size, color) => {
+        const key = itemKey(productId, size, color)
+        set(state => ({
+          items: state.items.filter(i => itemKey(i.productId, i.size, i.color) !== key),
+        }))
+      },
+
+      updateQty: (productId, qty, size, color) => {
+        const key = itemKey(productId, size, color)
+        if (qty <= 0) {
+          set(state => ({
+            items: state.items.filter(i => itemKey(i.productId, i.size, i.color) !== key),
+          }))
+          return
         }
-      }
-      return { items: [...state.items, { ...newItem, quantity: 1 }] }
-    })
-  },
+        set(state => ({
+          items: state.items.map(i =>
+            itemKey(i.productId, i.size, i.color) === key ? { ...i, quantity: qty } : i
+          ),
+        }))
+      },
 
-  removeItem: (productId, size, color) => {
-    const key = itemKey(productId, size, color)
-    set(state => ({
-      items: state.items.filter(i => itemKey(i.productId, i.size, i.color) !== key),
-    }))
-  },
+      clearStore: (storeId) => {
+        set(state => ({ items: state.items.filter(i => i.storeId !== storeId) }))
+      },
 
-  updateQty: (productId, qty, size, color) => {
-    const key = itemKey(productId, size, color)
-    if (qty <= 0) {
-      set(state => ({
-        items: state.items.filter(i => itemKey(i.productId, i.size, i.color) !== key),
-      }))
-      return
+      clearAll: () => set({ items: [] }),
+
+      totalCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
+
+      totalPrice: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
+
+      itemsByStore: () => {
+        const result: Record<string, CartItem[]> = {}
+        for (const item of get().items) {
+          if (!result[item.storeId]) result[item.storeId] = []
+          result[item.storeId].push(item)
+        }
+        return result
+      },
+    }),
+    {
+      name: 'zyff_cart',
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({ items: state.items }),
     }
-    set(state => ({
-      items: state.items.map(i =>
-        itemKey(i.productId, i.size, i.color) === key ? { ...i, quantity: qty } : i
-      ),
-    }))
-  },
-
-  clearStore: (storeId) => {
-    set(state => ({ items: state.items.filter(i => i.storeId !== storeId) }))
-  },
-
-  clearAll: () => set({ items: [] }),
-
-  totalCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
-
-  totalPrice: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
-
-  itemsByStore: () => {
-    const result: Record<string, CartItem[]> = {}
-    for (const item of get().items) {
-      if (!result[item.storeId]) result[item.storeId] = []
-      result[item.storeId].push(item)
-    }
-    return result
-  },
-}))
+  )
+)
