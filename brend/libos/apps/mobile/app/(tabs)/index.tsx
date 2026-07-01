@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity,
-  TextInput, StyleSheet, FlatList,
+  TextInput, StyleSheet, FlatList, Image,
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@libos/shared'
-import type { Gender } from '@libos/shared'
+import type { Gender, Product, Store } from '@libos/shared'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 const TABS: { label: string; value: Gender }[] = [
@@ -25,77 +25,79 @@ export default function HomeScreen() {
     queryFn: () => api.stores.list({ gender: activeGender, search }),
   })
 
+  const { data: featured } = useQuery({
+    queryKey: ['products', 'featured'],
+    queryFn: () => api.products.featured(),
+  })
+
+  const { data: discounted } = useQuery({
+    queryKey: ['products', 'discounted'],
+    queryFn: () => api.products.discounted(),
+  })
+
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <View style={styles.logoRow}>
-          <View style={styles.logoMark}><Text style={styles.logoLetter}>L</Text></View>
-          <Text style={styles.logoText}>
-            Li<Text style={{ color: '#534AB7' }}>bos</Text>
-          </Text>
-        </View>
-        <View style={styles.headerIcons}>
-          <Text style={styles.iconBtn}>🛒</Text>
-        </View>
-      </View>
-
-      <View style={styles.searchBar}>
-        <Text style={styles.searchIcon}>🔍</Text>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Do'kon yoki mahsulot qidiring..."
-          placeholderTextColor="#888780"
-          value={search}
-          onChangeText={setSearch}
-        />
-      </View>
-
-      <View style={styles.tabs}>
-        {TABS.map(tab => (
-          <TouchableOpacity
-            key={tab.value}
-            style={[styles.tab, activeGender === tab.value && styles.tabActive]}
-            onPress={() => setActiveGender(tab.value)}
-          >
-            <Text style={[styles.tabText, activeGender === tab.value && styles.tabTextActive]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
       <FlatList
         data={data?.stores ?? []}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.storeCard}
-            onPress={() => router.push(`/store/${item.slug}`)}
-          >
-            <View style={[styles.storeAvatar, { backgroundColor: item.themeBg }]}>
-              <Text style={{ fontSize: 28 }}>🏪</Text>
-            </View>
-            <View style={styles.storeInfo}>
-              <Text style={styles.storeName}>{item.name}</Text>
-              <Text style={styles.storeAddr}>{item.address}</Text>
-              <View style={styles.storeTags}>
-                {item.hasDelivery && <Tag label="Yetkazish" color="#E1F5EE" textColor="#0F6E56" />}
-                {item.hasPickup && <Tag label="Bron" color="#EEEDFE" textColor="#3C3489" />}
-                {item.hasCashOnDoor && <Tag label="Naqd" color="#FAEEDA" textColor="#633806" />}
-              </View>
-            </View>
-            <View style={styles.storeRight}>
-              <Text style={styles.rating}>⭐ {item.rating.toFixed(1)}</Text>
-              <Text style={styles.itemCount}>{item._count.products} mahsulot</Text>
-              <View style={[styles.openBadge, { backgroundColor: item.isOpen ? '#EAF3DE' : '#FCEBEB' }]}>
-                <Text style={{ fontSize: 10, color: item.isOpen ? '#3B6D11' : '#A32D2D' }}>
-                  {item.isOpen ? 'Ochiq' : 'Yopiq'}
+        renderItem={({ item }) => <StoreCard store={item} onPress={() => router.push(`/store/${item.slug}`)} />}
+        ListHeaderComponent={
+          <>
+            <View style={styles.header}>
+              <View style={styles.logoRow}>
+                <View style={styles.logoMark}><Text style={styles.logoLetter}>Z</Text></View>
+                <Text style={styles.logoText}>
+                  ZY<Text style={{ color: '#534AB7' }}>FF</Text>
                 </Text>
               </View>
+              <View style={styles.headerIcons}>
+                <Text style={styles.iconBtn}>🛒</Text>
+              </View>
             </View>
-          </TouchableOpacity>
-        )}
+
+            <View style={styles.searchBar}>
+              <Text style={styles.searchIcon}>🔍</Text>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Do'kon yoki mahsulot qidiring..."
+                placeholderTextColor="#888780"
+                value={search}
+                onChangeText={setSearch}
+              />
+            </View>
+
+            {!!featured?.products.length && (
+              <ProductRow
+                title="Ommabop mahsulotlar"
+                products={featured.products}
+                onPressProduct={p => router.push(`/product/${p.id}`)}
+              />
+            )}
+
+            {!!discounted?.products.length && (
+              <ProductRow
+                title="Chegirmalar"
+                products={discounted.products}
+                onPressProduct={p => router.push(`/product/${p.id}`)}
+              />
+            )}
+
+            <View style={styles.tabs}>
+              {TABS.map(tab => (
+                <TouchableOpacity
+                  key={tab.value}
+                  style={[styles.tab, activeGender === tab.value && styles.tabActive]}
+                  onPress={() => setActiveGender(tab.value)}
+                >
+                  <Text style={[styles.tabText, activeGender === tab.value && styles.tabTextActive]}>
+                    {tab.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        }
         ListEmptyComponent={
           isLoading ? (
             <Text style={styles.empty}>Yuklanmoqda...</Text>
@@ -105,6 +107,79 @@ export default function HomeScreen() {
         }
       />
     </SafeAreaView>
+  )
+}
+
+function StoreCard({ store, onPress }: { store: Store; onPress: () => void }) {
+  return (
+    <TouchableOpacity style={styles.storeCard} onPress={onPress}>
+      <View style={[styles.storeAvatar, { backgroundColor: store.themeBg }]}>
+        {store.logo ? (
+          <Image source={{ uri: store.logo }} style={styles.storeLogoImg} resizeMode="cover" />
+        ) : (
+          <Text style={{ fontSize: 28 }}>🏪</Text>
+        )}
+      </View>
+      <View style={styles.storeInfo}>
+        <Text style={styles.storeName}>{store.name}</Text>
+        <Text style={styles.storeAddr}>{store.address}</Text>
+        <View style={styles.storeTags}>
+          {store.hasDelivery && <Tag label="Yetkazish" color="#E1F5EE" textColor="#0F6E56" />}
+          {store.hasPickup && <Tag label="Bron" color="#EEEDFE" textColor="#3C3489" />}
+          {store.hasCashOnDoor && <Tag label="Naqd" color="#FAEEDA" textColor="#633806" />}
+        </View>
+      </View>
+      <View style={styles.storeRight}>
+        <Text style={styles.rating}>⭐ {store.rating.toFixed(1)}</Text>
+        <Text style={styles.itemCount}>{store._count.products} mahsulot</Text>
+        <View style={[styles.openBadge, { backgroundColor: store.isOpen ? '#EAF3DE' : '#FCEBEB' }]}>
+          <Text style={{ fontSize: 10, color: store.isOpen ? '#3B6D11' : '#A32D2D' }}>
+            {store.isOpen ? 'Ochiq' : 'Yopiq'}
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  )
+}
+
+function ProductRow({
+  title, products, onPressProduct,
+}: {
+  title: string
+  products: Product[]
+  onPressProduct: (p: Product) => void
+}) {
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sectionScroll}>
+        {products.map(product => (
+          <TouchableOpacity key={product.id} style={styles.productCard} onPress={() => onPressProduct(product)}>
+            <View style={styles.productImgWrap}>
+              {product.images?.[0] ? (
+                <Image source={{ uri: product.images[0] }} style={styles.productImg} resizeMode="cover" />
+              ) : (
+                <View style={styles.productImgPlaceholder} />
+              )}
+              {!!product.originalPrice && product.originalPrice > product.price && (
+                <View style={styles.discountBadge}>
+                  <Text style={styles.discountBadgeText}>
+                    -{Math.round((1 - product.price / product.originalPrice) * 100)}%
+                  </Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
+            <View style={styles.productPriceRow}>
+              <Text style={styles.productPrice}>{product.price.toLocaleString()} so'm</Text>
+              {!!product.originalPrice && product.originalPrice > product.price && (
+                <Text style={styles.productOriginalPrice}>{product.originalPrice.toLocaleString()}</Text>
+              )}
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
   )
 }
 
@@ -133,9 +208,10 @@ const styles = StyleSheet.create({
   tabActive: { borderBottomColor: '#534AB7' },
   tabText: { fontSize: 14, color: '#888780', fontWeight: '500' },
   tabTextActive: { color: '#534AB7' },
-  list: { padding: 12, gap: 10 },
-  storeCard: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12, borderWidth: 0.5, borderColor: '#D3D1C7', padding: 12, alignItems: 'center', gap: 12 },
-  storeAvatar: { width: 52, height: 52, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  list: { paddingBottom: 24, gap: 10 },
+  storeCard: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12, borderWidth: 0.5, borderColor: '#D3D1C7', padding: 12, marginHorizontal: 16, alignItems: 'center', gap: 12 },
+  storeAvatar: { width: 52, height: 52, borderRadius: 10, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  storeLogoImg: { width: '100%', height: '100%' },
   storeInfo: { flex: 1 },
   storeName: { fontSize: 14, fontWeight: '500', color: '#1a1a1a', marginBottom: 2 },
   storeAddr: { fontSize: 12, color: '#888780', marginBottom: 6 },
@@ -146,4 +222,17 @@ const styles = StyleSheet.create({
   itemCount: { fontSize: 11, color: '#888780' },
   openBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 20, marginTop: 2 },
   empty: { textAlign: 'center', color: '#888780', marginTop: 40, fontSize: 14 },
+  section: { marginBottom: 16 },
+  sectionTitle: { fontSize: 15, fontWeight: '600', color: '#1a1a1a', marginBottom: 10, marginHorizontal: 16 },
+  sectionScroll: { paddingHorizontal: 16, gap: 10 },
+  productCard: { width: 130 },
+  productImgWrap: { width: 130, height: 130, borderRadius: 10, overflow: 'hidden', backgroundColor: '#F1EFE8' },
+  productImg: { width: '100%', height: '100%' },
+  productImgPlaceholder: { width: '100%', height: '100%', backgroundColor: '#F1EFE8' },
+  discountBadge: { position: 'absolute', top: 6, left: 6, backgroundColor: '#e11d48', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  discountBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  productName: { fontSize: 12, color: '#1a1a1a', marginTop: 6, lineHeight: 16, height: 32 },
+  productPriceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 2 },
+  productPrice: { fontSize: 13, fontWeight: '600', color: '#534AB7' },
+  productOriginalPrice: { fontSize: 11, color: '#aaa', textDecorationLine: 'line-through' },
 })
