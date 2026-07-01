@@ -4,11 +4,12 @@ import {
   StyleSheet, FlatList, Image, Dimensions,
 } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { api } from '@libos/shared'
 import type { Product } from '@libos/shared'
+import { useAuthStore } from '../../store/auth'
 
 const { width } = Dimensions.get('window')
 const CARD_WIDTH = (width - 48) / 2
@@ -16,12 +17,34 @@ const CARD_WIDTH = (width - 48) / 2
 export default function StoreScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>()
   const router = useRouter()
+  const queryClient = useQueryClient()
+  const { isLoggedIn } = useAuthStore()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
   const { data: store, isLoading } = useQuery({
     queryKey: ['store', slug],
     queryFn: () => api.stores.bySlug(slug),
   })
+
+  const { data: favorites } = useQuery({
+    queryKey: ['favorites'],
+    queryFn: () => api.stores.favorites(),
+    enabled: isLoggedIn,
+  })
+  const isFavorited = !!store && !!favorites?.stores.some(s => s.id === store.id)
+
+  const toggleFavorite = useMutation({
+    mutationFn: () => api.stores.toggleFavorite(store!.id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['favorites'] }),
+  })
+
+  const handleHeartPress = () => {
+    if (!isLoggedIn) {
+      router.push('/auth/login')
+      return
+    }
+    toggleFavorite.mutate()
+  }
 
   if (isLoading) {
     return (
@@ -64,8 +87,8 @@ export default function StoreScreen() {
             <Text style={styles.headerOpen}> {store.isOpen ? 'Ochiq' : 'Yopiq'}</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.heartBtn}>
-          <Ionicons name="heart-outline" size={22} color="#fff" />
+        <TouchableOpacity style={styles.heartBtn} onPress={handleHeartPress} disabled={toggleFavorite.isPending}>
+          <Ionicons name={isFavorited ? 'heart' : 'heart-outline'} size={22} color="#fff" />
         </TouchableOpacity>
       </View>
 

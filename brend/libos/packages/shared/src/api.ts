@@ -62,6 +62,7 @@ export const api = {
     },
     getBySlug: (slug: string) => request<Store & { products: Product[] }>(`/stores/${slug}`),
     bySlug: (slug: string) => request<Store & { products: Product[] }>(`/stores/${slug}`),
+    favorites: () => request<{ stores: Store[] }>('/stores/favorites'),
     toggleFavorite: (id: string) =>
       request<{ favorited: boolean }>(`/stores/${id}/favorite`, { method: 'POST' }),
   },

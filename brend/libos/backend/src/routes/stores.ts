@@ -62,6 +62,27 @@ export default async function storesRoutes(app: FastifyInstance) {
     return reply.send(store)
   })
 
+  // Foydalanuvchining sevimli do'konlari
+  app.get('/favorites', { preHandler: [app.authenticate] }, async (req, reply) => {
+    const { userId } = req.user as { userId: string }
+    const favorites = await prisma.favoriteStore.findMany({
+      where: { userId },
+      include: {
+        store: {
+          select: {
+            id: true, name: true, slug: true, logo: true, banner: true,
+            city: true, address: true, isOpen: true, rating: true, reviewCount: true,
+            genders: true, hasDelivery: true, hasPickup: true, hasCashOnDoor: true,
+            deliveryTime: true, themeColor: true, themeBg: true,
+            lat: true, lng: true,
+            _count: { select: { products: true } },
+          },
+        },
+      },
+    })
+    return reply.send({ stores: favorites.map(f => f.store) })
+  })
+
   // Do'konni sevimlilarga qo'shish
   app.post('/:id/favorite', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { userId } = req.user as { userId: string }
