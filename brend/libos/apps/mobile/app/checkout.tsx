@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, TextInput, ActivityIndicator, Alert,
+  StyleSheet, TextInput, ActivityIndicator, Alert, Linking,
 } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -85,6 +85,7 @@ export default function CheckoutScreen() {
         deliveryType: delivery,
         address: delivery === 'DELIVERY' ? composeAddress() : undefined,
         note: note.trim() || undefined,
+        paymentProvider: payment === 'CASH' ? undefined : payment,
         items: items.map(i => ({
           productId: i.productId,
           quantity: i.quantity,
@@ -94,13 +95,10 @@ export default function CheckoutScreen() {
 
       clearStore(storeId)
 
-      if (payment === 'CLICK' || payment === 'PAYME') {
-        const endpoint = payment === 'CLICK' ? '/payment/click/create-url' : '/payment/payme/create-url'
-        // To'lov URL ga yo'naltirish — keyingi versiyada WebBrowser bilan
-        router.replace({ pathname: '/orders/[id]', params: { id: order.id } })
-      } else {
-        router.replace({ pathname: '/orders/[id]', params: { id: order.id } })
+      if (order.paymentUrl) {
+        await Linking.openURL(order.paymentUrl)
       }
+      router.replace({ pathname: '/orders/[id]', params: { id: order.id } })
     } catch (e: any) {
       Alert.alert('Xatolik', e.message ?? 'Buyurtma berilmadi')
     } finally {
