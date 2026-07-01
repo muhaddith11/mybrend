@@ -10,9 +10,8 @@ export default function ProfileScreen() {
 
   const menuItems = [
     { icon: 'receipt-outline', label: 'Buyurtmalarim', onPress: () => router.push('/orders') },
-    { icon: 'heart-outline', label: "Sevimli do'konlar", onPress: () => {} },
-    { icon: 'location-outline', label: 'Manzillarim', onPress: () => {} },
-    { icon: 'help-circle-outline', label: 'Yordam', onPress: () => {} },
+    { icon: 'heart-outline', label: "Sevimli do'konlar", onPress: () => router.push('/favorites') },
+    { icon: 'help-circle-outline', label: 'Yordam', onPress: () => router.push('/help') },
   ]
 
   return (
