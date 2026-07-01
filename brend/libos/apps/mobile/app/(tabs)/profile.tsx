@@ -48,6 +48,13 @@ export default function ProfileScreen() {
             <Ionicons name="log-out-outline" size={18} color="#ef4444" />
             <Text style={styles.logoutText}>Chiqish</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.deleteAccountLink}
+            onPress={() => router.push('/auth/delete-account')}
+          >
+            <Text style={styles.deleteAccountText}>Hisobni butunlay o'chirish</Text>
+          </TouchableOpacity>
         </>
       ) : (
         /* Kirmagan foydalanuvchi */
@@ -96,6 +103,8 @@ const styles = StyleSheet.create({
   menuLabel: { flex: 1, fontSize: 14, color: '#1a1a1a' },
   logoutBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, margin: 16, marginTop: 24, padding: 16, backgroundColor: '#fff5f5', borderRadius: 12 },
   logoutText: { fontSize: 14, color: '#ef4444', fontWeight: '500' },
+  deleteAccountLink: { alignItems: 'center', paddingVertical: 8, marginBottom: 16 },
+  deleteAccountText: { fontSize: 12, color: '#bbb', textDecorationLine: 'underline' },
   loginCard: { margin: 16, backgroundColor: '#fff', borderRadius: 16, padding: 24, alignItems: 'center', gap: 10, borderWidth: 0.5, borderColor: '#eee' },
   loginTitle: { fontSize: 18, fontWeight: '600', color: '#1a1a1a' },
   loginText: { fontSize: 13, color: '#888', textAlign: 'center', lineHeight: 20 },

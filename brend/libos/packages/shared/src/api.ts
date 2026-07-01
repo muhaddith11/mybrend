@@ -45,6 +45,10 @@ export const api = {
     me: () => request<User>('/auth/me'),
     updateProfile: (data: { name?: string; avatar?: string }) =>
       request<User>('/auth/profile', { method: 'PATCH', body: JSON.stringify(data) }),
+    deleteAccount: (code: string) =>
+      request<{ success: boolean }>('/auth/delete-account', {
+        method: 'DELETE', body: JSON.stringify({ code }),
+      }),
   },
 
   stores: {

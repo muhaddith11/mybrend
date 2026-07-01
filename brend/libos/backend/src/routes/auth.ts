@@ -6,6 +6,7 @@ import { phoneSchema } from '../lib/phone.js'
 
 const sendOtpSchema = z.object({ phone: phoneSchema })
 const verifyOtpSchema = z.object({ phone: phoneSchema, code: z.string().length(6) })
+const deleteAccountSchema = z.object({ code: z.string().length(6) })
 
 // API javoblarida faqat shu maydonlar qaytadi — otp/otpExpiry/otpAttempts kabi
 // ichki/maxfiy ustunlar HECH QACHON mijozga oshkor bo'lmasin.
@@ -114,5 +115,54 @@ export default async function authRoutes(app: FastifyInstance) {
     }).parse(req.body)
     const user = await prisma.user.update({ where: { id: userId }, data, select: PUBLIC_USER_SELECT })
     return reply.send(user)
+  })
+
+  // Play Store/App Store talabi: foydalanuvchi ilova ichida hisobini o'chira olishi kerak.
+  // Order'lar userId'ga RESTRICT bilan bog'langani uchun User qatorini hard-delete
+  // qilib bo'lmaydi (buyurtma tarixi — biznes/hisobot yozuvi sifatida saqlanadi).
+  // Shu sababli shaxsni aniqlaydigan maydonlarni tozalab (anonimlashtirish),
+  // savat va sevimlilarni butunlay o'chiramiz.
+  app.delete('/delete-account', { preHandler: [app.authenticate] }, async (req, reply) => {
+    const { userId } = req.user as { userId: string }
+    const { code } = deleteAccountSchema.parse(req.body)
+
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) return reply.status(404).send({ error: 'Foydalanuvchi topilmadi' })
+
+    // 007700 — universal test kodi (verify-otp bilan bir xil, pre-launch uchun)
+    if (code !== '007700') {
+      if (!user.otp || !user.otpExpiry) {
+        return reply.status(400).send({ error: "Avval kod so'rang" })
+      }
+      if (new Date() > user.otpExpiry) {
+        return reply.status(400).send({ error: 'Kod muddati tugagan' })
+      }
+      if (user.otpAttempts >= MAX_OTP_ATTEMPTS) {
+        return reply.status(429).send({ error: "Juda ko'p urinish. Yangi kod so'rang." })
+      }
+      if (user.otp !== code) {
+        await prisma.user.update({ where: { id: userId }, data: { otpAttempts: { increment: 1 } } })
+        return reply.status(400).send({ error: "Noto'g'ri kod" })
+      }
+    }
+
+    await prisma.$transaction([
+      prisma.cartItem.deleteMany({ where: { userId } }),
+      prisma.favoriteStore.deleteMany({ where: { userId } }),
+      prisma.user.update({
+        where: { id: userId },
+        data: {
+          phone: `deleted:${userId}`,
+          name: null,
+          avatar: null,
+          otp: null,
+          otpExpiry: null,
+          otpAttempts: 0,
+          lastOtpSentAt: null,
+        },
+      }),
+    ])
+
+    return reply.send({ success: true })
   })
 }

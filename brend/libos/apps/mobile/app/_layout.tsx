@@ -21,6 +21,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="auth/login" options={{ presentation: 'modal' }} />
           <Stack.Screen name="auth/verify" options={{ presentation: 'card' }} />
+          <Stack.Screen name="auth/delete-account" options={{ presentation: 'card' }} />
           <Stack.Screen name="store/[slug]" options={{ presentation: 'card' }} />
           <Stack.Screen name="product/[id]" options={{ presentation: 'card' }} />
           <Stack.Screen name="checkout" options={{ presentation: 'card' }} />
