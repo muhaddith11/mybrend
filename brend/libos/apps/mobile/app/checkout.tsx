@@ -12,7 +12,9 @@ import { useCartStore } from '../store/cart'
 import { useAuthStore } from '../store/auth'
 
 type DeliveryType = 'DELIVERY' | 'PICKUP' | 'CASH_ON_DOOR'
-type PaymentType = 'CLICK' | 'PAYME' | 'CASH'
+// Veb bilan bir xil: hozir faqat CASH va TRANSFER (bot orqali karta/QR) faol.
+// CLICK/PAYME kod saqlanadi — keyin yoqish uchun ro'yxatga qaytarish kifoya.
+type PaymentType = 'CASH' | 'CLICK' | 'PAYME' | 'TRANSFER'
 
 export default function CheckoutScreen() {
   const router = useRouter()
@@ -95,8 +97,11 @@ export default function CheckoutScreen() {
 
       clearStore(storeId)
 
-      if (order.paymentUrl) {
-        await Linking.openURL(order.paymentUrl)
+      // Click/Payme → paymentUrl, TRANSFER (bot orqali) → botUrl. Ikkalasi ham
+      // tashqi sahifaga/botga yo'naltiradi (veb bilan bir xil mantiq).
+      const redirectUrl = order.paymentUrl ?? order.botUrl
+      if (redirectUrl) {
+        await Linking.openURL(redirectUrl)
       }
       router.replace({ pathname: '/orders/[id]', params: { id: order.id } })
     } catch (e: any) {
@@ -207,10 +212,14 @@ export default function CheckoutScreen() {
         {/* To'lov usuli */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>To'lov usuli</Text>
+          {/*
+            Veb bilan bir xil: hozir faqat Naqd va Karta (bot orqali QR/karta
+            o'tkazma). Click/Payme kod saqlanadi — keyin yoqish uchun shu ro'yxatga
+            qaytarish kifoya: { value: 'CLICK', ... }, { value: 'PAYME', ... }
+          */}
           {[
             { value: 'CASH', icon: '💵', label: 'Naqd pul', desc: 'Yetkazilganda yoki do\'konda' },
-            { value: 'CLICK', icon: '🟡', label: 'Click', desc: 'Click ilovasi orqali' },
-            { value: 'PAYME', icon: '🔵', label: 'Payme', desc: 'Payme ilovasi orqali' },
+            { value: 'TRANSFER', icon: '💳', label: 'Karta', desc: 'Bot orqali — QR yoki karta raqami' },
           ].map(opt => (
             <TouchableOpacity
               key={opt.value}
