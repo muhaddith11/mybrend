@@ -23,6 +23,7 @@ export default function ProductScreen() {
 
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
+  const [selectedImg, setSelectedImg] = useState(0)
   const [added, setAdded] = useState(false)
 
   const { data: product, isLoading } = useQuery({
@@ -36,6 +37,8 @@ export default function ProductScreen() {
   if (!product) return null
 
   const themeColor = (product as any).store?.themeColor ?? '#534AB7'
+  const images: string[] = product.images ?? []
+  const inStock = product.inStock ?? true
   const sizes = [...new Set(product.variants.map(v => v.size).filter(Boolean))]
   const colors = [...new Set(product.variants.map(v => v.color).filter(Boolean))]
 
@@ -101,14 +104,33 @@ export default function ProductScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Rasm */}
         <View style={styles.imgContainer}>
-          {product.images[0] ? (
-            <Image source={{ uri: product.images[0] }} style={styles.image} resizeMode="cover" />
+          {images[selectedImg] ? (
+            <Image source={{ uri: images[selectedImg] }} style={styles.image} resizeMode="cover" />
           ) : (
             <View style={[styles.imgPlaceholder, { backgroundColor: themeColor + '18' }]}>
               <Ionicons name="shirt-outline" size={80} color={themeColor} />
             </View>
           )}
         </View>
+
+        {/* Rasm galereyasi (bir nechta rasm bo'lsa) */}
+        {images.length > 1 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.thumbs}
+          >
+            {images.map((src, i) => (
+              <TouchableOpacity
+                key={i}
+                style={[styles.thumb, selectedImg === i && { borderColor: themeColor }]}
+                onPress={() => setSelectedImg(i)}
+              >
+                <Image source={{ uri: src }} style={styles.thumbImg} resizeMode="cover" />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
 
         <View style={styles.content}>
           {/* Nom va narx */}
@@ -182,6 +204,14 @@ export default function ProductScreen() {
             </View>
           )}
 
+          {/* Bor / tugagan holati */}
+          <View style={styles.stockRow}>
+            <View style={[styles.stockDot, { backgroundColor: inStock ? '#22c55e' : '#ef4444' }]} />
+            <Text style={[styles.stockText, { color: inStock ? '#16a34a' : '#dc2626' }]}>
+              {inStock ? 'Sotuvda bor' : 'Tugagan'}
+            </Text>
+          </View>
+
           {/* Tavsif */}
           {product.description && (
             <View style={styles.section}>
@@ -195,12 +225,13 @@ export default function ProductScreen() {
       {/* Savatchaga qo'shish */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.addBtn, { backgroundColor: added ? '#22c55e' : themeColor }]}
+          style={[styles.addBtn, { backgroundColor: !inStock ? '#ccc' : added ? '#22c55e' : themeColor }]}
           onPress={handleAddToCart}
+          disabled={!inStock}
         >
           <Ionicons name={added ? 'checkmark' : 'bag-add-outline'} size={20} color="#fff" />
           <Text style={styles.addBtnText}>
-            {added ? 'Savatga qo\'shildi!' : 'Savatga qo\'shish'}
+            {!inStock ? 'Tugagan' : added ? 'Savatga qo\'shildi!' : 'Savatga qo\'shish'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -221,6 +252,9 @@ const styles = StyleSheet.create({
   imgContainer: { width, height: width * 0.9 },
   image: { width: '100%', height: '100%' },
   imgPlaceholder: { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' },
+  thumbs: { paddingHorizontal: 16, paddingTop: 12, gap: 8 },
+  thumb: { width: 60, height: 60, borderRadius: 8, overflow: 'hidden', borderWidth: 2, borderColor: 'transparent' },
+  thumbImg: { width: '100%', height: '100%' },
   content: { padding: 20 },
   titleRow: { marginBottom: 8 },
   name: { fontSize: 20, fontWeight: '600', color: '#1a1a1a', marginBottom: 6 },
@@ -234,6 +268,9 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#e0e0e0' },
   chipText: { fontSize: 13, color: '#444' },
+  stockRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 20 },
+  stockDot: { width: 8, height: 8, borderRadius: 4 },
+  stockText: { fontSize: 13, fontWeight: '600' },
   description: { fontSize: 14, color: '#666', lineHeight: 22 },
   footer: { padding: 16, borderTopWidth: 0.5, borderTopColor: '#f0f0f0' },
   addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, borderRadius: 12 },
