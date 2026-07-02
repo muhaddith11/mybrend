@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity,
-  TextInput, StyleSheet, FlatList, Image,
+  TextInput, StyleSheet, FlatList, Image, Linking,
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
@@ -140,6 +140,17 @@ export default function HomeScreen() {
               />
             )}
 
+            {/* Haftalik chegirmalar promo banneri */}
+            <View style={styles.promo}>
+              <View style={styles.promoLeft}>
+                <Text style={styles.promoIcon}>🔥</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.promoTitle}>Haftalik chegirmalar</Text>
+                  <Text style={styles.promoSub}>Eng yaxshi narxlar — faqat shu hafta. Shoshiling!</Text>
+                </View>
+              </View>
+            </View>
+
             <View style={styles.tabs}>
               {TABS.map(tab => (
                 <TouchableOpacity
@@ -162,8 +173,45 @@ export default function HomeScreen() {
             <Text style={styles.empty}>Do'konlar topilmadi</Text>
           )
         }
+        ListFooterComponent={<HomeFooter />}
       />
     </SafeAreaView>
+  )
+}
+
+function HomeFooter() {
+  const router = useRouter()
+  return (
+    <View style={styles.footer}>
+      <View style={styles.footerBrand}>
+        <View style={styles.footerLogoMark}><Text style={styles.footerLogoLetter}>Z</Text></View>
+        <Text style={styles.footerLogoText}>ZYFF</Text>
+      </View>
+      <Text style={styles.footerDesc}>
+        Shahringizdagi barcha kiyim do'konlari bir joyda. Online buyurtma bering yoki eshikda to'lang.
+      </Text>
+
+      <View style={styles.footerLinks}>
+        <TouchableOpacity onPress={() => router.push('/about')}><Text style={styles.footerLink}>Biz haqimizda</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/delivery')}><Text style={styles.footerLink}>Yetkazib berish</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/open-store')}><Text style={styles.footerLink}>Do'kon ochish</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/help')}><Text style={styles.footerLink}>Yordam</Text></TouchableOpacity>
+      </View>
+
+      <View style={styles.footerContacts}>
+        <TouchableOpacity onPress={() => Linking.openURL('tel:+998502500550')}>
+          <Text style={styles.footerContact}>📞 +998 50 250 05 50</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => Linking.openURL('https://instagram.com/zyff.uz')}>
+          <Text style={styles.footerContact}>📷 Instagram: @zyff.uz</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => Linking.openURL('https://t.me/zyff_uz')}>
+          <Text style={styles.footerContact}>✈️ Telegram: @zyff_uz</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.footerCopy}>© 2026 ZYFF · Barcha huquqlar himoyalangan</Text>
+    </View>
   )
 }
 
@@ -239,4 +287,20 @@ const styles = StyleSheet.create({
   searchCard: { flex: 1 },
   searchImgWrap: { width: '100%', aspectRatio: 1, borderRadius: 10, overflow: 'hidden', backgroundColor: '#F1EFE8' },
   searchStoreName: { fontSize: 11, color: '#888', marginTop: 2 },
+  promo: { marginHorizontal: 16, marginBottom: 16, backgroundColor: '#3C3489', borderRadius: 14, padding: 16 },
+  promoLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  promoIcon: { fontSize: 28 },
+  promoTitle: { color: '#fff', fontSize: 15, fontWeight: '700', marginBottom: 2 },
+  promoSub: { color: 'rgba(255,255,255,0.8)', fontSize: 12, lineHeight: 16 },
+  footer: { backgroundColor: '#1a1a1a', paddingHorizontal: 20, paddingVertical: 28, marginTop: 8 },
+  footerBrand: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  footerLogoMark: { width: 30, height: 30, backgroundColor: '#534AB7', borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
+  footerLogoLetter: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  footerLogoText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  footerDesc: { color: 'rgba(255,255,255,0.55)', fontSize: 13, lineHeight: 19, marginBottom: 20 },
+  footerLinks: { gap: 10, marginBottom: 20 },
+  footerLink: { color: 'rgba(255,255,255,0.8)', fontSize: 14 },
+  footerContacts: { gap: 10, marginBottom: 20, borderTopWidth: 0.5, borderTopColor: 'rgba(255,255,255,0.15)', paddingTop: 20 },
+  footerContact: { color: 'rgba(255,255,255,0.8)', fontSize: 13 },
+  footerCopy: { color: 'rgba(255,255,255,0.4)', fontSize: 11, borderTopWidth: 0.5, borderTopColor: 'rgba(255,255,255,0.15)', paddingTop: 16 },
 })
