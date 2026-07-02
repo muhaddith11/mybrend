@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { StoreCard } from '../../components/StoreCard'
 import { WishlistHeartButton } from '../../components/WishlistHeartButton'
 import { HeroBanner } from '../../components/HeroBanner'
+import { HomeHeader } from '../../components/HomeHeader'
 
 const TABS: { label: string; value: Gender }[] = [
   { label: 'Erkaklar', value: 'MEN' },
@@ -73,17 +74,7 @@ export default function HomeScreen() {
   if (searchQuery) {
     return (
       <SafeAreaView style={styles.safe}>
-        <View style={styles.header}>
-          <View style={styles.logoRow}>
-            <View style={styles.logoMark}><Text style={styles.logoLetter}>Z</Text></View>
-            <Text style={styles.logoText}>
-              ZY<Text style={{ color: '#534AB7' }}>FF</Text>
-            </Text>
-          </View>
-          <View style={styles.headerIcons}>
-            <Text style={styles.iconBtn}>🛒</Text>
-          </View>
-        </View>
+        <HomeHeader />
         {searchBar}
         <FlatList
           data={searchResults?.products ?? []}
@@ -127,17 +118,7 @@ export default function HomeScreen() {
         renderItem={({ item }) => <StoreCard store={item} onPress={() => router.push(`/store/${item.slug}`)} />}
         ListHeaderComponent={
           <>
-            <View style={styles.header}>
-              <View style={styles.logoRow}>
-                <View style={styles.logoMark}><Text style={styles.logoLetter}>Z</Text></View>
-                <Text style={styles.logoText}>
-                  ZY<Text style={{ color: '#534AB7' }}>FF</Text>
-                </Text>
-              </View>
-              <View style={styles.headerIcons}>
-                <Text style={styles.iconBtn}>🛒</Text>
-              </View>
-            </View>
+            <HomeHeader />
 
             {searchBar}
 
@@ -230,13 +211,6 @@ function ProductRow({
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#fff' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
-  logoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  logoMark: { width: 34, height: 34, backgroundColor: '#3C3489', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  logoLetter: { color: '#fff', fontSize: 16, fontWeight: '500' },
-  logoText: { fontSize: 22, fontWeight: '500', color: '#1a1a1a', letterSpacing: -0.5 },
-  headerIcons: { flexDirection: 'row', gap: 12 },
-  iconBtn: { fontSize: 22 },
   searchBar: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginBottom: 12, backgroundColor: '#F1EFE8', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
   searchIcon: { fontSize: 16 },
   searchInput: { flex: 1, fontSize: 14, color: '#2C2C2A' },
