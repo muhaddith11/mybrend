@@ -160,6 +160,9 @@ export const t = {
     mLoginCardText: "Buyurtmalaringizni kuzating va sevimli do'konlarni saqlang",
     mCity: 'Shahar',
     mOtherCitiesSoon: 'Boshqa shaharlar tez kunda',
+    mTagDelivery: 'Yetkazish',
+    mTagPickup: 'Bron',
+    mTagCash: 'Naqd',
   },
   ru: {
     deliveryAcross: 'Доставка по всему Узбекистану',
@@ -308,6 +311,9 @@ export const t = {
     mLoginCardText: 'Отслеживайте заказы и сохраняйте любимые магазины',
     mCity: 'Город',
     mOtherCitiesSoon: 'Другие города скоро',
+    mTagDelivery: 'Доставка',
+    mTagPickup: 'Бронь',
+    mTagCash: 'Нал',
   },
   en: {
     deliveryAcross: 'Delivery across Uzbekistan',
@@ -456,6 +462,9 @@ export const t = {
     mLoginCardText: 'Track your orders and save favorite stores',
     mCity: 'City',
     mOtherCitiesSoon: 'Other cities coming soon',
+    mTagDelivery: 'Delivery',
+    mTagPickup: 'Reserve',
+    mTagCash: 'Cash',
   },
 } satisfies Record<string, Record<string, string>>
 

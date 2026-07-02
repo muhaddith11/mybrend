@@ -5,24 +5,23 @@ import {
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
-import { api } from '@libos/shared'
+import { api, useT } from '@libos/shared'
 import type { Gender, Product } from '@libos/shared'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { StoreCard } from '../../components/StoreCard'
 import { WishlistHeartButton } from '../../components/WishlistHeartButton'
 import { HeroBanner } from '../../components/HeroBanner'
 import { HomeHeader } from '../../components/HomeHeader'
+import { useLangStore } from '../../store/lang'
 
-const TABS: { label: string; value: Gender }[] = [
-  { label: 'Erkaklar', value: 'MEN' },
-  { label: 'Ayollar', value: 'WOMEN' },
-  { label: 'Bolalar', value: 'KIDS' },
-]
+const GENDERS: Gender[] = ['MEN', 'WOMEN', 'KIDS']
 
 export default function HomeScreen() {
   const router = useRouter()
+  const tr = useT(useLangStore(s => s.lang))
   const [activeGender, setActiveGender] = useState<Gender>('MEN')
   const [search, setSearch] = useState('')
+  const genderLabel: Record<Gender, string> = { MEN: tr.men, WOMEN: tr.women, KIDS: tr.kids }
 
   const searchQuery = search.trim()
 
@@ -63,7 +62,7 @@ export default function HomeScreen() {
       <Text style={styles.searchIcon}>🔍</Text>
       <TextInput
         style={styles.searchInput}
-        placeholder="Do'kon yoki mahsulot qidiring..."
+        placeholder={tr.mSearchPlaceholder}
         placeholderTextColor="#888780"
         value={search}
         onChangeText={setSearch}
@@ -95,13 +94,13 @@ export default function HomeScreen() {
                 )}
               </View>
               <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
-              <Text style={styles.productPrice}>{item.price.toLocaleString()} so'm</Text>
+              <Text style={styles.productPrice}>{item.price.toLocaleString()} {tr.som}</Text>
               <Text style={styles.searchStoreName}>{item.store?.name}</Text>
             </TouchableOpacity>
           )}
           ListEmptyComponent={
             <Text style={styles.empty}>
-              {searchLoading ? 'Qidirilmoqda...' : `"${searchQuery}" bo'yicha hech narsa topilmadi`}
+              {searchLoading ? tr.mSearching : `"${searchQuery}" ${tr.mNothingFound}`}
             </Text>
           }
         />
@@ -126,16 +125,18 @@ export default function HomeScreen() {
 
             {!!featured?.products.length && (
               <ProductRow
-                title="Ommabop mahsulotlar"
+                title={tr.popularProducts}
                 products={featured.products}
+                cur={tr.som}
                 onPressProduct={p => router.push(`/product/${p.id}`)}
               />
             )}
 
             {!!discounted?.products.length && (
               <ProductRow
-                title="Chegirmalar"
+                title={tr.discountedProducts}
                 products={discounted.products}
+                cur={tr.som}
                 onPressProduct={p => router.push(`/product/${p.id}`)}
               />
             )}
@@ -145,21 +146,21 @@ export default function HomeScreen() {
               <View style={styles.promoLeft}>
                 <Text style={styles.promoIcon}>🔥</Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.promoTitle}>Haftalik chegirmalar</Text>
-                  <Text style={styles.promoSub}>Eng yaxshi narxlar — faqat shu hafta. Shoshiling!</Text>
+                  <Text style={styles.promoTitle}>{tr.weeklyDeals}</Text>
+                  <Text style={styles.promoSub}>{tr.weeklyDealsSub}</Text>
                 </View>
               </View>
             </View>
 
             <View style={styles.tabs}>
-              {TABS.map(tab => (
+              {GENDERS.map(g => (
                 <TouchableOpacity
-                  key={tab.value}
-                  style={[styles.tab, activeGender === tab.value && styles.tabActive]}
-                  onPress={() => setActiveGender(tab.value)}
+                  key={g}
+                  style={[styles.tab, activeGender === g && styles.tabActive]}
+                  onPress={() => setActiveGender(g)}
                 >
-                  <Text style={[styles.tabText, activeGender === tab.value && styles.tabTextActive]}>
-                    {tab.label}
+                  <Text style={[styles.tabText, activeGender === g && styles.tabTextActive]}>
+                    {genderLabel[g]}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -168,9 +169,9 @@ export default function HomeScreen() {
         }
         ListEmptyComponent={
           isLoading ? (
-            <Text style={styles.empty}>Yuklanmoqda...</Text>
+            <Text style={styles.empty}>{tr.mLoading}</Text>
           ) : (
-            <Text style={styles.empty}>Do'konlar topilmadi</Text>
+            <Text style={styles.empty}>{tr.mStoresNotFound}</Text>
           )
         }
         ListFooterComponent={<HomeFooter />}
@@ -181,21 +182,20 @@ export default function HomeScreen() {
 
 function HomeFooter() {
   const router = useRouter()
+  const tr = useT(useLangStore(s => s.lang))
   return (
     <View style={styles.footer}>
       <View style={styles.footerBrand}>
         <View style={styles.footerLogoMark}><Text style={styles.footerLogoLetter}>Z</Text></View>
         <Text style={styles.footerLogoText}>ZYFF</Text>
       </View>
-      <Text style={styles.footerDesc}>
-        Shahringizdagi barcha kiyim do'konlari bir joyda. Online buyurtma bering yoki eshikda to'lang.
-      </Text>
+      <Text style={styles.footerDesc}>{tr.footerDesc}</Text>
 
       <View style={styles.footerLinks}>
-        <TouchableOpacity onPress={() => router.push('/about')}><Text style={styles.footerLink}>Biz haqimizda</Text></TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/delivery')}><Text style={styles.footerLink}>Yetkazib berish</Text></TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/open-store')}><Text style={styles.footerLink}>Do'kon ochish</Text></TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/help')}><Text style={styles.footerLink}>Yordam</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/about')}><Text style={styles.footerLink}>{tr.aboutUs}</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/delivery')}><Text style={styles.footerLink}>{tr.delivery}</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/open-store')}><Text style={styles.footerLink}>{tr.openStore}</Text></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/help')}><Text style={styles.footerLink}>{tr.help}</Text></TouchableOpacity>
       </View>
 
       <View style={styles.footerContacts}>
@@ -210,16 +210,17 @@ function HomeFooter() {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.footerCopy}>© 2026 ZYFF · Barcha huquqlar himoyalangan</Text>
+      <Text style={styles.footerCopy}>{tr.copyright}</Text>
     </View>
   )
 }
 
 function ProductRow({
-  title, products, onPressProduct,
+  title, products, cur, onPressProduct,
 }: {
   title: string
   products: Product[]
+  cur: string
   onPressProduct: (p: Product) => void
 }) {
   return (
@@ -245,7 +246,7 @@ function ProductRow({
             </View>
             <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
             <View style={styles.productPriceRow}>
-              <Text style={styles.productPrice}>{product.price.toLocaleString()} so'm</Text>
+              <Text style={styles.productPrice}>{product.price.toLocaleString()} {cur}</Text>
               {!!product.originalPrice && product.originalPrice > product.price && (
                 <Text style={styles.productOriginalPrice}>{product.originalPrice.toLocaleString()}</Text>
               )}

@@ -2,24 +2,27 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { useT } from '@libos/shared'
 import { useCartStore } from '../../store/cart'
+import { useLangStore } from '../../store/lang'
 
 export default function CartScreen() {
   const router = useRouter()
+  const tr = useT(useLangStore(s => s.lang))
   const { items, updateQty, removeItem, totalPrice, itemsByStore } = useCartStore()
 
   if (items.length === 0) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Savat</Text>
+          <Text style={styles.headerTitle}>{tr.cart}</Text>
         </View>
         <View style={styles.empty}>
           <Ionicons name="bag-outline" size={64} color="#ddd" />
-          <Text style={styles.emptyTitle}>Savat bo'sh</Text>
-          <Text style={styles.emptyText}>Do'konlarga kiring va mahsulot tanlang</Text>
+          <Text style={styles.emptyTitle}>{tr.mCartEmpty}</Text>
+          <Text style={styles.emptyText}>{tr.mCartEmptySub}</Text>
           <TouchableOpacity style={styles.shopBtn} onPress={() => router.push('/')}>
-            <Text style={styles.shopBtnText}>Do'konlarga o'tish</Text>
+            <Text style={styles.shopBtnText}>{tr.mGoToStores}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -32,8 +35,8 @@ export default function CartScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Savat</Text>
-        <Text style={styles.headerCount}>{items.length} ta mahsulot</Text>
+        <Text style={styles.headerTitle}>{tr.cart}</Text>
+        <Text style={styles.headerCount}>{items.length} {tr.mItemsWord}</Text>
       </View>
 
       <FlatList
@@ -72,7 +75,7 @@ export default function CartScreen() {
                         {[item.size, item.color].filter(Boolean).join(' · ')}
                       </Text>
                     )}
-                    <Text style={styles.itemPrice}>{item.price.toLocaleString()} so'm</Text>
+                    <Text style={styles.itemPrice}>{item.price.toLocaleString()} {tr.som}</Text>
                   </View>
                   <View style={styles.itemRight}>
                     <TouchableOpacity
@@ -108,7 +111,7 @@ export default function CartScreen() {
                 })}
               >
                 <Text style={styles.checkoutText}>
-                  Buyurtma berish — {storeTotal.toLocaleString()} so'm
+                  {tr.mOrderNow} — {storeTotal.toLocaleString()} {tr.som}
                 </Text>
                 <Ionicons name="arrow-forward" size={16} color="#fff" />
               </TouchableOpacity>
@@ -118,8 +121,8 @@ export default function CartScreen() {
         ListFooterComponent={
           storeIds.length > 1 ? (
             <View style={styles.totalBar}>
-              <Text style={styles.totalLabel}>Jami barcha do'konlar:</Text>
-              <Text style={styles.totalPrice}>{totalPrice().toLocaleString()} so'm</Text>
+              <Text style={styles.totalLabel}>{tr.mTotalAllStores}</Text>
+              <Text style={styles.totalPrice}>{totalPrice().toLocaleString()} {tr.som}</Text>
             </View>
           ) : null
         }

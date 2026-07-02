@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { View, Text, TextInput, StyleSheet, FlatList } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
-import { api } from '@libos/shared'
+import { api, useT } from '@libos/shared'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { StoreCard } from '../../components/StoreCard'
+import { useLangStore } from '../../store/lang'
 
 export default function StoresScreen() {
   const router = useRouter()
+  const tr = useT(useLangStore(s => s.lang))
   const [search, setSearch] = useState('')
 
   const { data, isLoading } = useQuery({
@@ -18,14 +20,14 @@ export default function StoresScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Barcha do'konlar</Text>
+        <Text style={styles.headerTitle}>{tr.mAllStores}</Text>
       </View>
 
       <View style={styles.searchBar}>
         <Text style={styles.searchIcon}>🔍</Text>
         <TextInput
           style={styles.searchInput}
-          placeholder="Do'kon nomini qidiring..."
+          placeholder={tr.mSearchStoreName}
           placeholderTextColor="#888780"
           value={search}
           onChangeText={setSearch}
@@ -41,9 +43,9 @@ export default function StoresScreen() {
         )}
         ListEmptyComponent={
           isLoading ? (
-            <Text style={styles.empty}>Yuklanmoqda...</Text>
+            <Text style={styles.empty}>{tr.mLoading}</Text>
           ) : (
-            <Text style={styles.empty}>Do'konlar topilmadi</Text>
+            <Text style={styles.empty}>{tr.mStoresNotFound}</Text>
           )
         }
       />

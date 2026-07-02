@@ -1,7 +1,10 @@
 import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { useT } from '@libos/shared'
+import { useLangStore } from '../../store/lang'
 
 export default function TabsLayout() {
+  const tr = useT(useLangStore(s => s.lang))
   return (
     <Tabs
       screenOptions={{
@@ -20,35 +23,35 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Bosh sahifa',
+          title: tr.home,
           tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="stores"
         options={{
-          title: "Do'konlar",
+          title: tr.stores,
           tabBarIcon: ({ color, size }) => <Ionicons name="storefront-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="cart"
         options={{
-          title: 'Savat',
+          title: tr.cart,
           tabBarIcon: ({ color, size }) => <Ionicons name="bag-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="favorites"
         options={{
-          title: 'Sevimli',
+          title: tr.saved,
           tabBarIcon: ({ color, size }) => <Ionicons name="heart-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profil',
+          title: tr.profile,
           tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
         }}
       />

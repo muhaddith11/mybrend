@@ -2,17 +2,19 @@ import { useState } from 'react'
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
-import { api } from '@libos/shared'
+import { api, useT } from '@libos/shared'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuthStore } from '../../store/auth'
 import { useWishlistStore, type WishlistItem } from '../../store/wishlist'
+import { useLangStore } from '../../store/lang'
 import { StoreCard } from '../../components/StoreCard'
 
 type Tab = 'stores' | 'products'
 
 export default function FavoritesScreen() {
   const router = useRouter()
+  const tr = useT(useLangStore(s => s.lang))
   const { isLoggedIn } = useAuthStore()
   const [tab, setTab] = useState<Tab>('stores')
   const wishlistItems = useWishlistStore(s => s.items)
@@ -26,15 +28,15 @@ export default function FavoritesScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Sevimlilar</Text>
+        <Text style={styles.headerTitle}>{tr.mFavorites}</Text>
       </View>
 
       <View style={styles.tabs}>
         <TouchableOpacity style={[styles.tab, tab === 'stores' && styles.tabActive]} onPress={() => setTab('stores')}>
-          <Text style={[styles.tabText, tab === 'stores' && styles.tabTextActive]}>Do'konlar</Text>
+          <Text style={[styles.tabText, tab === 'stores' && styles.tabTextActive]}>{tr.mStoresTab}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.tab, tab === 'products' && styles.tabActive]} onPress={() => setTab('products')}>
-          <Text style={[styles.tabText, tab === 'products' && styles.tabTextActive]}>Mahsulotlar</Text>
+          <Text style={[styles.tabText, tab === 'products' && styles.tabTextActive]}>{tr.mProductsTab}</Text>
         </TouchableOpacity>
       </View>
 
@@ -42,10 +44,10 @@ export default function FavoritesScreen() {
         !isLoggedIn ? (
           <View style={styles.empty}>
             <Ionicons name="heart-outline" size={64} color="#ddd" />
-            <Text style={styles.emptyTitle}>Tizimga kiring</Text>
-            <Text style={styles.emptyText}>Sevimli do'konlaringizni ko'rish uchun kiring</Text>
+            <Text style={styles.emptyTitle}>{tr.loginToProfile}</Text>
+            <Text style={styles.emptyText}>{tr.mLoginToSeeFav}</Text>
             <TouchableOpacity style={styles.loginBtn} onPress={() => router.push('/auth/login')}>
-              <Text style={styles.loginBtnText}>Kirish</Text>
+              <Text style={styles.loginBtnText}>{tr.login}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -58,12 +60,12 @@ export default function FavoritesScreen() {
             )}
             ListEmptyComponent={
               isLoading ? (
-                <Text style={styles.emptyText}>Yuklanmoqda...</Text>
+                <Text style={styles.emptyText}>{tr.mLoading}</Text>
               ) : (
                 <View style={styles.empty}>
                   <Ionicons name="heart-outline" size={64} color="#ddd" />
-                  <Text style={styles.emptyTitle}>Hali sevimli do'kon yo'q</Text>
-                  <Text style={styles.emptyText}>Do'kon sahifasida ♡ bosing</Text>
+                  <Text style={styles.emptyTitle}>{tr.mNoFavStore}</Text>
+                  <Text style={styles.emptyText}>{tr.mNoFavStoreSub}</Text>
                 </View>
               )
             }
@@ -75,13 +77,13 @@ export default function FavoritesScreen() {
           keyExtractor={item => item.productId}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (
-            <WishlistProductRow item={item} onPress={() => router.push(`/product/${item.productId}`)} />
+            <WishlistProductRow item={item} cur={tr.som} onPress={() => router.push(`/product/${item.productId}`)} />
           )}
           ListEmptyComponent={
             <View style={styles.empty}>
               <Ionicons name="heart-outline" size={64} color="#ddd" />
-              <Text style={styles.emptyTitle}>Hali sevimli mahsulot yo'q</Text>
-              <Text style={styles.emptyText}>Mahsulot sahifasida ♡ bosing</Text>
+              <Text style={styles.emptyTitle}>{tr.mNoFavProduct}</Text>
+              <Text style={styles.emptyText}>{tr.mNoFavProductSub}</Text>
             </View>
           }
         />
@@ -90,7 +92,7 @@ export default function FavoritesScreen() {
   )
 }
 
-function WishlistProductRow({ item, onPress }: { item: WishlistItem; onPress: () => void }) {
+function WishlistProductRow({ item, cur, onPress }: { item: WishlistItem; cur: string; onPress: () => void }) {
   return (
     <TouchableOpacity style={styles.productRow} onPress={onPress}>
       <View style={styles.productImgWrap}>
@@ -104,7 +106,7 @@ function WishlistProductRow({ item, onPress }: { item: WishlistItem; onPress: ()
         <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
         <Text style={styles.productStore}>{item.storeName}</Text>
         <View style={styles.productPriceRow}>
-          <Text style={styles.productPrice}>{item.price.toLocaleString()} so'm</Text>
+          <Text style={styles.productPrice}>{item.price.toLocaleString()} {cur}</Text>
           {!!item.originalPrice && item.originalPrice > item.price && (
             <Text style={styles.productOriginalPrice}>{item.originalPrice.toLocaleString()}</Text>
           )}

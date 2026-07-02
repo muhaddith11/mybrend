@@ -1,7 +1,10 @@
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native'
 import type { Store } from '@libos/shared'
+import { useT } from '@libos/shared'
+import { useLangStore } from '../store/lang'
 
 export function StoreCard({ store, onPress }: { store: Store; onPress: () => void }) {
+  const tr = useT(useLangStore(s => s.lang))
   return (
     <TouchableOpacity style={styles.storeCard} onPress={onPress}>
       <View style={[styles.storeAvatar, { backgroundColor: store.themeBg }]}>
@@ -15,19 +18,19 @@ export function StoreCard({ store, onPress }: { store: Store; onPress: () => voi
         <Text style={styles.storeName}>{store.name}</Text>
         <Text style={styles.storeAddr}>{store.address}</Text>
         <View style={styles.storeTags}>
-          {store.hasDelivery && <Tag label="Yetkazish" color="#E1F5EE" textColor="#0F6E56" />}
-          {store.hasPickup && <Tag label="Bron" color="#EEEDFE" textColor="#3C3489" />}
-          {store.hasCashOnDoor && <Tag label="Naqd" color="#FAEEDA" textColor="#633806" />}
+          {store.hasDelivery && <Tag label={tr.mTagDelivery} color="#E1F5EE" textColor="#0F6E56" />}
+          {store.hasPickup && <Tag label={tr.mTagPickup} color="#EEEDFE" textColor="#3C3489" />}
+          {store.hasCashOnDoor && <Tag label={tr.mTagCash} color="#FAEEDA" textColor="#633806" />}
         </View>
       </View>
       <View style={styles.storeRight}>
         <Text style={styles.rating}>
           ⭐ {store.rating.toFixed(1)}{!!store.reviewCount && ` (${store.reviewCount})`}
         </Text>
-        <Text style={styles.itemCount}>{store._count.products} mahsulot</Text>
+        <Text style={styles.itemCount}>{store._count.products} {tr.products}</Text>
         <View style={[styles.openBadge, { backgroundColor: store.isOpen ? '#EAF3DE' : '#FCEBEB' }]}>
           <Text style={{ fontSize: 10, color: store.isOpen ? '#3B6D11' : '#A32D2D' }}>
-            {store.isOpen ? 'Ochiq' : 'Yopiq'}
+            {store.isOpen ? tr.open : tr.closed}
           </Text>
         </View>
       </View>

@@ -7,15 +7,17 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { api } from '@libos/shared'
+import { api, useT } from '@libos/shared'
 import { useCartStore } from '../../store/cart'
 import { useWishlistStore } from '../../store/wishlist'
+import { useLangStore } from '../../store/lang'
 
 const { width } = Dimensions.get('window')
 
 export default function ProductScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
+  const tr = useT(useLangStore(s => s.lang))
   const addToCart = useCartStore(s => s.addItem)
   const cartCount = useCartStore(s => s.totalCount())
   const wishlistHas = useWishlistStore(s => s.has)
@@ -32,7 +34,7 @@ export default function ProductScreen() {
   })
 
   if (isLoading) {
-    return <View style={styles.loading}><Text>Yuklanmoqda...</Text></View>
+    return <View style={styles.loading}><Text>{tr.mLoading}</Text></View>
   }
   if (!product) return null
 
@@ -138,11 +140,11 @@ export default function ProductScreen() {
             <Text style={styles.name}>{product.name}</Text>
             <View style={styles.priceRow}>
               <Text style={[styles.price, { color: themeColor }]}>
-                {product.price.toLocaleString()} so'm
+                {product.price.toLocaleString()} {tr.som}
               </Text>
               {!!product.originalPrice && product.originalPrice > product.price && (
                 <Text style={styles.originalPrice}>
-                  {product.originalPrice.toLocaleString()} so'm
+                  {product.originalPrice.toLocaleString()} {tr.som}
                 </Text>
               )}
             </View>
@@ -161,7 +163,7 @@ export default function ProductScreen() {
           {/* O'lcham tanlash */}
           {sizes.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>O'lcham</Text>
+              <Text style={styles.sectionLabel}>{tr.prSize}</Text>
               <View style={styles.chips}>
                 {sizes.map(size => (
                   <TouchableOpacity
@@ -184,7 +186,7 @@ export default function ProductScreen() {
           {/* Rang tanlash */}
           {colors.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Rang</Text>
+              <Text style={styles.sectionLabel}>{tr.prColor}</Text>
               <View style={styles.chips}>
                 {colors.map(color => (
                   <TouchableOpacity
@@ -208,14 +210,14 @@ export default function ProductScreen() {
           <View style={styles.stockRow}>
             <View style={[styles.stockDot, { backgroundColor: inStock ? '#22c55e' : '#ef4444' }]} />
             <Text style={[styles.stockText, { color: inStock ? '#16a34a' : '#dc2626' }]}>
-              {inStock ? 'Sotuvda bor' : 'Tugagan'}
+              {inStock ? tr.mInStockShort : tr.mSoldOut}
             </Text>
           </View>
 
           {/* Tavsif */}
           {product.description && (
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>Tavsif</Text>
+              <Text style={styles.sectionLabel}>{tr.mDescription}</Text>
               <Text style={styles.description}>{product.description}</Text>
             </View>
           )}
@@ -231,7 +233,7 @@ export default function ProductScreen() {
         >
           <Ionicons name={added ? 'checkmark' : 'bag-add-outline'} size={20} color="#fff" />
           <Text style={styles.addBtnText}>
-            {!inStock ? 'Tugagan' : added ? 'Savatga qo\'shildi!' : 'Savatga qo\'shish'}
+            {!inStock ? tr.mSoldOut : added ? tr.mAddedToCartShort : tr.addToCart}
           </Text>
         </TouchableOpacity>
       </View>
