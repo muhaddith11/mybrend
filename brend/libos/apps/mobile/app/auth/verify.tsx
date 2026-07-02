@@ -7,14 +7,16 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { api } from '@libos/shared'
+import { api, useT } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
+import { useLangStore } from '../../store/lang'
 
 const CODE_LENGTH = 6
 
 export default function VerifyScreen() {
   const { phone } = useLocalSearchParams<{ phone: string }>()
   const router = useRouter()
+  const tr = useT(useLangStore(s => s.lang))
   const login = useAuthStore(s => s.login)
 
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(''))
@@ -62,7 +64,7 @@ export default function VerifyScreen() {
   const verify = async (fullCode?: string) => {
     const codeStr = fullCode ?? code.join('')
     if (codeStr.length < CODE_LENGTH) {
-      setError('6 ta raqam kiriting')
+      setError(tr.mEnter6)
       return
     }
 
@@ -74,7 +76,7 @@ export default function VerifyScreen() {
       // Muvaffaqiyatli — bosh sahifaga
       router.replace('/')
     } catch (e: any) {
-      setError(e.message ?? 'Noto\'g\'ri kod')
+      setError(e.message ?? tr.mWrongCode)
       // Kodni tozalash
       setCode(Array(CODE_LENGTH).fill(''))
       inputs.current[0]?.focus()
@@ -92,7 +94,7 @@ export default function VerifyScreen() {
       setCode(Array(CODE_LENGTH).fill(''))
       inputs.current[0]?.focus()
     } catch (e: any) {
-      setError(e.message ?? 'Xatolik')
+      setError(e.message ?? tr.mErrorGeneric)
     } finally {
       setResending(false)
     }
@@ -117,10 +119,10 @@ export default function VerifyScreen() {
             <Text style={styles.icon}>💬</Text>
           </View>
 
-          <Text style={styles.title}>SMS kodni kiriting</Text>
+          <Text style={styles.title}>{tr.mEnterSmsCode}</Text>
           <Text style={styles.subtitle}>
             <Text style={styles.phoneText}>{maskedPhone}</Text>
-            {'\n'}raqamiga yuborilgan 6 ta raqamni kiriting
+            {'\n'}{tr.mCodeSentSuffix}
           </Text>
 
           {/* 6 ta katak */}
@@ -162,7 +164,7 @@ export default function VerifyScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.btnText}>Tasdiqlash</Text>
+              <Text style={styles.btnText}>{tr.mConfirm}</Text>
             )}
           </TouchableOpacity>
 
@@ -170,7 +172,7 @@ export default function VerifyScreen() {
           <View style={styles.resendRow}>
             {resendTimer > 0 ? (
               <Text style={styles.resendTimer}>
-                Qayta yuborish:{' '}
+                {tr.mResendLabel}{' '}
                 <Text style={styles.timerNum}>
                   0:{resendTimer.toString().padStart(2, '0')}
                 </Text>
@@ -180,7 +182,7 @@ export default function VerifyScreen() {
                 {resending ? (
                   <ActivityIndicator size="small" color="#534AB7" />
                 ) : (
-                  <Text style={styles.resendBtn}>Kodni qayta yuborish</Text>
+                  <Text style={styles.resendBtn}>{tr.mResendCode}</Text>
                 )}
               </TouchableOpacity>
             )}

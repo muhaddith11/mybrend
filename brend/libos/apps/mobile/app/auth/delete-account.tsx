@@ -6,13 +6,15 @@ import {
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { api } from '@libos/shared'
+import { api, useT } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
+import { useLangStore } from '../../store/lang'
 
 const CODE_LENGTH = 6
 
 export default function DeleteAccountScreen() {
   const router = useRouter()
+  const tr = useT(useLangStore(s => s.lang))
   const { user, logout } = useAuthStore()
 
   const [step, setStep] = useState<'warn' | 'code'>('warn')
@@ -30,7 +32,7 @@ export default function DeleteAccountScreen() {
       await api.auth.sendOtp(user.phone)
       setStep('code')
     } catch (e: any) {
-      setError(e.message ?? 'Xatolik yuz berdi')
+      setError(e.message ?? tr.mErrorGeneric)
     } finally {
       setLoading(false)
     }
@@ -61,7 +63,7 @@ export default function DeleteAccountScreen() {
   const confirmDelete = async (fullCode?: string) => {
     const codeStr = fullCode ?? code.join('')
     if (codeStr.length < CODE_LENGTH) {
-      setError('6 ta raqam kiriting')
+      setError(tr.mEnter6)
       return
     }
 
@@ -70,10 +72,10 @@ export default function DeleteAccountScreen() {
     try {
       await api.auth.deleteAccount(codeStr)
       await logout()
-      Alert.alert("Hisob o'chirildi", "Hisobingiz va shaxsiy ma'lumotlaringiz o'chirildi")
+      Alert.alert(tr.mDeleteDone, tr.mDeleteDoneMsg)
       router.replace('/')
     } catch (e: any) {
-      setError(e.message ?? "Noto'g'ri kod")
+      setError(e.message ?? tr.mWrongCode)
       setCode(Array(CODE_LENGTH).fill(''))
       inputs.current[0]?.focus()
     } finally {
@@ -97,16 +99,16 @@ export default function DeleteAccountScreen() {
               <Ionicons name="warning-outline" size={36} color="#ef4444" />
             </View>
 
-            <Text style={styles.title}>Hisobni butunlay o'chirish</Text>
+            <Text style={styles.title}>{tr.mDeleteAccount}</Text>
             <Text style={styles.subtitle}>
-              Bu amalni ortga qaytarib bo'lmaydi. Hisobni o'chirsangiz:
+              {tr.mDeleteWarnSub}
             </Text>
 
             <View style={styles.list}>
-              <Text style={styles.listItem}>• Ism, telefon raqam va profil ma'lumotlaringiz o'chiriladi</Text>
-              <Text style={styles.listItem}>• Savat va sevimli do'konlar ro'yxati tozalanadi</Text>
-              <Text style={styles.listItem}>• Ilovaga shu telefon raqam bilan qayta ro'yxatdan o'tishingiz mumkin</Text>
-              <Text style={styles.listItem}>• Buyurtmalar tarixi qonun talabiga ko'ra do'konlar hisobotida saqlanib qoladi (shaxsiy ma'lumotsiz)</Text>
+              <Text style={styles.listItem}>• {tr.mDelB1}</Text>
+              <Text style={styles.listItem}>• {tr.mDelB2}</Text>
+              <Text style={styles.listItem}>• {tr.mDelB3}</Text>
+              <Text style={styles.listItem}>• {tr.mDelB4}</Text>
             </View>
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -119,12 +121,12 @@ export default function DeleteAccountScreen() {
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.dangerBtnText}>Tasdiqlash kodini yuborish</Text>
+                <Text style={styles.dangerBtnText}>{tr.mSendCode}</Text>
               )}
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.cancelBtn} onPress={() => router.back()}>
-              <Text style={styles.cancelBtnText}>Bekor qilish</Text>
+              <Text style={styles.cancelBtnText}>{tr.mCancel}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -133,10 +135,10 @@ export default function DeleteAccountScreen() {
               <Text style={styles.icon}>💬</Text>
             </View>
 
-            <Text style={styles.title}>SMS kodni kiriting</Text>
+            <Text style={styles.title}>{tr.mEnterSmsCode}</Text>
             <Text style={styles.subtitle}>
               <Text style={styles.phoneText}>{user?.phone}</Text>
-              {'\n'}raqamiga yuborilgan 6 ta raqamni kiriting
+              {'\n'}{tr.mCodeSentSuffix}
             </Text>
 
             <View style={styles.codeRow}>
@@ -176,7 +178,7 @@ export default function DeleteAccountScreen() {
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.dangerBtnText}>Hisobni butunlay o'chirish</Text>
+                <Text style={styles.dangerBtnText}>{tr.mDeleteAccount}</Text>
               )}
             </TouchableOpacity>
           </View>

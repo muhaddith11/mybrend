@@ -5,10 +5,12 @@ import {
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { api } from '@libos/shared'
+import { api, useT } from '@libos/shared'
+import { useLangStore } from '../../store/lang'
 
 export default function LoginScreen() {
   const router = useRouter()
+  const tr = useT(useLangStore(s => s.lang))
   const [phone, setPhone] = useState('+998')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -25,7 +27,7 @@ export default function LoginScreen() {
   const handleSend = async () => {
     const digits = phone.replace(/\D/g, '')
     if (digits.length < 12) {
-      setError('Telefon raqamni to\'liq kiriting')
+      setError(tr.mPhoneIncomplete)
       return
     }
 
@@ -35,7 +37,7 @@ export default function LoginScreen() {
       await api.auth.sendOtp(phone)
       router.push({ pathname: '/auth/verify', params: { phone } })
     } catch (e: any) {
-      setError(e.message ?? 'Xatolik yuz berdi')
+      setError(e.message ?? tr.mErrorGeneric)
     } finally {
       setLoading(false)
     }
@@ -50,17 +52,17 @@ export default function LoginScreen() {
         {/* Logo */}
         <View style={styles.logoArea}>
           <View style={styles.logoMark}>
-            <Text style={styles.logoLetter}>L</Text>
+            <Text style={styles.logoLetter}>Z</Text>
           </View>
           <Text style={styles.logoText}>
-            Li<Text style={{ color: '#534AB7' }}>bos</Text>
+            ZY<Text style={{ color: '#534AB7' }}>FF</Text>
           </Text>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.title}>Kirish</Text>
+          <Text style={styles.title}>{tr.login}</Text>
           <Text style={styles.subtitle}>
-            Telefon raqamingizga SMS kod yuboramiz
+            {tr.mLoginSub}
           </Text>
 
           {/* Telefon input */}
@@ -80,7 +82,7 @@ export default function LoginScreen() {
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-          <Text style={styles.hint}>Masalan: +998901234567</Text>
+          <Text style={styles.hint}>{tr.mPhoneExample}</Text>
 
           {/* Davom etish tugmasi */}
           <TouchableOpacity
@@ -91,16 +93,12 @@ export default function LoginScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.btnText}>Kod olish</Text>
+              <Text style={styles.btnText}>{tr.mGetCode}</Text>
             )}
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.terms}>
-          Davom etish orqali siz{' '}
-          <Text style={styles.termsLink}>foydalanish shartlari</Text>
-          {' '}bilan roziliq bildirasiz
-        </Text>
+        <Text style={styles.terms}>{tr.mTerms}</Text>
       </KeyboardAvoidingView>
     </SafeAreaView>
   )
