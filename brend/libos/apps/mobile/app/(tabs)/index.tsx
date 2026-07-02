@@ -22,20 +22,93 @@ export default function HomeScreen() {
   const [activeGender, setActiveGender] = useState<Gender>('MEN')
   const [search, setSearch] = useState('')
 
+  const searchQuery = search.trim()
+
   const { data, isLoading } = useQuery({
-    queryKey: ['stores', activeGender, search],
-    queryFn: () => api.stores.list({ gender: activeGender, search }),
+    queryKey: ['stores', activeGender],
+    queryFn: () => api.stores.list({ gender: activeGender }),
+    enabled: !searchQuery,
   })
 
   const { data: featured } = useQuery({
     queryKey: ['products', 'featured'],
     queryFn: () => api.products.featured(),
+    enabled: !searchQuery,
   })
 
   const { data: discounted } = useQuery({
     queryKey: ['products', 'discounted'],
     queryFn: () => api.products.discounted(),
+    enabled: !searchQuery,
   })
+
+  // Butun mahsulotlar bo'ylab qidiruv (bitta do'kon nomi bilan cheklanmaydi)
+  const { data: searchResults, isLoading: searchLoading } = useQuery({
+    queryKey: ['products', 'search', searchQuery],
+    queryFn: () => api.products.search(searchQuery),
+    enabled: !!searchQuery,
+  })
+
+  const searchBar = (
+    <View style={styles.searchBar}>
+      <Text style={styles.searchIcon}>🔍</Text>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Do'kon yoki mahsulot qidiring..."
+        placeholderTextColor="#888780"
+        value={search}
+        onChangeText={setSearch}
+      />
+    </View>
+  )
+
+  if (searchQuery) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.header}>
+          <View style={styles.logoRow}>
+            <View style={styles.logoMark}><Text style={styles.logoLetter}>Z</Text></View>
+            <Text style={styles.logoText}>
+              ZY<Text style={{ color: '#534AB7' }}>FF</Text>
+            </Text>
+          </View>
+          <View style={styles.headerIcons}>
+            <Text style={styles.iconBtn}>🛒</Text>
+          </View>
+        </View>
+        {searchBar}
+        <FlatList
+          data={searchResults?.products ?? []}
+          keyExtractor={item => item.id}
+          numColumns={2}
+          contentContainerStyle={styles.searchGrid}
+          columnWrapperStyle={styles.searchRow}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.searchCard}
+              onPress={() => router.push(`/product/${item.id}`)}
+            >
+              <View style={styles.searchImgWrap}>
+                {item.images?.[0] ? (
+                  <Image source={{ uri: item.images[0] }} style={styles.productImg} resizeMode="cover" />
+                ) : (
+                  <View style={styles.productImgPlaceholder} />
+                )}
+              </View>
+              <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
+              <Text style={styles.productPrice}>{item.price.toLocaleString()} so'm</Text>
+              <Text style={styles.searchStoreName}>{item.store?.name}</Text>
+            </TouchableOpacity>
+          )}
+          ListEmptyComponent={
+            <Text style={styles.empty}>
+              {searchLoading ? 'Qidirilmoqda...' : `"${searchQuery}" bo'yicha hech narsa topilmadi`}
+            </Text>
+          }
+        />
+      </SafeAreaView>
+    )
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -58,16 +131,7 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            <View style={styles.searchBar}>
-              <Text style={styles.searchIcon}>🔍</Text>
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Do'kon yoki mahsulot qidiring..."
-                placeholderTextColor="#888780"
-                value={search}
-                onChangeText={setSearch}
-              />
-            </View>
+            {searchBar}
 
             {!!featured?.products.length && (
               <ProductRow
@@ -186,4 +250,9 @@ const styles = StyleSheet.create({
   productPriceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 2 },
   productPrice: { fontSize: 13, fontWeight: '600', color: '#534AB7' },
   productOriginalPrice: { fontSize: 11, color: '#aaa', textDecorationLine: 'line-through' },
+  searchGrid: { padding: 16, paddingBottom: 32 },
+  searchRow: { gap: 12, marginBottom: 16 },
+  searchCard: { flex: 1 },
+  searchImgWrap: { width: '100%', aspectRatio: 1, borderRadius: 10, overflow: 'hidden', backgroundColor: '#F1EFE8' },
+  searchStoreName: { fontSize: 11, color: '#888', marginTop: 2 },
 })
