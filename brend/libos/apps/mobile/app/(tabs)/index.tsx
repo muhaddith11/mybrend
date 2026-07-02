@@ -10,6 +10,7 @@ import type { Gender, Product } from '@libos/shared'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { StoreCard } from '../../components/StoreCard'
 import { WishlistHeartButton } from '../../components/WishlistHeartButton'
+import { HeroBanner } from '../../components/HeroBanner'
 
 const TABS: { label: string; value: Gender }[] = [
   { label: 'Erkaklar', value: 'MEN' },
@@ -47,6 +48,13 @@ export default function HomeScreen() {
     queryKey: ['products', 'search', searchQuery],
     queryFn: () => api.products.search(searchQuery),
     enabled: !!searchQuery,
+  })
+
+  // Banner uchun eng yaxshi do'konlar (gender'dan mustaqil — tab almashtirilganda o'zgarmasin)
+  const { data: topStores } = useQuery({
+    queryKey: ['stores', 'top'],
+    queryFn: () => api.stores.list({ limit: 8 }),
+    enabled: !searchQuery,
   })
 
   const searchBar = (
@@ -132,6 +140,8 @@ export default function HomeScreen() {
             </View>
 
             {searchBar}
+
+            {!!topStores?.stores.length && <HeroBanner stores={topStores.stores} />}
 
             {!!featured?.products.length && (
               <ProductRow
