@@ -2,26 +2,34 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-nati
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { useT } from '@libos/shared'
+import { useLangStore } from '../store/lang'
 
 export default function AboutScreen() {
   const router = useRouter()
+  const lang = useLangStore(s => s.lang)
+  const tr = useT(lang)
+
+  const heading = lang === 'ru' ? 'О ZYFF' : lang === 'en' ? 'About ZYFF' : 'ZYFF haqida'
+  const intro = lang === 'ru'
+    ? 'ZYFF — мультибрендовая платформа одежды в городе Коканд. Мы объединяем лучшие магазины города в одном месте: ищите, сравнивайте и заказывайте напрямую.'
+    : lang === 'en'
+    ? 'ZYFF is a multi-brand clothing marketplace in Kokand, Uzbekistan. We bring the city’s best stores together in one place — search, compare and order directly.'
+    : "ZYFF — Qo'qon shahridagi ko'p brendli kiyim marketplace platformasi. Biz shahardagi eng yaxshi do'konlarni bir joyda birlashtiramiz: qidiring, solishtiring va to'g'ridan-to'g'ri buyurtma bering."
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>ZYFF haqida</Text>
+        <Text style={styles.headerTitle}>{heading}</Text>
         <View style={{ width: 22 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.icon}>🛍️</Text>
-        <Text style={styles.intro}>
-          ZYFF — Qo'qon shahridagi ko'p brendli kiyim marketplace platformasi. Biz shahardagi
-          eng yaxshi do'konlarni bir joyda birlashtiramiz: qidiring, solishtiring va
-          to'g'ridan-to'g'ri buyurtma bering.
-        </Text>
+        <Text style={styles.intro}>{intro}</Text>
 
         <View style={styles.block}>
           <Text style={styles.blockTitle}>Bizning do'konlarimiz</Text>
@@ -51,7 +59,7 @@ export default function AboutScreen() {
         </View>
 
         <TouchableOpacity style={styles.btn} onPress={() => router.push('/stores')}>
-          <Text style={styles.btnText}>Do'konlarni ko'rish</Text>
+          <Text style={styles.btnText}>{tr.heroAppCta.replace(' →', '')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

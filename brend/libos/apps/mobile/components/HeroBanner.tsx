@@ -5,6 +5,8 @@ import {
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import type { Store } from '@libos/shared'
+import { useT } from '@libos/shared'
+import { useLangStore } from '../store/lang'
 
 const { width } = Dimensions.get('window')
 const BANNER_W = width - 32
@@ -18,13 +20,14 @@ const GRADIENTS = ['#F59E0B', '#8B5CF6', '#10B981']
 
 export function HeroBanner({ stores }: { stores: Store[] }) {
   const router = useRouter()
+  const tr = useT(useLangStore(s => s.lang))
   const scrollRef = useRef<ScrollView>(null)
   const [active, setActive] = useState(0)
 
   const slides: Slide[] = [
     { kind: 'app' },
-    ...(stores[0] ? [{ kind: 'store' as const, store: stores[0], badge: "🏆 Tavsiya etilgan do'kon" }] : []),
-    ...(stores[1] ? [{ kind: 'store' as const, store: stores[1], badge: "⭐ Premium do'kon" }] : []),
+    ...(stores[0] ? [{ kind: 'store' as const, store: stores[0], badge: tr.mBadgeRecommended }] : []),
+    ...(stores[1] ? [{ kind: 'store' as const, store: stores[1], badge: tr.mBadgePremium }] : []),
   ]
 
   // Avtomatik aylanish
@@ -69,11 +72,11 @@ export function HeroBanner({ stores }: { stores: Store[] }) {
                 <View style={styles.orbSmall} />
                 <Text style={styles.appBadge}>✨ ZYFF — Qo'qon</Text>
                 <Text style={styles.appTitle}>
-                  Barcha kiyim do'konlari{'\n'}
-                  <Text style={{ color: '#FBBF24' }}>bir joyda</Text>
+                  {tr.heroAppL1} {tr.heroAppHL}{'\n'}
+                  <Text style={{ color: '#FBBF24' }}>{tr.heroAppL3}</Text>
                 </Text>
                 <View style={styles.ctaBtn}>
-                  <Text style={styles.ctaBtnText}>Do'konlarni ko'rish →</Text>
+                  <Text style={styles.ctaBtnText}>{tr.heroAppCta}</Text>
                 </View>
                 <Text style={styles.bgLetter}>Z</Text>
               </TouchableOpacity>
@@ -100,7 +103,7 @@ export function HeroBanner({ stores }: { stores: Store[] }) {
                   <Text style={styles.storeAddr} numberOfLines={1}>📍 {slide.store.address}</Text>
                 )}
                 <View style={styles.visitBtn}>
-                  <Text style={styles.visitBtnText}>Hozir tashrif buyuring →</Text>
+                  <Text style={styles.visitBtnText}>{tr.mVisitNow}</Text>
                 </View>
               </View>
             </TouchableOpacity>

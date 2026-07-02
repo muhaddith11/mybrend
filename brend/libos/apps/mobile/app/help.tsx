@@ -2,6 +2,8 @@ import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { useT } from '@libos/shared'
+import { useLangStore } from '../store/lang'
 
 const CONTACTS = [
   { icon: 'call-outline' as const, label: '+998 50 250 05 50', href: 'tel:+998502500550' },
@@ -12,6 +14,15 @@ const CONTACTS = [
 
 export default function HelpScreen() {
   const router = useRouter()
+  const lang = useLangStore(s => s.lang)
+  const tr = useT(lang)
+
+  const title = lang === 'ru' ? 'Чем можем помочь?' : lang === 'en' ? 'How can we help?' : 'Qanday yordam bera olamiz?'
+  const text = lang === 'ru'
+    ? 'Служба поддержки работает ежедневно с 9:00 до 22:00. Свяжитесь с нами одним из способов ниже:'
+    : lang === 'en'
+    ? 'Support is available daily from 9:00 to 22:00. Contact us in one of the ways below:'
+    : "Qo'llab-quvvatlash xizmati har kuni 9:00 dan 22:00 gacha ishlaydi. Quyidagi usullardan biri orqali biz bilan bog'laning:"
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -19,17 +30,14 @@ export default function HelpScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Yordam</Text>
+        <Text style={styles.headerTitle}>{tr.help}</Text>
         <View style={{ width: 22 }} />
       </View>
 
       <View style={styles.content}>
         <Text style={styles.icon}>💬</Text>
-        <Text style={styles.title}>Qanday yordam bera olamiz?</Text>
-        <Text style={styles.text}>
-          Qo'llab-quvvatlash xizmati har kuni 9:00 dan 22:00 gacha ishlaydi.
-          Quyidagi usullardan biri orqali biz bilan bog'laning:
-        </Text>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.text}>{text}</Text>
 
         <View style={styles.list}>
           {CONTACTS.map(c => (

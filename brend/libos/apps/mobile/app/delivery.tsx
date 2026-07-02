@@ -2,29 +2,37 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { useT } from '@libos/shared'
+import { useLangStore } from '../store/lang'
 
 export default function DeliveryScreen() {
   const router = useRouter()
+  const lang = useLangStore(s => s.lang)
+  const tr = useT(lang)
+
+  const title = lang === 'ru' ? 'Условия доставки' : lang === 'en' ? 'Delivery terms' : 'Yetkazib berish shartlari'
+  const text = lang === 'ru'
+    ? 'Бесплатная доставка при заказе от 300 000 сум. Доставка по всему Узбекистану. Время и стоимость доставки зависят от магазина — указаны на странице каждого магазина.'
+    : lang === 'en'
+    ? 'Free delivery on orders over 300,000 UZS. Delivery across Uzbekistan. Delivery time and cost depend on the store — shown on each store page.'
+    : "300 000 so'mdan yuqori xaridlarga bepul yetkazib berish. O'zbekiston bo'ylab yetkazib berish mavjud. Yetkazish vaqti va narxi do'konga qarab farq qiladi — har bir do'kon sahifasida ko'rsatilgan."
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Yetkazib berish</Text>
+        <Text style={styles.headerTitle}>{tr.delivery}</Text>
         <View style={{ width: 22 }} />
       </View>
 
       <View style={styles.content}>
         <Text style={styles.icon}>🚚</Text>
-        <Text style={styles.title}>Yetkazib berish shartlari</Text>
-        <Text style={styles.text}>
-          300 000 so'mdan yuqori xaridlarga bepul yetkazib berish. O'zbekiston bo'ylab
-          yetkazib berish mavjud. Yetkazish vaqti va narxi do'konга qarab farq qiladi —
-          har bir do'kon sahifasida ko'rsatilgan.
-        </Text>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.text}>{text}</Text>
         <TouchableOpacity style={styles.btn} onPress={() => router.push('/')}>
-          <Text style={styles.btnText}>Bosh sahifa</Text>
+          <Text style={styles.btnText}>{tr.home}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

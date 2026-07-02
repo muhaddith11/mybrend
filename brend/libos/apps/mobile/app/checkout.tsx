@@ -7,9 +7,10 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useQuery } from '@tanstack/react-query'
-import { api } from '@libos/shared'
+import { api, useT } from '@libos/shared'
 import { useCartStore } from '../store/cart'
 import { useAuthStore } from '../store/auth'
+import { useLangStore } from '../store/lang'
 
 type DeliveryType = 'DELIVERY' | 'PICKUP' | 'CASH_ON_DOOR'
 // Veb bilan bir xil: hozir faqat CASH va TRANSFER (bot orqali karta/QR) faol.
@@ -18,6 +19,7 @@ type PaymentType = 'CASH' | 'CLICK' | 'PAYME' | 'TRANSFER'
 
 export default function CheckoutScreen() {
   const router = useRouter()
+  const tr = useT(useLangStore(s => s.lang))
   const { storeId } = useLocalSearchParams<{ storeId: string }>()
   const { isLoggedIn } = useAuthStore()
   const { itemsByStore, clearStore } = useCartStore()
@@ -65,9 +67,9 @@ export default function CheckoutScreen() {
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
           <Ionicons name="lock-closed-outline" size={48} color="#534AB7" />
-          <Text style={styles.lockTitle}>Kirish talab etiladi</Text>
+          <Text style={styles.lockTitle}>{tr.mLoginRequired}</Text>
           <TouchableOpacity style={styles.loginBtn} onPress={() => router.push('/auth/login')}>
-            <Text style={styles.loginBtnText}>Tizimga kirish</Text>
+            <Text style={styles.loginBtnText}>{tr.login}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -76,7 +78,7 @@ export default function CheckoutScreen() {
 
   const handleOrder = async () => {
     if (delivery === 'DELIVERY' && !addrFilled) {
-      Alert.alert('Manzil', 'Mahalla va uy/kvartira raqamini kiriting')
+      Alert.alert(tr.mAddrTitle, tr.mAddrRequired)
       return
     }
 
@@ -105,7 +107,7 @@ export default function CheckoutScreen() {
       }
       router.replace({ pathname: '/orders/[id]', params: { id: order.id } })
     } catch (e: any) {
-      Alert.alert('Xatolik', e.message ?? 'Buyurtma berilmadi')
+      Alert.alert(tr.mErrorTitle, e.message ?? tr.mOrderFailed)
     } finally {
       setLoading(false)
     }
@@ -117,7 +119,7 @@ export default function CheckoutScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Buyurtma berish</Text>
+        <Text style={styles.headerTitle}>{tr.coTitle}</Text>
         <View style={{ width: 22 }} />
       </View>
 
@@ -125,7 +127,7 @@ export default function CheckoutScreen() {
 
         {/* Do'kon */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Do'kon</Text>
+          <Text style={styles.sectionLabel}>{tr.mStore}</Text>
           <View style={styles.storeRow}>
             <Ionicons name="storefront-outline" size={18} color="#534AB7" />
             <Text style={styles.storeRowName}>{storeName}</Text>
@@ -134,7 +136,7 @@ export default function CheckoutScreen() {
 
         {/* Mahsulotlar */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Mahsulotlar</Text>
+          <Text style={styles.sectionLabel}>{tr.coProducts}</Text>
           {items.map(item => (
             <View key={`${item.productId}_${item.size}_${item.color}`} style={styles.orderItem}>
               <Text style={styles.orderItemName} numberOfLines={1}>{item.name}</Text>
@@ -142,7 +144,7 @@ export default function CheckoutScreen() {
                 <Text style={styles.orderItemVariant}>{[item.size, item.color].filter(Boolean).join(' · ')}</Text>
               )}
               <Text style={styles.orderItemPrice}>
-                {item.quantity} × {item.price.toLocaleString()} = {(item.quantity * item.price).toLocaleString()} so'm
+                {item.quantity} × {item.price.toLocaleString()} = {(item.quantity * item.price).toLocaleString()} {tr.som}
               </Text>
             </View>
           ))}
@@ -150,11 +152,11 @@ export default function CheckoutScreen() {
 
         {/* Yetkazish usuli */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Olish usuli</Text>
+          <Text style={styles.sectionLabel}>{tr.mDeliveryMethod}</Text>
           {[
-            { value: 'DELIVERY', icon: 'bicycle-outline', label: 'Yetkazib berish', desc: store?.deliveryTime ? `~${store.deliveryTime} daqiqa` : '', show: store?.hasDelivery !== false },
-            { value: 'PICKUP', icon: 'bag-check-outline', label: 'O\'zim olib ketaman (bron)', desc: 'Do\'konga borib olasiz', show: store?.hasPickup !== false },
-            { value: 'CASH_ON_DOOR', icon: 'cash-outline', label: 'Eshik oldida naqd', desc: 'Yetkazilganda to\'lanadi', show: store?.hasCashOnDoor !== false },
+            { value: 'DELIVERY', icon: 'bicycle-outline', label: tr.mDelivDelivery, desc: store?.deliveryTime ? `~${store.deliveryTime} ${tr.mMinutes}` : '', show: store?.hasDelivery !== false },
+            { value: 'PICKUP', icon: 'bag-check-outline', label: tr.mDelivPickupLabel, desc: tr.mDelivPickupDesc, show: store?.hasPickup !== false },
+            { value: 'CASH_ON_DOOR', icon: 'cash-outline', label: tr.mDelivCashDoor, desc: tr.mDelivCashDesc, show: store?.hasCashOnDoor !== false },
           ].filter(o => o.show).map(opt => (
             <TouchableOpacity
               key={opt.value}
@@ -176,7 +178,7 @@ export default function CheckoutScreen() {
         {/* Manzil (faqat yetkazish uchun) — strukturali */}
         {delivery === 'DELIVERY' && (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Yetkazish manzili</Text>
+            <Text style={styles.sectionLabel}>{tr.mDeliveryAddr}</Text>
 
             {/* Kvartira / Hovli */}
             <View style={styles.addrToggle}>
@@ -187,39 +189,39 @@ export default function CheckoutScreen() {
                   onPress={() => setAddrKind(k)}
                 >
                   <Text style={[styles.addrToggleText, addrKind === k && styles.addrToggleTextActive]}>
-                    {k === 'apartment' ? '🏢 Kvartira' : '🏠 Hovli'}
+                    {k === 'apartment' ? tr.mAddrApartment : tr.mAddrHouse}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <TextInput style={styles.fieldInput} placeholder="Mahalla" placeholderTextColor="#aaa" value={mahalla} onChangeText={setMahalla} />
+            <TextInput style={styles.fieldInput} placeholder={tr.mAddrMahalla} placeholderTextColor="#aaa" value={mahalla} onChangeText={setMahalla} />
             {addrKind === 'apartment' ? (
               <>
-                <TextInput style={styles.fieldInput} placeholder="Dom (bino)" placeholderTextColor="#aaa" value={dom} onChangeText={setDom} />
+                <TextInput style={styles.fieldInput} placeholder={tr.mAddrDom} placeholderTextColor="#aaa" value={dom} onChangeText={setDom} />
                 <View style={styles.addrRow}>
-                  <TextInput style={[styles.fieldInput, styles.addrHalf]} placeholder="Padez" placeholderTextColor="#aaa" value={padez} onChangeText={setPadez} keyboardType="numeric" />
-                  <TextInput style={[styles.fieldInput, styles.addrHalf]} placeholder="Etaj" placeholderTextColor="#aaa" value={etaj} onChangeText={setEtaj} keyboardType="numeric" />
+                  <TextInput style={[styles.fieldInput, styles.addrHalf]} placeholder={tr.mAddrPadez} placeholderTextColor="#aaa" value={padez} onChangeText={setPadez} keyboardType="numeric" />
+                  <TextInput style={[styles.fieldInput, styles.addrHalf]} placeholder={tr.mAddrEtaj} placeholderTextColor="#aaa" value={etaj} onChangeText={setEtaj} keyboardType="numeric" />
                 </View>
-                <TextInput style={styles.fieldInput} placeholder="Kvartira raqami" placeholderTextColor="#aaa" value={kvartira} onChangeText={setKvartira} keyboardType="numeric" />
+                <TextInput style={styles.fieldInput} placeholder={tr.mAddrKv} placeholderTextColor="#aaa" value={kvartira} onChangeText={setKvartira} keyboardType="numeric" />
               </>
             ) : (
-              <TextInput style={styles.fieldInput} placeholder="Uy raqami" placeholderTextColor="#aaa" value={uy} onChangeText={setUy} />
+              <TextInput style={styles.fieldInput} placeholder={tr.mAddrUy} placeholderTextColor="#aaa" value={uy} onChangeText={setUy} />
             )}
           </View>
         )}
 
         {/* To'lov usuli */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>To'lov usuli</Text>
+          <Text style={styles.sectionLabel}>{tr.coPayment}</Text>
           {/*
             Veb bilan bir xil: hozir faqat Naqd va Karta (bot orqali QR/karta
             o'tkazma). Click/Payme kod saqlanadi — keyin yoqish uchun shu ro'yxatga
             qaytarish kifoya: { value: 'CLICK', ... }, { value: 'PAYME', ... }
           */}
           {[
-            { value: 'CASH', icon: '💵', label: 'Naqd pul', desc: 'Yetkazilganda yoki do\'konda' },
-            { value: 'TRANSFER', icon: '💳', label: 'Karta', desc: 'Bot orqali — QR yoki karta raqami' },
+            { value: 'CASH', icon: '💵', label: tr.mPayCash, desc: tr.mPayCashDesc },
+            { value: 'TRANSFER', icon: '💳', label: tr.mPayCard, desc: tr.mPayCardDesc },
           ].map(opt => (
             <TouchableOpacity
               key={opt.value}
@@ -240,10 +242,10 @@ export default function CheckoutScreen() {
 
         {/* Izoh */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Izoh (ixtiyoriy)</Text>
+          <Text style={styles.sectionLabel}>{tr.coNote}</Text>
           <TextInput
             style={styles.textArea}
-            placeholder="Qo'shimcha ma'lumot..."
+            placeholder={tr.coNotePh}
             placeholderTextColor="#aaa"
             value={note}
             onChangeText={setNote}
@@ -256,8 +258,8 @@ export default function CheckoutScreen() {
       {/* Footer — jami va tugma */}
       <View style={styles.footer}>
         <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Jami:</Text>
-          <Text style={styles.totalPrice}>{total.toLocaleString()} so'm</Text>
+          <Text style={styles.totalLabel}>{tr.coTotal}:</Text>
+          <Text style={styles.totalPrice}>{total.toLocaleString()} {tr.som}</Text>
         </View>
         <TouchableOpacity
           style={[styles.orderBtn, loading && { opacity: 0.6 }]}
@@ -266,7 +268,7 @@ export default function CheckoutScreen() {
         >
           {loading
             ? <ActivityIndicator color="#fff" />
-            : <Text style={styles.orderBtnText}>Buyurtma berish</Text>
+            : <Text style={styles.orderBtnText}>{tr.mOrderNow}</Text>
           }
         </TouchableOpacity>
       </View>
