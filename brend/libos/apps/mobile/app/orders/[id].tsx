@@ -4,40 +4,37 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { api } from '@libos/shared'
+import { api, useT } from '@libos/shared'
+import { useLangStore } from '../../store/lang'
 
 type Step = { key: string; label: string; icon: string }
-
-// Bosqichlar yetkazish turiga qarab farq qiladi:
-//  • DELIVERY → Qabul → Tasdiq → Tayyorlanmoqda → Yo'lda → Yetkazildi
-//  • PICKUP   → Qabul → Tasdiq → Olib ketildi (DELIVERED enum'i, boshqa yorliq)
-const DELIVERY_STEPS: Step[] = [
-  { key: 'PENDING',    label: 'Qabul qilindi',   icon: 'checkmark-circle-outline' },
-  { key: 'CONFIRMED',  label: 'Tasdiqlandi',      icon: 'storefront-outline' },
-  { key: 'PREPARING',  label: 'Tayyorlanmoqda',   icon: 'construct-outline' },
-  { key: 'DELIVERING', label: 'Yo\'lda',           icon: 'bicycle-outline' },
-  { key: 'DELIVERED',  label: 'Yetkazildi',        icon: 'home-outline' },
-]
-
-const PICKUP_STEPS: Step[] = [
-  { key: 'PENDING',   label: 'Qabul qilindi', icon: 'checkmark-circle-outline' },
-  { key: 'CONFIRMED', label: 'Tasdiqlandi',    icon: 'storefront-outline' },
-  { key: 'DELIVERED', label: 'Olib ketildi',   icon: 'bag-check-outline' },
-]
-
-function stepsFor(deliveryType?: string): Step[] {
-  return deliveryType === 'PICKUP' ? PICKUP_STEPS : DELIVERY_STEPS
-}
-
-const DELIVERY_LABELS: Record<string, string> = {
-  DELIVERY: 'Yetkazib berish',
-  PICKUP: 'O\'zim olib ketaman',
-  CASH_ON_DOOR: 'Eshik oldida naqd',
-}
 
 export default function OrderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
+  const tr = useT(useLangStore(s => s.lang))
+
+  // Bosqichlar yetkazish turiga qarab farq qiladi (DELIVERY vs PICKUP)
+  const DELIVERY_STEPS: Step[] = [
+    { key: 'PENDING',    label: tr.stPending,    icon: 'checkmark-circle-outline' },
+    { key: 'CONFIRMED',  label: tr.stConfirmed,  icon: 'storefront-outline' },
+    { key: 'PREPARING',  label: tr.stPreparing,  icon: 'construct-outline' },
+    { key: 'DELIVERING', label: tr.stDelivering, icon: 'bicycle-outline' },
+    { key: 'DELIVERED',  label: tr.stDelivered,  icon: 'home-outline' },
+  ]
+  const PICKUP_STEPS: Step[] = [
+    { key: 'PENDING',   label: tr.stPending,   icon: 'checkmark-circle-outline' },
+    { key: 'CONFIRMED', label: tr.stConfirmed, icon: 'storefront-outline' },
+    { key: 'DELIVERED', label: tr.stPickedUp,  icon: 'bag-check-outline' },
+  ]
+  const stepsFor = (deliveryType?: string): Step[] =>
+    deliveryType === 'PICKUP' ? PICKUP_STEPS : DELIVERY_STEPS
+
+  const DELIVERY_LABELS: Record<string, string> = {
+    DELIVERY: tr.mDelivDelivery,
+    PICKUP: tr.mDelivPickup,
+    CASH_ON_DOOR: tr.mDelivCashDoor,
+  }
 
   const { data: order, refetch } = useQuery({
     queryKey: ['order', id],
@@ -65,7 +62,7 @@ export default function OrderScreen() {
         <TouchableOpacity onPress={() => router.replace('/')}>
           <Ionicons name="home-outline" size={22} color="#1a1a1a" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Buyurtma #{id.slice(-6).toUpperCase()}</Text>
+        <Text style={styles.headerTitle}>#{id.slice(-6).toUpperCase()}</Text>
         <View style={{ width: 22 }} />
       </View>
 
@@ -74,7 +71,7 @@ export default function OrderScreen() {
         {/* Status tracker */}
         {!isCancelled ? (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Holat</Text>
+            <Text style={styles.sectionLabel}>{tr.mStatus}</Text>
             <View style={styles.tracker}>
               {steps.map((step, i) => {
                 const done = i <= currentIdx
@@ -108,50 +105,50 @@ export default function OrderScreen() {
         ) : (
           <View style={[styles.section, styles.cancelledCard]}>
             <Ionicons name="close-circle-outline" size={32} color="#ef4444" />
-            <Text style={styles.cancelledText}>Buyurtma bekor qilindi</Text>
+            <Text style={styles.cancelledText}>{tr.mOrderCancelled}</Text>
           </View>
         )}
 
         {/* Do'kon */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Do'kon</Text>
+          <Text style={styles.sectionLabel}>{tr.mStore}</Text>
           <Text style={styles.value}>{(order as any).store?.name}</Text>
         </View>
 
         {/* Yetkazish */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Olish usuli</Text>
+          <Text style={styles.sectionLabel}>{tr.mDeliveryMethod}</Text>
           <Text style={styles.value}>{DELIVERY_LABELS[order.deliveryType]}</Text>
           {order.address && <Text style={styles.subValue}>{order.address}</Text>}
         </View>
 
         {/* Mahsulotlar */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Mahsulotlar</Text>
+          <Text style={styles.sectionLabel}>{tr.coProducts}</Text>
           {order.items.map(item => (
             <View key={item.id} style={styles.itemRow}>
               <Text style={styles.itemName} numberOfLines={1}>{item.product.name}</Text>
               <Text style={styles.itemPrice}>
-                {item.quantity} × {item.price.toLocaleString()} so'm
+                {item.quantity} × {item.price.toLocaleString()} {tr.som}
               </Text>
             </View>
           ))}
           <View style={styles.totalLine}>
-            <Text style={styles.totalLabel}>Jami:</Text>
-            <Text style={styles.totalPrice}>{order.totalPrice.toLocaleString()} so'm</Text>
+            <Text style={styles.totalLabel}>{tr.coTotal}:</Text>
+            <Text style={styles.totalPrice}>{order.totalPrice.toLocaleString()} {tr.som}</Text>
           </View>
         </View>
 
         {/* Izoh */}
         {(order as any).note && (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Izoh</Text>
+            <Text style={styles.sectionLabel}>{tr.mNote}</Text>
             <Text style={styles.value}>{(order as any).note}</Text>
           </View>
         )}
 
         <TouchableOpacity style={styles.homeBtn} onPress={() => router.replace('/')}>
-          <Text style={styles.homeBtnText}>Bosh sahifaga qaytish</Text>
+          <Text style={styles.homeBtnText}>{tr.mBackHome}</Text>
         </TouchableOpacity>
 
       </ScrollView>

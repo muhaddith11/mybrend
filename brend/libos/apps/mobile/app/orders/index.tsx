@@ -3,19 +3,21 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { api } from '@libos/shared'
+import { api, useT } from '@libos/shared'
+import { useLangStore } from '../../store/lang'
 
 const STATUS_COLOR: Record<string, string> = {
   PENDING: '#f59e0b', CONFIRMED: '#3b82f6', PREPARING: '#8b5cf6',
   DELIVERING: '#10b981', DELIVERED: '#22c55e', CANCELLED: '#ef4444',
 }
-const STATUS_LABEL: Record<string, string> = {
-  PENDING: 'Kutilmoqda', CONFIRMED: 'Tasdiqlandi', PREPARING: 'Tayyorlanmoqda',
-  DELIVERING: "Yo'lda", DELIVERED: 'Yetkazildi', CANCELLED: 'Bekor',
-}
 
 export default function OrdersScreen() {
   const router = useRouter()
+  const tr = useT(useLangStore(s => s.lang))
+  const STATUS_LABEL: Record<string, string> = {
+    PENDING: tr.stPending, CONFIRMED: tr.stConfirmed, PREPARING: tr.stPreparing,
+    DELIVERING: tr.stDelivering, DELIVERED: tr.stDelivered, CANCELLED: tr.stCancelled,
+  }
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['my-orders'],
     queryFn: () => api.orders.my(),
@@ -27,7 +29,7 @@ export default function OrdersScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Buyurtmalarim</Text>
+        <Text style={styles.headerTitle}>{tr.myOrders}</Text>
         <View style={{ width: 22 }} />
       </View>
 
@@ -52,7 +54,7 @@ export default function OrdersScreen() {
               {item.items.map(i => i.product.name).join(', ')}
             </Text>
             <View style={styles.cardBottom}>
-              <Text style={styles.price}>{item.totalPrice.toLocaleString()} so'm</Text>
+              <Text style={styles.price}>{item.totalPrice.toLocaleString()} {tr.som}</Text>
               <Text style={styles.date}>
                 {new Date(item.createdAt).toLocaleDateString('uz-UZ')}
               </Text>
@@ -63,7 +65,7 @@ export default function OrdersScreen() {
           isLoading ? null : (
             <View style={styles.empty}>
               <Ionicons name="receipt-outline" size={56} color="#ddd" />
-              <Text style={styles.emptyText}>Hali buyurtma yo'q</Text>
+              <Text style={styles.emptyText}>{tr.noOrders}</Text>
             </View>
           )
         }

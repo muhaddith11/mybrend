@@ -7,9 +7,10 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { api } from '@libos/shared'
+import { api, useT } from '@libos/shared'
 import type { Product, Store } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
+import { useLangStore } from '../../store/lang'
 import { WishlistHeartButton } from '../../components/WishlistHeartButton'
 
 const { width } = Dimensions.get('window')
@@ -19,6 +20,7 @@ export default function StoreScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>()
   const router = useRouter()
   const queryClient = useQueryClient()
+  const tr = useT(useLangStore(s => s.lang))
   const { isLoggedIn } = useAuthStore()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
@@ -50,7 +52,7 @@ export default function StoreScreen() {
   if (isLoading) {
     return (
       <View style={styles.loading}>
-        <Text style={styles.loadingText}>Yuklanmoqda...</Text>
+        <Text style={styles.loadingText}>{tr.mLoading}</Text>
       </View>
     )
   }
@@ -85,7 +87,7 @@ export default function StoreScreen() {
             <Text style={styles.headerRating}> {store.rating.toFixed(1)}</Text>
             <Text style={styles.headerDot}> · </Text>
             <View style={[styles.openDot, { backgroundColor: store.isOpen ? '#4ade80' : '#f87171' }]} />
-            <Text style={styles.headerOpen}> {store.isOpen ? 'Ochiq' : 'Yopiq'}</Text>
+            <Text style={styles.headerOpen}> {store.isOpen ? tr.open : tr.closed}</Text>
           </View>
         </View>
         <TouchableOpacity style={styles.heartBtn} onPress={handleHeartPress} disabled={toggleFavorite.isPending}>
@@ -103,19 +105,19 @@ export default function StoreScreen() {
         {store.hasDelivery && (
           <View style={styles.infoItem}>
             <Ionicons name="bicycle-outline" size={14} color="#fff" />
-            <Text style={styles.infoText}>{store.deliveryTime} daq</Text>
+            <Text style={styles.infoText}>{store.deliveryTime} {tr.mMinutes}</Text>
           </View>
         )}
         {store.hasPickup && (
           <View style={styles.infoItem}>
             <Ionicons name="bag-check-outline" size={14} color="#fff" />
-            <Text style={styles.infoText}>Bron</Text>
+            <Text style={styles.infoText}>{tr.mTagPickup}</Text>
           </View>
         )}
         {store.hasCashOnDoor && (
           <View style={styles.infoItem}>
             <Ionicons name="cash-outline" size={14} color="#fff" />
-            <Text style={styles.infoText}>Naqd</Text>
+            <Text style={styles.infoText}>{tr.mTagCash}</Text>
           </View>
         )}
       </View>
@@ -136,7 +138,7 @@ export default function StoreScreen() {
             onPress={() => setSelectedCategory(null)}
           >
             <Text style={[styles.catText, !selectedCategory && styles.catTextActive]}>
-              Barchasi
+              {tr.mAllCategory}
             </Text>
           </TouchableOpacity>
           {categories.map(cat => (
@@ -171,11 +173,12 @@ export default function StoreScreen() {
             product={item}
             store={store}
             themeColor={theme.primary}
+            cur={tr.som}
             onPress={() => router.push(`/product/${item.id}`)}
           />
         )}
         ListEmptyComponent={
-          <Text style={styles.empty}>Mahsulotlar topilmadi</Text>
+          <Text style={styles.empty}>{tr.mProductsNotFound}</Text>
         }
       />
     </SafeAreaView>
@@ -183,11 +186,12 @@ export default function StoreScreen() {
 }
 
 function ProductCard({
-  product, store, themeColor, onPress,
+  product, store, themeColor, cur, onPress,
 }: {
   product: Product
   store: Store
   themeColor: string
+  cur: string
   onPress: () => void
 }) {
   return (
@@ -206,7 +210,7 @@ function ProductCard({
         <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
         <View style={styles.cardFooter}>
           <Text style={[styles.price, { color: themeColor }]}>
-            {product.price.toLocaleString()} so'm
+            {product.price.toLocaleString()} {cur}
           </Text>
           <TouchableOpacity style={[styles.addBtn, { backgroundColor: themeColor }]}>
             <Ionicons name="add" size={18} color="#fff" />
