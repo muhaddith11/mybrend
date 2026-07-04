@@ -20,7 +20,8 @@ const { width } = Dimensions.get('window')
 export default function ProductScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
-  const tr = useT(useLangStore(s => s.lang))
+  const lang = useLangStore(s => s.lang)
+  const tr = useT(lang)
   const { colors } = useTheme()
   const addToCart = useCartStore(s => s.addItem)
   const cartCount = useCartStore(s => s.totalCount())
@@ -31,6 +32,7 @@ export default function ProductScreen() {
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
   const [selectedImg, setSelectedImg] = useState(0)
   const [added, setAdded] = useState(false)
+  const [selectErr, setSelectErr] = useState('')
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
@@ -84,6 +86,16 @@ export default function ProductScreen() {
   }
 
   const handleAddToCart = () => {
+    // Razmer/rang bor bo'lsa — tanlanmasdan savatga qo'shib bo'lmaydi
+    if (sizes.length > 0 && !selectedSize) {
+      setSelectErr(lang === 'ru' ? 'Выберите размер' : lang === 'en' ? 'Select a size' : "O'lchamni tanlang")
+      return
+    }
+    if (variantColors.length > 0 && !selectedColor) {
+      setSelectErr(lang === 'ru' ? 'Выберите цвет' : lang === 'en' ? 'Select a color' : 'Rangni tanlang')
+      return
+    }
+    setSelectErr('')
     addToCart({
       productId: product.id,
       name: product.name,
@@ -196,7 +208,7 @@ export default function ProductScreen() {
                       styles.chip,
                       selectedSize === size && { backgroundColor: themeColor, borderColor: themeColor },
                     ]}
-                    onPress={() => setSelectedSize(size!)}
+                    onPress={() => { setSelectedSize(size!); setSelectErr('') }}
                   >
                     <Text style={[styles.chipText, selectedSize === size && { color: '#fff' }]}>
                       {size}
@@ -219,7 +231,7 @@ export default function ProductScreen() {
                       styles.chip,
                       selectedColor === color && { backgroundColor: themeColor, borderColor: themeColor },
                     ]}
-                    onPress={() => setSelectedColor(color!)}
+                    onPress={() => { setSelectedColor(color!); setSelectErr('') }}
                   >
                     <Text style={[styles.chipText, selectedColor === color && { color: '#fff' }]}>
                       {color}
@@ -250,6 +262,12 @@ export default function ProductScreen() {
 
       {/* Savatchaga qo'shish */}
       <View style={styles.footer}>
+        {!!selectErr && (
+          <View style={styles.selectErrRow}>
+            <Ionicons name="alert-circle-outline" size={15} color={colors.danger} />
+            <Text style={styles.selectErrText}>{selectErr}</Text>
+          </View>
+        )}
         <TouchableOpacity
           style={[styles.addBtn, { backgroundColor: !inStock ? colors.border : added ? '#22c55e' : themeColor }]}
           onPress={handleAddToCart}
@@ -301,4 +319,6 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   footer: { padding: 16, borderTopWidth: 0.5, borderTopColor: c.border, backgroundColor: c.surface },
   addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, borderRadius: 12 },
   addBtnText: { fontSize: 16, color: '#fff', fontWeight: '600' },
+  selectErrRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 10 },
+  selectErrText: { fontSize: 13, color: c.danger, fontWeight: '600' },
 })

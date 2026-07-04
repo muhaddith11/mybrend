@@ -191,14 +191,25 @@ export default function StoreScreen() {
             themeColor={theme.primary}
             cur={tr.som}
             onPress={() => router.push(`/product/${item.id}`)}
-            onAdd={() => addToCart({
-              productId: item.id,
-              name: item.name,
-              price: item.price,
-              image: resolveImg(item.images?.[0]),
-              storeId: store.id,
-              storeName: store.name,
-            })}
+            onAdd={() => {
+              // Razmer/rang bor bo'lsa — to'g'ridan-to'g'ri qo'shmaymiz, mahsulot
+              // sahifasiga o'tamiz (u yerda tanlab qo'shadi). Aks holda tez qo'shish.
+              const needsVariant = !!((item as any).sizes?.length || (item as any).colors?.length
+                || (item.variants && item.variants.length > 0))
+              if (needsVariant) {
+                router.push(`/product/${item.id}`)
+                return false
+              }
+              addToCart({
+                productId: item.id,
+                name: item.name,
+                price: item.price,
+                image: resolveImg(item.images?.[0]),
+                storeId: store.id,
+                storeName: store.name,
+              })
+              return true
+            }}
           />
         )}
         ListEmptyComponent={
@@ -267,13 +278,16 @@ function ProductCard({
   themeColor: string
   cur: string
   onPress: () => void
-  onAdd: () => void
+  onAdd: () => boolean
 }) {
   const [added, setAdded] = useState(false)
   const handleAdd = () => {
-    onAdd()
-    setAdded(true)
-    setTimeout(() => setAdded(false), 1500)
+    // onAdd true qaytarsa — savatga qo'shildi (✓ ko'rsatamiz); false — mahsulot
+    // sahifasiga o'tildi (variant tanlash uchun), ✓ ko'rsatmaymiz.
+    if (onAdd()) {
+      setAdded(true)
+      setTimeout(() => setAdded(false), 1500)
+    }
   }
   return (
     <TouchableOpacity style={[styles.card, { width: CARD_WIDTH }]} onPress={onPress}>
