@@ -7,9 +7,23 @@ export function cloudinarySign(params: Record<string, string>, apiSecret: string
 }
 
 export default async function uploadRoutes(app: FastifyInstance) {
+  // Foydalanuvchi (userId) YOKI do'kon egasi (ownerId) tokeni — ikkalasi ham
+  // rasm yuklashi mumkin (mijoz avatar/chek, ega mahsulot rasmi). /upload/sign
+  // faqat Cloudinary imzo parametrlarini qaytaradi (maxfiy ma'lumot yo'q).
+  const authUserOrOwner = async (req: any, reply: any) => {
+    try {
+      await req.jwtVerify()
+      if (!req.user?.userId && !req.user?.ownerId) {
+        return reply.status(401).send({ error: 'Kirish kerak' })
+      }
+    } catch {
+      reply.status(401).send({ error: 'Kirish kerak' })
+    }
+  }
+
   // Cloudinary signed upload parametrlarini berish
   // Rasm faylni to'g'ridan to'g'ri Cloudinary'ga yuboradi — server orqali o'tmaydi
-  app.get('/upload/sign', { preHandler: [app.authenticate] }, async (req, reply) => {
+  app.get('/upload/sign', { preHandler: [authUserOrOwner] }, async (req, reply) => {
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME
     const apiKey = process.env.CLOUDINARY_API_KEY
     const apiSecret = process.env.CLOUDINARY_API_SECRET
