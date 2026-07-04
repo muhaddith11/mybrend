@@ -67,7 +67,8 @@ export default function CheckoutScreen() {
 
   const { data: store } = useQuery({
     queryKey: ['store-detail', storeId],
-    queryFn: () => api.stores.list({ search: '' }).then(r => r.stores.find(s => s.id === storeId)),
+    // limit=100 — do'kon ro'yxati 20 tadan oshsa ham (reyting past do'kon) topiladi
+    queryFn: () => api.stores.list({ limit: 100 }).then(r => r.stores.find(s => s.id === storeId)),
     enabled: !!storeId,
   })
 

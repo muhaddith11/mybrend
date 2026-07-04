@@ -128,14 +128,20 @@ export default function OrderScreen() {
         {/* Mahsulotlar */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>{tr.coProducts}</Text>
-          {order.items.map(item => (
-            <View key={item.id} style={styles.itemRow}>
-              <Text style={styles.itemName} numberOfLines={1}>{item.product.name}</Text>
-              <Text style={styles.itemPrice}>
-                {item.quantity} × {item.price.toLocaleString()} {tr.som}
-              </Text>
-            </View>
-          ))}
+          {order.items.map(item => {
+            const variant = [(item as any).size, (item as any).color].filter(Boolean).join(' · ')
+            return (
+              <View key={item.id} style={styles.itemRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.itemName} numberOfLines={1}>{item.product.name}</Text>
+                  {!!variant && <Text style={styles.itemVariant}>{variant}</Text>}
+                </View>
+                <Text style={styles.itemPrice}>
+                  {item.quantity} × {item.price.toLocaleString()} {tr.som}
+                </Text>
+              </View>
+            )
+          })}
           <View style={styles.totalLine}>
             <Text style={styles.totalLabel}>{tr.coTotal}:</Text>
             <Text style={styles.totalPrice}>{order.totalPrice.toLocaleString()} {tr.som}</Text>
@@ -182,7 +188,8 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   cancelledCard: { alignItems: 'center', gap: 8, paddingVertical: 24 },
   cancelledText: { fontSize: 16, fontWeight: '600', color: c.danger },
   itemRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: c.border },
-  itemName: { flex: 1, fontSize: 14, color: c.text },
+  itemName: { fontSize: 14, color: c.text },
+  itemVariant: { fontSize: 12, color: c.text2, marginTop: 2 },
   itemPrice: { fontSize: 13, color: c.brand, fontWeight: '500' },
   totalLine: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 8, marginTop: 4 },
   totalLabel: { fontSize: 14, color: c.text2 },

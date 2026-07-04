@@ -11,7 +11,8 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.brand,
+        // Faol tab — ko'k rang (qaysi sahifada ekanini aniq bildiradi)
+        tabBarActiveTintColor: '#2F6BFF',
         tabBarInactiveTintColor: colors.text3,
         tabBarStyle: {
           backgroundColor: colors.surface,

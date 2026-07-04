@@ -19,6 +19,10 @@ import { resolveImg } from '../../lib/links'
 
 const GENDERS: Gender[] = ['MEN', 'WOMEN', 'KIDS']
 
+// Web'da TextInput focus'da xunuk qora ramka (outline) chiqadi — o'chiramiz.
+// Native'da bu prop e'tiborsiz qoldiriladi.
+const noOutline = { outlineStyle: 'none' } as any
+
 export default function HomeScreen() {
   const router = useRouter()
   const lang = useLangStore(s => s.lang)
@@ -74,7 +78,7 @@ export default function HomeScreen() {
     <View style={styles.searchBar}>
       <Text style={styles.searchIcon}>🔍</Text>
       <TextInput
-        style={styles.searchInput}
+        style={[styles.searchInput, noOutline]}
         placeholder={tr.mSearchPlaceholder}
         placeholderTextColor={colors.text3}
         value={search}

@@ -66,8 +66,11 @@ export default function AdminOrders() {
                 </Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.items} numberOfLines={3}>
-              {item.items.map(i => `${i.quantity}× ${i.product.name}${(i.product as any).sku ? ` [${(i.product as any).sku}]` : ''}`).join(', ')}
+            <Text style={styles.items} numberOfLines={4}>
+              {item.items.map(i => {
+                const v = [(i as any).size, (i as any).color].filter(Boolean).join('/')
+                return `${i.quantity}× ${i.product.name}${v ? ` (${v})` : ''}${(i.product as any).sku ? ` [${(i.product as any).sku}]` : ''}`
+              }).join(', ')}
             </Text>
             {item.address ? <Text style={styles.addr}>📍 {item.address}</Text> : null}
             <View style={styles.cardBottom}>

@@ -35,7 +35,7 @@ export default function StoresScreen() {
       <View style={styles.searchBar}>
         <Text style={styles.searchIcon}>🔍</Text>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { outlineStyle: 'none' } as any]}
           placeholder={tr.mSearchStoreName}
           placeholderTextColor={colors.text3}
           value={search}
