@@ -17,6 +17,7 @@ import type { Product, Store } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
 import { useLangStore } from '../../store/lang'
 import { WishlistHeartButton } from '../WishlistHeartButton'
+import { AddToCartButton } from '../AddToCartButton'
 import type { StoreDesign } from '../../lib/storeDesigns'
 import { instagramUrl, telegramUrl, telHref, resolveImg } from '../../lib/links'
 
@@ -295,6 +296,7 @@ function FeaturedCard({ product, design, styles, cur, onPress }: { product: Prod
           ? <Image source={{ uri: resolveImg(product.images[0]) }} style={styles.imgFill} resizeMode="cover" />
           : <View style={[styles.imgFill, { backgroundColor: design.surface }]} />}
         <WishlistHeartButton product={product} size={13} />
+        <AddToCartButton product={product} bg={design.accent} style={styles.addOnImg} />
       </View>
       <Text style={styles.featName} numberOfLines={1}>{product.name}</Text>
       <Text style={styles.featPrice}>{product.price.toLocaleString()} {cur}</Text>
@@ -312,6 +314,7 @@ function GridCard({ product, design, styles, cur, onPress }: { product: Product;
               <Ionicons name="shirt-outline" size={34} color={design.accent} />
             </View>}
         <WishlistHeartButton product={product} size={13} />
+        <AddToCartButton product={product} bg={design.accent} style={styles.addOnImg} />
       </View>
       <Text style={styles.gridName} numberOfLines={2}>{product.name}</Text>
       <Text style={styles.gridPrice}>{product.price.toLocaleString()} {cur}</Text>
@@ -361,6 +364,7 @@ const makeStyles = (d: StoreDesign) => StyleSheet.create({
   gridName: { fontFamily: d.fonts.body, fontSize: 13, color: d.text, marginTop: 8, lineHeight: 17, minHeight: 34 },
   gridPrice: { fontFamily: d.fonts.bodyBold, fontSize: 14, color: d.accent, marginTop: 2 },
   imgFill: { width: '100%', height: '100%' },
+  addOnImg: { position: 'absolute', right: 8, bottom: 8 },
   empty: { fontFamily: d.fonts.body, color: d.textMuted, textAlign: 'center', width: '100%', marginTop: 30 },
 
   // ── Kontakt / footer ──

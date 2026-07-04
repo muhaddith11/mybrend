@@ -10,6 +10,7 @@ import type { Gender, Product } from '@libos/shared'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { StoreCard } from '../../components/StoreCard'
 import { WishlistHeartButton } from '../../components/WishlistHeartButton'
+import { AddToCartButton } from '../../components/AddToCartButton'
 import { HeroBanner } from '../../components/HeroBanner'
 import { HomeHeader } from '../../components/HomeHeader'
 import { LeafletWebMap, type MapStore } from '../../components/LeafletWebMap'
@@ -118,6 +119,7 @@ export default function HomeScreen() {
                   </View>
                 )}
                 <WishlistHeartButton product={item as Product} size={14} />
+                <AddToCartButton product={item as Product} bg={colors.brand} style={styles.addOnImg} />
               </View>
               <Text style={styles.searchName} numberOfLines={2}>{item.name}</Text>
               <View style={styles.searchPriceRow}>
@@ -310,6 +312,7 @@ function ProductRow({
                 </View>
               )}
               <WishlistHeartButton product={product} size={14} />
+              <AddToCartButton product={product} bg={colors.brand} style={styles.addOnImg} />
             </View>
             <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
             <View style={styles.productPriceRow}>
@@ -351,6 +354,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   productImgWrap: { width: '100%', height: 118, overflow: 'hidden', backgroundColor: c.surface2 },
   productImg: { width: '100%', height: '100%' },
   productImgPlaceholder: { width: '100%', height: '100%', backgroundColor: c.surface2 },
+  addOnImg: { position: 'absolute', right: 8, bottom: 8 },
   discountBadge: { position: 'absolute', top: 8, left: 8, backgroundColor: '#E23B3B', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 },
   discountBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
   productName: { fontSize: 12.5, color: c.text, marginTop: 10, marginHorizontal: 12, lineHeight: 16, height: 32, fontWeight: '600' },
