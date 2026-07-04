@@ -12,6 +12,8 @@ import { useCartStore } from '../../store/cart'
 import { useWishlistStore } from '../../store/wishlist'
 import { useLangStore } from '../../store/lang'
 import { useTheme, type ThemeColors } from '../../store/theme'
+import { getStoreDesign } from '../../lib/storeDesigns'
+import { resolveImg } from '../../lib/links'
 
 const { width } = Dimensions.get('window')
 
@@ -20,7 +22,6 @@ export default function ProductScreen() {
   const router = useRouter()
   const tr = useT(useLangStore(s => s.lang))
   const { colors } = useTheme()
-  const styles = useMemo(() => makeStyles(colors), [colors])
   const addToCart = useCartStore(s => s.addItem)
   const cartCount = useCartStore(s => s.totalCount())
   const wishlistHas = useWishlistStore(s => s.has)
@@ -36,16 +37,36 @@ export default function ProductScreen() {
     queryFn: () => api.products.byId(id),
   })
 
+  // Do'kon bespoke dizayni bo'lsa (asma/boosner/onepro), mahsulot sahifasini ham
+  // shu do'kon ko'rinishida (masalan asma — qora/oltin) ochamiz — web bilan parity.
+  const design = product ? getStoreDesign((product as any).store?.slug) : null
+  const pc: ThemeColors = design
+    ? {
+        ...colors,
+        bg: design.bg, surface: design.surface, surface2: design.surface,
+        text: design.text, text2: design.textMuted, text3: design.textMuted,
+        border: design.border, brand: design.accent, brandLight: design.surface,
+        white: design.accentText,
+      }
+    : colors
+  const styles = useMemo(() => makeStyles(pc), [colors, design])
+
   if (isLoading) {
-    return <View style={styles.loading}><Text style={{ color: colors.text2 }}>{tr.mLoading}</Text></View>
+    return <View style={styles.loading}><Text style={{ color: pc.text2 }}>{tr.mLoading}</Text></View>
   }
   if (!product) return null
 
-  const themeColor = (product as any).store?.themeColor ?? colors.brand
-  const images: string[] = product.images ?? []
+  const themeColor = design?.accent ?? (product as any).store?.themeColor ?? colors.brand
+  const images: string[] = (product.images ?? []).map(resolveImg).filter(Boolean) as string[]
   const inStock = product.inStock ?? true
-  const sizes = [...new Set((product.variants ?? []).map(v => v.size).filter(Boolean))]
-  const variantColors = [...new Set((product.variants ?? []).map(v => v.color).filter(Boolean))]
+  // Razmer/rang mahsulotda massiv sifatida saqlanadi (sizes/colors); variants bo'sh
+  // bo'lsa ham shulardan o'qiymiz.
+  const sizes = ((product as any).sizes?.length
+    ? (product as any).sizes
+    : [...new Set((product.variants ?? []).map(v => v.size).filter(Boolean))]) as string[]
+  const variantColors = ((product as any).colors?.length
+    ? (product as any).colors
+    : [...new Set((product.variants ?? []).map(v => v.color).filter(Boolean))]) as string[]
 
   const isWishlisted = wishlistHas(product.id)
   const handleToggleWishlist = () => {

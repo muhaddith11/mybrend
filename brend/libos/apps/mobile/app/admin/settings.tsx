@@ -1,15 +1,18 @@
 import { useMemo, useState, useEffect } from 'react'
 import {
   View, Text, ScrollView, TextInput, TouchableOpacity,
-  StyleSheet, Switch, ActivityIndicator, Alert,
+  StyleSheet, Switch, ActivityIndicator, Alert, Image,
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import * as ImagePicker from 'expo-image-picker'
 import { useTheme, type ThemeColors } from '../../store/theme'
 import { useAdminStore } from '../../store/admin'
 import { adminApi } from '../../lib/adminApi'
+import { uploadImage } from '../../lib/upload'
+import { resolveImg } from '../../lib/links'
 
 export default function AdminSettings() {
   const router = useRouter()
@@ -20,6 +23,31 @@ export default function AdminSettings() {
 
   const [form, setForm] = useState<Record<string, any>>({})
   const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }))
+  const [lbUploading, setLbUploading] = useState(false)
+
+  // Lookbook rasmini kamera/galereyadan olib Cloudinary'ga yuklaydi va ro'yxatga qo'shadi
+  const pickLookbook = async (from: 'camera' | 'library') => {
+    const perm = from === 'camera'
+      ? await ImagePicker.requestCameraPermissionsAsync()
+      : await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (!perm.granted) {
+      Alert.alert('Ruxsat kerak', from === 'camera' ? 'Kameraga ruxsat bering' : 'Galereyaga ruxsat bering')
+      return
+    }
+    const res = from === 'camera'
+      ? await ImagePicker.launchCameraAsync({ quality: 0.75 })
+      : await ImagePicker.launchImageLibraryAsync({ quality: 0.75, mediaTypes: ImagePicker.MediaTypeOptions.Images })
+    if (res.canceled || !res.assets?.[0]) return
+    setLbUploading(true)
+    try {
+      const url = await uploadImage(res.assets[0].uri, token!)
+      setForm(f => ({ ...f, lookbook: [...(Array.isArray(f.lookbook) ? f.lookbook : []), url] }))
+    } catch (e: any) {
+      Alert.alert('Xatolik', e.message ?? "Rasmni yuklab bo'lmadi")
+    } finally {
+      setLbUploading(false)
+    }
+  }
 
   const { data: store, isLoading } = useQuery({
     queryKey: ['admin-store'],
@@ -36,6 +64,7 @@ export default function AdminSettings() {
         workingHours: store.workingHours ?? '',
         instagram: store.instagram ?? '',
         telegram: (store as any).telegram ?? '',
+        lookbook: Array.isArray((store as any).lookbook) ? (store as any).lookbook : [],
         deliveryTime: store.deliveryTime != null ? String(store.deliveryTime) : '',
         cardNumber: store.cardNumber ?? '',
         cardHolder: store.cardHolder ?? '',
@@ -55,6 +84,7 @@ export default function AdminSettings() {
       workingHours: form.workingHours || undefined,
       instagram: form.instagram || undefined,
       telegram: form.telegram || undefined,
+      lookbook: Array.isArray(form.lookbook) ? form.lookbook : undefined,
       deliveryTime: form.deliveryTime ? parseInt(form.deliveryTime, 10) : undefined,
       cardNumber: form.cardNumber || undefined,
       cardHolder: form.cardHolder || undefined,
@@ -120,6 +150,40 @@ export default function AdminSettings() {
           {F('Karta raqami', 'cardNumber', { keyboard: 'numeric' })}
           {F('Karta egasi', 'cardHolder')}
 
+          <Text style={styles.sectionTitle}>Lookbook (tayyor obrazlar)</Text>
+          <Text style={styles.lbHint}>Do'kon sahifasida chiroyli galereya sifatida ko'rinadi. Model/obraz rasmlarini yuklang.</Text>
+          {Array.isArray(form.lookbook) && form.lookbook.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 8 }}>
+              {form.lookbook.map((uri: string, idx: number) => (
+                <View key={uri + idx} style={styles.lbThumb}>
+                  <Image source={{ uri: resolveImg(uri) }} style={styles.lbThumbImg} resizeMode="cover" />
+                  <TouchableOpacity
+                    style={styles.lbDel}
+                    onPress={() => setForm(f => ({ ...f, lookbook: (f.lookbook as string[]).filter((_, i) => i !== idx) }))}
+                  >
+                    <Ionicons name="close" size={13} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+          )}
+          <View style={styles.lbBtns}>
+            <TouchableOpacity style={styles.lbBtn} onPress={() => pickLookbook('camera')} disabled={lbUploading}>
+              <Ionicons name="camera-outline" size={20} color={colors.brand} />
+              <Text style={styles.lbBtnText}>Kamera</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.lbBtn} onPress={() => pickLookbook('library')} disabled={lbUploading}>
+              <Ionicons name="images-outline" size={20} color={colors.brand} />
+              <Text style={styles.lbBtnText}>Galereya</Text>
+            </TouchableOpacity>
+          </View>
+          {lbUploading && (
+            <View style={styles.lbUploading}>
+              <ActivityIndicator size="small" color={colors.brand} />
+              <Text style={styles.lbHint}>Yuklanmoqda…</Text>
+            </View>
+          )}
+
           <Text style={styles.sectionTitle}>Xizmatlar</Text>
           {T("Do'kon ochiq", 'isOpen')}
           {T('Yetkazib berish', 'hasDelivery')}
@@ -148,4 +212,12 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   switchLabel: { fontSize: 14, color: c.text },
   saveBtn: { backgroundColor: c.brand, borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 24 },
   saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  lbHint: { fontSize: 12, color: c.text3, marginTop: 4, lineHeight: 17 },
+  lbThumb: { width: 96, height: 128, borderRadius: 12, overflow: 'hidden', position: 'relative', backgroundColor: c.surface2 },
+  lbThumbImg: { width: '100%', height: '100%' },
+  lbDel: { position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
+  lbBtns: { flexDirection: 'row', gap: 10, marginTop: 10 },
+  lbBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 13, borderRadius: 12, borderWidth: 1.5, borderColor: c.border, backgroundColor: c.surface },
+  lbBtnText: { fontSize: 14, fontWeight: '600', color: c.text },
+  lbUploading: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
 })

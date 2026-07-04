@@ -15,6 +15,7 @@ import { HomeHeader } from '../../components/HomeHeader'
 import { LeafletWebMap, type MapStore } from '../../components/LeafletWebMap'
 import { useLangStore } from '../../store/lang'
 import { useTheme, type ThemeColors } from '../../store/theme'
+import { resolveImg } from '../../lib/links'
 
 const GENDERS: Gender[] = ['MEN', 'WOMEN', 'KIDS']
 
@@ -101,7 +102,7 @@ export default function HomeScreen() {
             >
               <View style={styles.searchImgWrap}>
                 {item.images?.[0] ? (
-                  <Image source={{ uri: item.images[0] }} style={styles.productImg} resizeMode="cover" />
+                  <Image source={{ uri: resolveImg(item.images[0]) }} style={styles.productImg} resizeMode="cover" />
                 ) : (
                   <View style={styles.productImgPlaceholder} />
                 )}
@@ -293,7 +294,7 @@ function ProductRow({
           <TouchableOpacity key={product.id} style={styles.productCard} onPress={() => onPressProduct(product)}>
             <View style={styles.productImgWrap}>
               {product.images?.[0] ? (
-                <Image source={{ uri: product.images[0] }} style={styles.productImg} resizeMode="cover" />
+                <Image source={{ uri: resolveImg(product.images[0]) }} style={styles.productImg} resizeMode="cover" />
               ) : (
                 <View style={styles.productImgPlaceholder} />
               )}
@@ -367,7 +368,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   promoSub: { color: 'rgba(255,255,255,0.8)', fontSize: 12, lineHeight: 16 },
   footer: { backgroundColor: '#1a1a1a', paddingHorizontal: 20, paddingVertical: 28, marginTop: 8 },
   footerBrand: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  footerLogoImg: { width: 104, height: 34 },
+  footerLogoImg: { width: 132, height: 44 },
   footerDesc: { color: 'rgba(255,255,255,0.55)', fontSize: 13, lineHeight: 19, marginBottom: 20 },
   footerLinks: { gap: 10, marginBottom: 20 },
   footerLink: { color: 'rgba(255,255,255,0.8)', fontSize: 14 },

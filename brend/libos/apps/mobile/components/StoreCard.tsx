@@ -4,6 +4,7 @@ import type { Store } from '@libos/shared'
 import { useT } from '@libos/shared'
 import { useLangStore } from '../store/lang'
 import { useTheme, type ThemeColors } from '../store/theme'
+import { resolveImg } from '../lib/links'
 
 export function StoreCard({ store, onPress }: { store: Store; onPress: () => void }) {
   const tr = useT(useLangStore(s => s.lang))
@@ -13,7 +14,7 @@ export function StoreCard({ store, onPress }: { store: Store; onPress: () => voi
     <TouchableOpacity style={styles.storeCard} onPress={onPress}>
       <View style={[styles.storeAvatar, { backgroundColor: store.themeBg }]}>
         {store.logo ? (
-          <Image source={{ uri: store.logo }} style={styles.storeLogoImg} resizeMode="cover" />
+          <Image source={{ uri: resolveImg(store.logo) }} style={styles.storeLogoImg} resizeMode="cover" />
         ) : (
           <Text style={{ fontSize: 28 }}>🏪</Text>
         )}

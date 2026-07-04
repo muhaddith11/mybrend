@@ -9,6 +9,7 @@ import { useAuthStore } from '../../store/auth'
 import { useWishlistStore, type WishlistItem } from '../../store/wishlist'
 import { useLangStore } from '../../store/lang'
 import { useTheme, type ThemeColors } from '../../store/theme'
+import { resolveImg } from '../../lib/links'
 import { StoreCard } from '../../components/StoreCard'
 
 type Tab = 'stores' | 'products'
@@ -102,7 +103,7 @@ function WishlistProductRow({ item, cur, onPress }: { item: WishlistItem; cur: s
     <TouchableOpacity style={styles.productRow} onPress={onPress}>
       <View style={styles.productImgWrap}>
         {item.image ? (
-          <Image source={{ uri: item.image }} style={styles.productImg} resizeMode="cover" />
+          <Image source={{ uri: resolveImg(item.image) }} style={styles.productImg} resizeMode="cover" />
         ) : (
           <View style={styles.productImgPlaceholder} />
         )}

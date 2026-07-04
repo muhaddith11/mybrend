@@ -28,7 +28,7 @@ export function HomeHeader() {
 
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
-  logoImg: { width: 96, height: 32, borderRadius: 8 },
+  logoImg: { width: 74, height: 26, borderRadius: 6 },
   cartBtn: { width: 38, height: 38, borderRadius: 12, backgroundColor: c.brandLight, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   badge: { position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: '#E23B3B', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
   badgeText: { color: c.white, fontSize: 10, fontWeight: '700' },

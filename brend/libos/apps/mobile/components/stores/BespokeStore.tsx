@@ -17,9 +17,8 @@ import type { Product, Store } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
 import { useLangStore } from '../../store/lang'
 import { WishlistHeartButton } from '../WishlistHeartButton'
-import { LeafletWebMap } from '../LeafletWebMap'
 import type { StoreDesign } from '../../lib/storeDesigns'
-import { instagramUrl, telegramUrl, telHref } from '../../lib/links'
+import { instagramUrl, telegramUrl, telHref, resolveImg } from '../../lib/links'
 
 const { width } = Dimensions.get('window')
 const CARD_W = (width - 32 - 12) / 2
@@ -36,6 +35,7 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const scrollRef = useRef<ScrollView>(null)
   const gridY = useRef(0)
+  const lookbookY = useRef(0)
 
   const HERO_H = Math.min(Math.max(height * 0.62, 440), 620)
 
@@ -70,6 +70,8 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
   const tgUrl = telegramUrl((store as any).telegram)
   const hours = (store as any).workingHours as string | undefined
   const hasCoords = typeof store.lat === 'number' && typeof store.lng === 'number'
+  const lookbook = (store as any).lookbook as string[] | undefined
+  const hasLookbook = Array.isArray(lookbook) && lookbook.length > 0
   const L = {
     contact: lang === 'ru' ? 'КОНТАКТЫ' : lang === 'en' ? 'CONTACT' : 'ALOQA',
     hours: lang === 'ru' ? 'Часы работы' : lang === 'en' ? 'Working hours' : 'Ish vaqti',
@@ -102,7 +104,7 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
         {/* ── HERO ── */}
         <View style={[styles.hero, { height: HERO_H }]}>
           {store.banner ? (
-            <Image source={{ uri: store.banner }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+            <Image source={{ uri: resolveImg(store.banner) }} style={StyleSheet.absoluteFill} resizeMode="cover" />
           ) : (
             <View style={[StyleSheet.absoluteFill, { backgroundColor: design.bg }]} />
           )}
@@ -142,6 +144,15 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
               >
                 <Text style={styles.ctaPrimaryText}>{design.hero.ctaCollection}</Text>
               </TouchableOpacity>
+              {hasLookbook && (
+                <TouchableOpacity
+                  style={styles.ctaSecondary}
+                  activeOpacity={0.85}
+                  onPress={() => scrollRef.current?.scrollTo({ y: Math.max(lookbookY.current - 10, HERO_H - 40), animated: true })}
+                >
+                  <Text style={styles.ctaSecondaryText}>{design.hero.ctaLookbook}</Text>
+                </TouchableOpacity>
+              )}
             </Animated.View>
           </View>
 
@@ -173,6 +184,21 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
             <View style={[styles.divider, { alignSelf: 'center' }]} />
             <Text style={styles.storyText}>{store.description}</Text>
           </Animated.View>
+        )}
+
+        {/* ── LOOKBOOK (tayyor obrazlar galereyasi) ── */}
+        {hasLookbook && (
+          <View style={styles.section} onLayout={e => { lookbookY.current = e.nativeEvent.layout.y }}>
+            <Text style={styles.sectionKicker}>LOOKBOOK</Text>
+            <View style={styles.divider} />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 14, paddingRight: 16 }}>
+              {lookbook!.map((uri, i) => (
+                <View key={i} style={styles.lookCard}>
+                  <Image source={{ uri: resolveImg(uri) }} style={styles.imgFill} resizeMode="cover" />
+                </View>
+              ))}
+            </ScrollView>
+          </View>
         )}
 
         {/* ── KATEGORIYALAR ── */}
@@ -245,17 +271,6 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
             </View>
           )}
 
-          {hasCoords && (
-            <View style={styles.contactMap}>
-              <LeafletWebMap
-                mode="display"
-                height={190}
-                dark={design.mode === 'dark'}
-                stores={[{ id: store.id, name: store.name, lat: store.lat!, lng: store.lng!, isOpen: store.isOpen }]}
-              />
-            </View>
-          )}
-
           <Text style={styles.established}>{design.established} · {design.location}</Text>
           <Text style={styles.copy}>© 2026 {store.name} — ZYFF</Text>
         </View>
@@ -277,7 +292,7 @@ function FeaturedCard({ product, design, styles, cur, onPress }: { product: Prod
     <TouchableOpacity style={styles.featCard} onPress={onPress} activeOpacity={0.9}>
       <View style={styles.featImg}>
         {product.images?.[0]
-          ? <Image source={{ uri: product.images[0] }} style={styles.imgFill} resizeMode="cover" />
+          ? <Image source={{ uri: resolveImg(product.images[0]) }} style={styles.imgFill} resizeMode="cover" />
           : <View style={[styles.imgFill, { backgroundColor: design.surface }]} />}
         <WishlistHeartButton product={product} size={13} />
       </View>
@@ -292,7 +307,7 @@ function GridCard({ product, design, styles, cur, onPress }: { product: Product;
     <TouchableOpacity style={styles.gridCard} onPress={onPress} activeOpacity={0.9}>
       <View style={styles.gridImg}>
         {product.images?.[0]
-          ? <Image source={{ uri: product.images[0] }} style={styles.imgFill} resizeMode="cover" />
+          ? <Image source={{ uri: resolveImg(product.images[0]) }} style={styles.imgFill} resizeMode="cover" />
           : <View style={[styles.imgFill, { backgroundColor: design.surface, alignItems: 'center', justifyContent: 'center' }]}>
               <Ionicons name="shirt-outline" size={34} color={design.accent} />
             </View>}
@@ -315,9 +330,12 @@ const makeStyles = (d: StoreDesign) => StyleSheet.create({
   heroTitle: { fontFamily: d.fonts.heading, fontSize: 46, lineHeight: 50, color: d.mode === 'dark' ? '#F5F5F5' : '#fff', textAlign: 'center', letterSpacing: d.hero.letterSpacing },
   heroTitle2: { color: d.accent, fontStyle: d.hero.italic2 ? 'italic' : 'normal', fontFamily: d.hero.italic2 ? 'CormorantGaramond_500Medium_Italic' : d.fonts.heading },
   heroSub: { fontFamily: d.fonts.body, fontSize: 14, lineHeight: 21, color: 'rgba(255,255,255,0.85)', textAlign: 'center', marginTop: 18, maxWidth: 320 },
-  heroBtns: { marginTop: 28 },
-  ctaPrimary: { backgroundColor: d.accent, paddingHorizontal: 30, paddingVertical: 13, borderRadius: d.radius },
+  heroBtns: { marginTop: 28, flexDirection: 'row', gap: 12, flexWrap: 'wrap', justifyContent: 'center' },
+  ctaPrimary: { backgroundColor: d.accent, paddingHorizontal: 26, paddingVertical: 13, borderRadius: d.radius },
   ctaPrimaryText: { fontFamily: d.fonts.bodyBold, fontSize: 13, letterSpacing: 1.5, color: d.accentText, textTransform: 'uppercase' },
+  ctaSecondary: { borderWidth: 1, borderColor: d.accent, paddingHorizontal: 26, paddingVertical: 12, borderRadius: d.radius, backgroundColor: 'transparent' },
+  ctaSecondaryText: { fontFamily: d.fonts.bodyBold, fontSize: 13, letterSpacing: 1.5, color: d.accent, textTransform: 'uppercase' },
+  lookCard: { width: 260, height: 360, borderRadius: d.radius, overflow: 'hidden', backgroundColor: d.surface },
   scrollIndicator: { position: 'absolute', bottom: 20, alignSelf: 'center', zIndex: 3 },
 
   section: { paddingTop: 32, paddingLeft: 16 },
@@ -355,7 +373,6 @@ const makeStyles = (d: StoreDesign) => StyleSheet.create({
   socialRow: { flexDirection: 'row', gap: 12, marginBottom: 26 },
   socialBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: d.accent, paddingHorizontal: 22, paddingVertical: 12, borderRadius: d.radius },
   socialBtnText: { fontFamily: d.fonts.bodyBold, fontSize: 13, letterSpacing: 0.5, color: d.accentText },
-  contactMap: { alignSelf: 'stretch', borderRadius: d.radius, overflow: 'hidden', marginBottom: 24, borderWidth: StyleSheet.hairlineWidth, borderColor: d.border },
   established: { fontFamily: d.fonts.body, fontSize: 12, letterSpacing: 1, color: d.textMuted, marginBottom: 8, textAlign: 'center' },
   copy: { fontFamily: d.fonts.body, fontSize: 11, color: d.textMuted, opacity: 0.7, textAlign: 'center' },
 })

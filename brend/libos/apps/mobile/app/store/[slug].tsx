@@ -13,10 +13,9 @@ import type { Product, Store } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
 import { useLangStore } from '../../store/lang'
 import { WishlistHeartButton } from '../../components/WishlistHeartButton'
-import { LeafletWebMap } from '../../components/LeafletWebMap'
 import { BespokeStore } from '../../components/stores/BespokeStore'
 import { getStoreDesign } from '../../lib/storeDesigns'
-import { instagramUrl, telegramUrl, telHref } from '../../lib/links'
+import { instagramUrl, telegramUrl, telHref, resolveImg } from '../../lib/links'
 
 const { width } = Dimensions.get('window')
 const CARD_WIDTH = (width - 48) / 2
@@ -196,7 +195,7 @@ export default function StoreScreen() {
               productId: item.id,
               name: item.name,
               price: item.price,
-              image: item.images?.[0],
+              image: resolveImg(item.images?.[0]),
               storeId: store.id,
               storeName: store.name,
             })}
@@ -252,16 +251,6 @@ export default function StoreScreen() {
               </View>
             )}
 
-            {hasCoords && (
-              <View style={styles.footerMap}>
-                <LeafletWebMap
-                  mode="display"
-                  height={190}
-                  stores={[{ id: store.id, name: store.name, lat: store.lat!, lng: store.lng!, isOpen: store.isOpen }]}
-                />
-              </View>
-            )}
-
             <Text style={styles.footerCopy}>© 2026 {store.name} — ZYFF</Text>
           </View>
         }
@@ -290,7 +279,7 @@ function ProductCard({
     <TouchableOpacity style={[styles.card, { width: CARD_WIDTH }]} onPress={onPress}>
       <View style={styles.cardImg}>
         {product.images?.[0] ? (
-          <Image source={{ uri: product.images[0] }} style={styles.img} resizeMode="cover" />
+          <Image source={{ uri: resolveImg(product.images[0]) }} style={styles.img} resizeMode="cover" />
         ) : (
           <View style={[styles.imgPlaceholder, { backgroundColor: themeColor + '22' }]}>
             <Ionicons name="shirt-outline" size={36} color={themeColor} />
@@ -361,6 +350,5 @@ const styles = StyleSheet.create({
   footerSocial: { flexDirection: 'row', gap: 12, marginBottom: 24 },
   footerSocialBtn: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#fff', paddingHorizontal: 20, paddingVertical: 11, borderRadius: 12 },
   footerSocialText: { fontSize: 13, fontWeight: '700' },
-  footerMap: { alignSelf: 'stretch', borderRadius: 14, overflow: 'hidden', marginBottom: 22 },
   footerCopy: { fontSize: 11, color: 'rgba(255,255,255,0.6)', textAlign: 'center' },
 })

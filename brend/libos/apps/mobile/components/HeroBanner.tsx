@@ -9,6 +9,7 @@ import type { Store } from '@libos/shared'
 import { useT } from '@libos/shared'
 import { useLangStore } from '../store/lang'
 import { useTheme } from '../store/theme'
+import { resolveImg } from '../lib/links'
 
 const { width } = Dimensions.get('window')
 const BANNER_W = width - 32
@@ -100,7 +101,7 @@ export function HeroBanner({ stores }: { stores: Store[] }) {
               onPress={() => router.push(`/store/${slide.store.slug}`)}
             >
               {slide.store.banner ? (
-                <Image source={{ uri: slide.store.banner }} style={styles.bannerImg} resizeMode="cover" />
+                <Image source={{ uri: resolveImg(slide.store.banner) }} style={styles.bannerImg} resizeMode="cover" />
               ) : (
                 <Text style={styles.storeInitial}>{slide.store.name.charAt(0)}</Text>
               )}

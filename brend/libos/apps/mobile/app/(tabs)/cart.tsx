@@ -7,6 +7,7 @@ import { useT } from '@libos/shared'
 import { useCartStore } from '../../store/cart'
 import { useLangStore } from '../../store/lang'
 import { useTheme, type ThemeColors } from '../../store/theme'
+import { resolveImg } from '../../lib/links'
 
 export default function CartScreen() {
   const router = useRouter()
@@ -65,7 +66,7 @@ export default function CartScreen() {
                 <View key={`${item.productId}_${item.size}_${item.color}`} style={styles.item}>
                   <View style={styles.itemImg}>
                     {item.image ? (
-                      <Image source={{ uri: item.image }} style={styles.img} resizeMode="cover" />
+                      <Image source={{ uri: resolveImg(item.image) }} style={styles.img} resizeMode="cover" />
                     ) : (
                       <View style={styles.imgPlaceholder}>
                         <Ionicons name="shirt-outline" size={24} color={colors.text3} />
