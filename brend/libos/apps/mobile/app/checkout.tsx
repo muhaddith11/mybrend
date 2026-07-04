@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, TextInput, ActivityIndicator, Alert, Linking,
@@ -11,6 +11,8 @@ import { api, useT } from '@libos/shared'
 import { useCartStore } from '../store/cart'
 import { useAuthStore } from '../store/auth'
 import { useLangStore } from '../store/lang'
+import { useTheme, type ThemeColors } from '../store/theme'
+import { LeafletWebMap } from '../components/LeafletWebMap'
 
 type DeliveryType = 'DELIVERY' | 'PICKUP' | 'CASH_ON_DOOR'
 // Veb bilan bir xil: hozir faqat CASH va TRANSFER (bot orqali karta/QR) faol.
@@ -20,6 +22,8 @@ type PaymentType = 'CASH' | 'CLICK' | 'PAYME' | 'TRANSFER'
 export default function CheckoutScreen() {
   const router = useRouter()
   const tr = useT(useLangStore(s => s.lang))
+  const { colors, dark } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   const { storeId } = useLocalSearchParams<{ storeId: string }>()
   const { isLoggedIn } = useAuthStore()
   const { itemsByStore, clearStore } = useCartStore()
@@ -35,6 +39,9 @@ export default function CheckoutScreen() {
   const [kvartira, setKvartira] = useState('')
   const [uy, setUy] = useState('')
   const [note, setNote] = useState('')
+  // Xaritadan tanlangan aniq joylashuv (web bilan bir xil — lat/lng)
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [mapAddress, setMapAddress] = useState('')
 
   const composeAddress = () => {
     const parts: string[] = []
@@ -49,7 +56,8 @@ export default function CheckoutScreen() {
     }
     return parts.join(', ')
   }
-  const addrFilled = !!mahalla.trim() && (addrKind === 'apartment' ? !!kvartira.trim() : !!uy.trim())
+  // Xaritadan joy tanlangan bo'lsa ham, strukturali manzil to'ldirilgan bo'lsa ham — yaroqli
+  const addrFilled = !!coords || (!!mahalla.trim() && (addrKind === 'apartment' ? !!kvartira.trim() : !!uy.trim()))
   const [loading, setLoading] = useState(false)
 
   const items = itemsByStore()[storeId] ?? []
@@ -66,7 +74,7 @@ export default function CheckoutScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
-          <Ionicons name="lock-closed-outline" size={48} color="#534AB7" />
+          <Ionicons name="lock-closed-outline" size={48} color={colors.brand} />
           <Text style={styles.lockTitle}>{tr.mLoginRequired}</Text>
           <TouchableOpacity style={styles.loginBtn} onPress={() => router.push('/auth/login')}>
             <Text style={styles.loginBtnText}>{tr.login}</Text>
@@ -87,7 +95,9 @@ export default function CheckoutScreen() {
       const order = await api.orders.create({
         storeId,
         deliveryType: delivery,
-        address: delivery === 'DELIVERY' ? composeAddress() : undefined,
+        address: delivery === 'DELIVERY' ? ([mapAddress, composeAddress()].filter(Boolean).join(' — ') || undefined) : undefined,
+        lat: delivery === 'DELIVERY' ? coords?.lat : undefined,
+        lng: delivery === 'DELIVERY' ? coords?.lng : undefined,
         note: note.trim() || undefined,
         paymentProvider: payment === 'CASH' ? undefined : payment,
         items: items.map(i => ({
@@ -117,7 +127,7 @@ export default function CheckoutScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{tr.coTitle}</Text>
         <View style={{ width: 22 }} />
@@ -129,7 +139,7 @@ export default function CheckoutScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>{tr.mStore}</Text>
           <View style={styles.storeRow}>
-            <Ionicons name="storefront-outline" size={18} color="#534AB7" />
+            <Ionicons name="storefront-outline" size={18} color={colors.brand} />
             <Text style={styles.storeRowName}>{storeName}</Text>
           </View>
         </View>
@@ -163,9 +173,9 @@ export default function CheckoutScreen() {
               style={[styles.optionRow, delivery === opt.value && styles.optionActive]}
               onPress={() => setDelivery(opt.value as DeliveryType)}
             >
-              <Ionicons name={opt.icon as any} size={20} color={delivery === opt.value ? '#534AB7' : '#888'} />
+              <Ionicons name={opt.icon as any} size={20} color={delivery === opt.value ? colors.brand : colors.text3} />
               <View style={styles.optionText}>
-                <Text style={[styles.optionLabel, delivery === opt.value && { color: '#534AB7' }]}>{opt.label}</Text>
+                <Text style={[styles.optionLabel, delivery === opt.value && { color: colors.brand }]}>{opt.label}</Text>
                 {opt.desc ? <Text style={styles.optionDesc}>{opt.desc}</Text> : null}
               </View>
               <View style={[styles.radio, delivery === opt.value && styles.radioActive]}>
@@ -179,6 +189,18 @@ export default function CheckoutScreen() {
         {delivery === 'DELIVERY' && (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>{tr.mDeliveryAddr}</Text>
+
+            {/* Xarita — aniq joyni belgilash (web bilan bir xil) */}
+            <LeafletWebMap
+              mode="picker"
+              height={240}
+              dark={dark}
+              initial={coords}
+              onSelect={(lat, lng, address) => { setCoords({ lat, lng }); setMapAddress(address) }}
+            />
+            {mapAddress
+              ? <Text style={styles.mapAddr}>📍 {mapAddress}</Text>
+              : <Text style={styles.mapHint}>🗺️ Xaritadan uyingizni belgilang (ixtiyoriy)</Text>}
 
             {/* Kvartira / Hovli */}
             <View style={styles.addrToggle}>
@@ -195,18 +217,18 @@ export default function CheckoutScreen() {
               ))}
             </View>
 
-            <TextInput style={styles.fieldInput} placeholder={tr.mAddrMahalla} placeholderTextColor="#aaa" value={mahalla} onChangeText={setMahalla} />
+            <TextInput style={styles.fieldInput} placeholder={tr.mAddrMahalla} placeholderTextColor={colors.text3} value={mahalla} onChangeText={setMahalla} />
             {addrKind === 'apartment' ? (
               <>
-                <TextInput style={styles.fieldInput} placeholder={tr.mAddrDom} placeholderTextColor="#aaa" value={dom} onChangeText={setDom} />
+                <TextInput style={styles.fieldInput} placeholder={tr.mAddrDom} placeholderTextColor={colors.text3} value={dom} onChangeText={setDom} />
                 <View style={styles.addrRow}>
-                  <TextInput style={[styles.fieldInput, styles.addrHalf]} placeholder={tr.mAddrPadez} placeholderTextColor="#aaa" value={padez} onChangeText={setPadez} keyboardType="numeric" />
-                  <TextInput style={[styles.fieldInput, styles.addrHalf]} placeholder={tr.mAddrEtaj} placeholderTextColor="#aaa" value={etaj} onChangeText={setEtaj} keyboardType="numeric" />
+                  <TextInput style={[styles.fieldInput, styles.addrHalf]} placeholder={tr.mAddrPadez} placeholderTextColor={colors.text3} value={padez} onChangeText={setPadez} keyboardType="numeric" />
+                  <TextInput style={[styles.fieldInput, styles.addrHalf]} placeholder={tr.mAddrEtaj} placeholderTextColor={colors.text3} value={etaj} onChangeText={setEtaj} keyboardType="numeric" />
                 </View>
-                <TextInput style={styles.fieldInput} placeholder={tr.mAddrKv} placeholderTextColor="#aaa" value={kvartira} onChangeText={setKvartira} keyboardType="numeric" />
+                <TextInput style={styles.fieldInput} placeholder={tr.mAddrKv} placeholderTextColor={colors.text3} value={kvartira} onChangeText={setKvartira} keyboardType="numeric" />
               </>
             ) : (
-              <TextInput style={styles.fieldInput} placeholder={tr.mAddrUy} placeholderTextColor="#aaa" value={uy} onChangeText={setUy} />
+              <TextInput style={styles.fieldInput} placeholder={tr.mAddrUy} placeholderTextColor={colors.text3} value={uy} onChangeText={setUy} />
             )}
           </View>
         )}
@@ -230,7 +252,7 @@ export default function CheckoutScreen() {
             >
               <Text style={{ fontSize: 20 }}>{opt.icon}</Text>
               <View style={styles.optionText}>
-                <Text style={[styles.optionLabel, payment === opt.value && { color: '#534AB7' }]}>{opt.label}</Text>
+                <Text style={[styles.optionLabel, payment === opt.value && { color: colors.brand }]}>{opt.label}</Text>
                 <Text style={styles.optionDesc}>{opt.desc}</Text>
               </View>
               <View style={[styles.radio, payment === opt.value && styles.radioActive]}>
@@ -246,7 +268,7 @@ export default function CheckoutScreen() {
           <TextInput
             style={styles.textArea}
             placeholder={tr.coNotePh}
-            placeholderTextColor="#aaa"
+            placeholderTextColor={colors.text3}
             value={note}
             onChangeText={setNote}
             multiline
@@ -276,44 +298,46 @@ export default function CheckoutScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f8f8f8' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
-  lockTitle: { fontSize: 18, fontWeight: '600', color: '#1a1a1a' },
-  loginBtn: { backgroundColor: '#534AB7', paddingHorizontal: 32, paddingVertical: 12, borderRadius: 10 },
-  loginBtnText: { color: '#fff', fontWeight: '600' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: '#fff', borderBottomWidth: 0.5, borderBottomColor: '#eee' },
-  headerTitle: { fontSize: 17, fontWeight: '600', color: '#1a1a1a' },
+  lockTitle: { fontSize: 18, fontWeight: '600', color: c.text },
+  loginBtn: { backgroundColor: c.brand, paddingHorizontal: 32, paddingVertical: 12, borderRadius: 10 },
+  loginBtnText: { color: c.white, fontWeight: '600' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: c.surface, borderBottomWidth: 0.5, borderBottomColor: c.border },
+  headerTitle: { fontSize: 17, fontWeight: '600', color: c.text },
   scroll: { padding: 16, gap: 12, paddingBottom: 8 },
-  section: { backgroundColor: '#fff', borderRadius: 14, padding: 16, gap: 10, borderWidth: 0.5, borderColor: '#eee' },
-  sectionLabel: { fontSize: 13, fontWeight: '600', color: '#888', textTransform: 'uppercase', letterSpacing: 0.5 },
+  section: { backgroundColor: c.surface, borderRadius: 14, padding: 16, gap: 10, borderWidth: 0.5, borderColor: c.border },
+  sectionLabel: { fontSize: 13, fontWeight: '600', color: c.text3, textTransform: 'uppercase', letterSpacing: 0.5 },
   storeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  storeRowName: { fontSize: 15, fontWeight: '500', color: '#1a1a1a' },
-  orderItem: { paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: '#f5f5f5' },
-  orderItemName: { fontSize: 14, color: '#1a1a1a', fontWeight: '500' },
-  orderItemVariant: { fontSize: 12, color: '#888', marginTop: 1 },
-  orderItemPrice: { fontSize: 13, color: '#534AB7', marginTop: 3 },
-  optionRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: '#eee', backgroundColor: '#fafafa' },
-  optionActive: { borderColor: '#534AB7', backgroundColor: '#f5f4ff' },
+  storeRowName: { fontSize: 15, fontWeight: '500', color: c.text },
+  orderItem: { paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: c.border },
+  orderItemName: { fontSize: 14, color: c.text, fontWeight: '500' },
+  orderItemVariant: { fontSize: 12, color: c.text2, marginTop: 1 },
+  orderItemPrice: { fontSize: 13, color: c.brand, marginTop: 3 },
+  optionRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 10, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface2 },
+  optionActive: { borderColor: c.brand, backgroundColor: c.brandLight },
   optionText: { flex: 1 },
-  optionLabel: { fontSize: 14, fontWeight: '500', color: '#1a1a1a' },
-  optionDesc: { fontSize: 12, color: '#888', marginTop: 1 },
-  radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#ddd', alignItems: 'center', justifyContent: 'center' },
-  radioActive: { borderColor: '#534AB7' },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#534AB7' },
-  textArea: { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10, padding: 12, fontSize: 14, color: '#1a1a1a', backgroundColor: '#fafafa', minHeight: 60, textAlignVertical: 'top' },
+  optionLabel: { fontSize: 14, fontWeight: '500', color: c.text },
+  optionDesc: { fontSize: 12, color: c.text2, marginTop: 1 },
+  radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: c.border, alignItems: 'center', justifyContent: 'center' },
+  radioActive: { borderColor: c.brand },
+  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: c.brand },
+  textArea: { borderWidth: 1, borderColor: c.border, borderRadius: 10, padding: 12, fontSize: 14, color: c.text, backgroundColor: c.surface2, minHeight: 60, textAlignVertical: 'top' },
+  mapAddr: { fontSize: 13, color: c.brand, fontWeight: '500' },
+  mapHint: { fontSize: 12, color: c.text3 },
   addrToggle: { flexDirection: 'row', gap: 8 },
-  addrToggleBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: '#e0e0e0', alignItems: 'center', backgroundColor: '#fafafa' },
-  addrToggleActive: { borderColor: '#534AB7', backgroundColor: '#534AB7' },
-  addrToggleText: { fontSize: 14, color: '#1a1a1a', fontWeight: '500' },
-  addrToggleTextActive: { color: '#fff' },
-  fieldInput: { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 10, padding: 12, fontSize: 14, color: '#1a1a1a', backgroundColor: '#fafafa' },
+  addrToggleBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: c.border, alignItems: 'center', backgroundColor: c.surface2 },
+  addrToggleActive: { borderColor: c.brand, backgroundColor: c.brand },
+  addrToggleText: { fontSize: 14, color: c.text, fontWeight: '500' },
+  addrToggleTextActive: { color: c.white },
+  fieldInput: { borderWidth: 1, borderColor: c.border, borderRadius: 10, padding: 12, fontSize: 14, color: c.text, backgroundColor: c.surface2 },
   addrRow: { flexDirection: 'row', gap: 8 },
   addrHalf: { flex: 1 },
-  footer: { backgroundColor: '#fff', padding: 16, gap: 12, borderTopWidth: 0.5, borderTopColor: '#eee' },
+  footer: { backgroundColor: c.surface, padding: 16, gap: 12, borderTopWidth: 0.5, borderTopColor: c.border },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  totalLabel: { fontSize: 15, color: '#666' },
-  totalPrice: { fontSize: 20, fontWeight: '700', color: '#1a1a1a' },
-  orderBtn: { backgroundColor: '#534AB7', borderRadius: 12, paddingVertical: 16, alignItems: 'center' },
-  orderBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  totalLabel: { fontSize: 15, color: c.text2 },
+  totalPrice: { fontSize: 20, fontWeight: '700', color: c.text },
+  orderBtn: { backgroundColor: c.brand, borderRadius: 12, paddingVertical: 16, alignItems: 'center' },
+  orderBtnText: { color: c.white, fontSize: 16, fontWeight: '600' },
 })

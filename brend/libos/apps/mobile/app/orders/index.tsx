@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
@@ -5,15 +6,18 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { api, useT } from '@libos/shared'
 import { useLangStore } from '../../store/lang'
+import { useTheme, type ThemeColors } from '../../store/theme'
 
 const STATUS_COLOR: Record<string, string> = {
   PENDING: '#f59e0b', CONFIRMED: '#3b82f6', PREPARING: '#8b5cf6',
-  DELIVERING: '#10b981', DELIVERED: '#22c55e', CANCELLED: '#ef4444',
+  DELIVERING: '#06b6d4', DELIVERED: '#16a34a', CANCELLED: '#ef4444',
 }
 
 export default function OrdersScreen() {
   const router = useRouter()
   const tr = useT(useLangStore(s => s.lang))
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   const STATUS_LABEL: Record<string, string> = {
     PENDING: tr.stPending, CONFIRMED: tr.stConfirmed, PREPARING: tr.stPreparing,
     DELIVERING: tr.stDelivering, DELIVERED: tr.stDelivered, CANCELLED: tr.stCancelled,
@@ -27,7 +31,7 @@ export default function OrdersScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{tr.myOrders}</Text>
         <View style={{ width: 22 }} />
@@ -64,7 +68,7 @@ export default function OrdersScreen() {
         ListEmptyComponent={
           isLoading ? null : (
             <View style={styles.empty}>
-              <Ionicons name="receipt-outline" size={56} color="#ddd" />
+              <Ionicons name="receipt-outline" size={56} color={colors.border} />
               <Text style={styles.emptyText}>{tr.noOrders}</Text>
             </View>
           )
@@ -74,20 +78,21 @@ export default function OrdersScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f8f8f8' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: '#fff', borderBottomWidth: 0.5, borderBottomColor: '#eee' },
-  headerTitle: { fontSize: 17, fontWeight: '600', color: '#1a1a1a' },
+// Buyurtma statusi ranglari — semantik (web bilan bir xil), mavzudan qat'i nazar saqlanadi.
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: c.surface, borderBottomWidth: 0.5, borderBottomColor: c.border },
+  headerTitle: { fontSize: 17, fontWeight: '600', color: c.text },
   list: { padding: 16, gap: 10 },
-  card: { backgroundColor: '#fff', borderRadius: 14, padding: 16, gap: 8, borderWidth: 0.5, borderColor: '#eee' },
+  card: { backgroundColor: c.surface, borderRadius: 14, padding: 16, gap: 8, borderWidth: 0.5, borderColor: c.border },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  storeName: { fontSize: 15, fontWeight: '600', color: '#1a1a1a' },
+  storeName: { fontSize: 15, fontWeight: '600', color: c.text },
   badge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20 },
   badgeText: { fontSize: 12, fontWeight: '500' },
-  items: { fontSize: 13, color: '#666' },
+  items: { fontSize: 13, color: c.text2 },
   cardBottom: { flexDirection: 'row', justifyContent: 'space-between' },
-  price: { fontSize: 15, fontWeight: '700', color: '#534AB7' },
-  date: { fontSize: 12, color: '#aaa' },
+  price: { fontSize: 15, fontWeight: '700', color: c.brand },
+  date: { fontSize: 12, color: c.text3 },
   empty: { alignItems: 'center', marginTop: 80, gap: 12 },
-  emptyText: { fontSize: 15, color: '#aaa' },
+  emptyText: { fontSize: 15, color: c.text3 },
 })

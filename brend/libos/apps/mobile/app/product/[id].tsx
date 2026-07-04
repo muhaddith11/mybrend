@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, Image, Dimensions,
@@ -11,6 +11,7 @@ import { api, useT } from '@libos/shared'
 import { useCartStore } from '../../store/cart'
 import { useWishlistStore } from '../../store/wishlist'
 import { useLangStore } from '../../store/lang'
+import { useTheme, type ThemeColors } from '../../store/theme'
 
 const { width } = Dimensions.get('window')
 
@@ -18,6 +19,8 @@ export default function ProductScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
   const tr = useT(useLangStore(s => s.lang))
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   const addToCart = useCartStore(s => s.addItem)
   const cartCount = useCartStore(s => s.totalCount())
   const wishlistHas = useWishlistStore(s => s.has)
@@ -34,15 +37,15 @@ export default function ProductScreen() {
   })
 
   if (isLoading) {
-    return <View style={styles.loading}><Text>{tr.mLoading}</Text></View>
+    return <View style={styles.loading}><Text style={{ color: colors.text2 }}>{tr.mLoading}</Text></View>
   }
   if (!product) return null
 
-  const themeColor = (product as any).store?.themeColor ?? '#534AB7'
+  const themeColor = (product as any).store?.themeColor ?? colors.brand
   const images: string[] = product.images ?? []
   const inStock = product.inStock ?? true
   const sizes = [...new Set(product.variants.map(v => v.size).filter(Boolean))]
-  const colors = [...new Set(product.variants.map(v => v.color).filter(Boolean))]
+  const variantColors = [...new Set(product.variants.map(v => v.color).filter(Boolean))]
 
   const isWishlisted = wishlistHas(product.id)
   const handleToggleWishlist = () => {
@@ -79,21 +82,21 @@ export default function ProductScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerRight}>
           <TouchableOpacity onPress={handleToggleWishlist} style={styles.heartBtn}>
             <Ionicons
               name={isWishlisted ? 'heart' : 'heart-outline'}
               size={22}
-              color={isWishlisted ? '#ef4444' : '#1a1a1a'}
+              color={isWishlisted ? colors.danger : colors.text}
             />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => router.push('/cart')}
             style={styles.cartBtn}
           >
-            <Ionicons name="bag-outline" size={22} color="#1a1a1a" />
+            <Ionicons name="bag-outline" size={22} color={colors.text} />
             {cartCount > 0 && (
               <View style={[styles.badge, { backgroundColor: themeColor }]}>
                 <Text style={styles.badgeText}>{cartCount}</Text>
@@ -155,9 +158,9 @@ export default function ProductScreen() {
             style={styles.storeRow}
             onPress={() => router.push(`/store/${(product as any).store?.slug}`)}
           >
-            <Ionicons name="storefront-outline" size={15} color="#888" />
+            <Ionicons name="storefront-outline" size={15} color={colors.text3} />
             <Text style={styles.storeName}>{(product as any).store?.name}</Text>
-            <Ionicons name="chevron-forward" size={13} color="#aaa" />
+            <Ionicons name="chevron-forward" size={13} color={colors.text3} />
           </TouchableOpacity>
 
           {/* O'lcham tanlash */}
@@ -184,11 +187,11 @@ export default function ProductScreen() {
           )}
 
           {/* Rang tanlash */}
-          {colors.length > 0 && (
+          {variantColors.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionLabel}>{tr.prColor}</Text>
               <View style={styles.chips}>
-                {colors.map(color => (
+                {variantColors.map(color => (
                   <TouchableOpacity
                     key={color!}
                     style={[
@@ -209,7 +212,7 @@ export default function ProductScreen() {
           {/* Bor / tugagan holati */}
           <View style={styles.stockRow}>
             <View style={[styles.stockDot, { backgroundColor: inStock ? '#22c55e' : '#ef4444' }]} />
-            <Text style={[styles.stockText, { color: inStock ? '#16a34a' : '#dc2626' }]}>
+            <Text style={[styles.stockText, { color: inStock ? '#16a34a' : '#ef4444' }]}>
               {inStock ? tr.mInStockShort : tr.mSoldOut}
             </Text>
           </View>
@@ -227,7 +230,7 @@ export default function ProductScreen() {
       {/* Savatchaga qo'shish */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.addBtn, { backgroundColor: !inStock ? '#ccc' : added ? '#22c55e' : themeColor }]}
+          style={[styles.addBtn, { backgroundColor: !inStock ? colors.border : added ? '#22c55e' : themeColor }]}
           onPress={handleAddToCart}
           disabled={!inStock}
         >
@@ -241,9 +244,9 @@ export default function ProductScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
-  loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.surface },
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: c.surface },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
   backBtn: { padding: 6 },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
@@ -259,22 +262,22 @@ const styles = StyleSheet.create({
   thumbImg: { width: '100%', height: '100%' },
   content: { padding: 20 },
   titleRow: { marginBottom: 8 },
-  name: { fontSize: 20, fontWeight: '600', color: '#1a1a1a', marginBottom: 6 },
+  name: { fontSize: 20, fontWeight: '600', color: c.text, marginBottom: 6 },
   priceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
   price: { fontSize: 22, fontWeight: '700' },
-  originalPrice: { fontSize: 14, color: '#aaa', textDecorationLine: 'line-through' },
-  storeRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 20, paddingBottom: 20, borderBottomWidth: 0.5, borderBottomColor: '#f0f0f0' },
-  storeName: { fontSize: 13, color: '#666', flex: 1 },
+  originalPrice: { fontSize: 14, color: c.text3, textDecorationLine: 'line-through' },
+  storeRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 20, paddingBottom: 20, borderBottomWidth: 0.5, borderBottomColor: c.border },
+  storeName: { fontSize: 13, color: c.text2, flex: 1 },
   section: { marginBottom: 20 },
-  sectionLabel: { fontSize: 14, fontWeight: '600', color: '#1a1a1a', marginBottom: 10 },
+  sectionLabel: { fontSize: 14, fontWeight: '600', color: c.text, marginBottom: 10 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#e0e0e0' },
-  chipText: { fontSize: 13, color: '#444' },
+  chip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: c.border },
+  chipText: { fontSize: 13, color: c.text2 },
   stockRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 20 },
   stockDot: { width: 8, height: 8, borderRadius: 4 },
   stockText: { fontSize: 13, fontWeight: '600' },
-  description: { fontSize: 14, color: '#666', lineHeight: 22 },
-  footer: { padding: 16, borderTopWidth: 0.5, borderTopColor: '#f0f0f0' },
+  description: { fontSize: 14, color: c.text2, lineHeight: 22 },
+  footer: { padding: 16, borderTopWidth: 0.5, borderTopColor: c.border, backgroundColor: c.surface },
   addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, borderRadius: 12 },
   addBtnText: { fontSize: 16, color: '#fff', fontWeight: '600' },
 })

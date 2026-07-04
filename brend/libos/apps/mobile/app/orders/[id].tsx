@@ -1,11 +1,12 @@
-import { useEffect } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native'
+import { useMemo } from 'react'
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { api, useT } from '@libos/shared'
 import { useLangStore } from '../../store/lang'
+import { useTheme, type ThemeColors } from '../../store/theme'
 
 type Step = { key: string; label: string; icon: string }
 
@@ -13,6 +14,8 @@ export default function OrderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
   const tr = useT(useLangStore(s => s.lang))
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
 
   // Bosqichlar yetkazish turiga qarab farq qiladi (DELIVERY vs PICKUP)
   const DELIVERY_STEPS: Step[] = [
@@ -36,7 +39,7 @@ export default function OrderScreen() {
     CASH_ON_DOOR: tr.mDelivCashDoor,
   }
 
-  const { data: order, refetch } = useQuery({
+  const { data: order } = useQuery({
     queryKey: ['order', id],
     queryFn: () => api.orders.byId(id),
     refetchInterval: 10000, // har 10 soniyada yangilanadi
@@ -46,7 +49,7 @@ export default function OrderScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
-          <ActivityIndicator />
+          <ActivityIndicator color={colors.brand} />
         </View>
       </SafeAreaView>
     )
@@ -60,7 +63,7 @@ export default function OrderScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.replace('/')}>
-          <Ionicons name="home-outline" size={22} color="#1a1a1a" />
+          <Ionicons name="home-outline" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>#{id.slice(-6).toUpperCase()}</Text>
         <View style={{ width: 22 }} />
@@ -87,7 +90,7 @@ export default function OrderScreen() {
                         <Ionicons
                           name={step.icon as any}
                           size={14}
-                          color={done ? '#fff' : '#ccc'}
+                          color={done ? '#fff' : colors.text3}
                         />
                       </View>
                       {i < steps.length - 1 && (
@@ -104,7 +107,7 @@ export default function OrderScreen() {
           </View>
         ) : (
           <View style={[styles.section, styles.cancelledCard]}>
-            <Ionicons name="close-circle-outline" size={32} color="#ef4444" />
+            <Ionicons name="close-circle-outline" size={32} color={colors.danger} />
             <Text style={styles.cancelledText}>{tr.mOrderCancelled}</Text>
           </View>
         )}
@@ -156,37 +159,34 @@ export default function OrderScreen() {
   )
 }
 
-// ActivityIndicator import qo'shamiz
-import { ActivityIndicator } from 'react-native'
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f8f8f8' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: '#fff', borderBottomWidth: 0.5, borderBottomColor: '#eee' },
-  headerTitle: { fontSize: 16, fontWeight: '600', color: '#1a1a1a' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: c.surface, borderBottomWidth: 0.5, borderBottomColor: c.border },
+  headerTitle: { fontSize: 16, fontWeight: '600', color: c.text },
   scroll: { padding: 16, gap: 12, paddingBottom: 32 },
-  section: { backgroundColor: '#fff', borderRadius: 14, padding: 16, gap: 8, borderWidth: 0.5, borderColor: '#eee' },
-  sectionLabel: { fontSize: 12, fontWeight: '600', color: '#888', textTransform: 'uppercase', letterSpacing: 0.5 },
-  value: { fontSize: 15, color: '#1a1a1a', fontWeight: '500' },
-  subValue: { fontSize: 13, color: '#666' },
+  section: { backgroundColor: c.surface, borderRadius: 14, padding: 16, gap: 8, borderWidth: 0.5, borderColor: c.border },
+  sectionLabel: { fontSize: 12, fontWeight: '600', color: c.text3, textTransform: 'uppercase', letterSpacing: 0.5 },
+  value: { fontSize: 15, color: c.text, fontWeight: '500' },
+  subValue: { fontSize: 13, color: c.text2 },
   tracker: { gap: 0 },
   trackerStep: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, minHeight: 48 },
   trackerLeft: { alignItems: 'center', width: 28 },
-  trackerDot: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#eee', alignItems: 'center', justifyContent: 'center' },
-  trackerDotDone: { backgroundColor: '#534AB7' },
-  trackerDotActive: { backgroundColor: '#534AB7', shadowColor: '#534AB7', shadowOpacity: 0.4, shadowRadius: 6, elevation: 4 },
-  trackerLine: { width: 2, flex: 1, backgroundColor: '#eee', minHeight: 20, marginVertical: 2 },
-  trackerLineDone: { backgroundColor: '#534AB7' },
-  trackerLabel: { fontSize: 14, color: '#aaa', paddingTop: 5 },
-  trackerLabelActive: { color: '#534AB7', fontWeight: '600' },
+  trackerDot: { width: 28, height: 28, borderRadius: 14, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center' },
+  trackerDotDone: { backgroundColor: c.brand },
+  trackerDotActive: { backgroundColor: c.brand, shadowColor: c.brand, shadowOpacity: 0.4, shadowRadius: 6, elevation: 4 },
+  trackerLine: { width: 2, flex: 1, backgroundColor: c.border, minHeight: 20, marginVertical: 2 },
+  trackerLineDone: { backgroundColor: c.brand },
+  trackerLabel: { fontSize: 14, color: c.text3, paddingTop: 5 },
+  trackerLabelActive: { color: c.brand, fontWeight: '600' },
   cancelledCard: { alignItems: 'center', gap: 8, paddingVertical: 24 },
-  cancelledText: { fontSize: 16, fontWeight: '600', color: '#ef4444' },
-  itemRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: '#f5f5f5' },
-  itemName: { flex: 1, fontSize: 14, color: '#1a1a1a' },
-  itemPrice: { fontSize: 13, color: '#534AB7', fontWeight: '500' },
+  cancelledText: { fontSize: 16, fontWeight: '600', color: c.danger },
+  itemRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: c.border },
+  itemName: { flex: 1, fontSize: 14, color: c.text },
+  itemPrice: { fontSize: 13, color: c.brand, fontWeight: '500' },
   totalLine: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 8, marginTop: 4 },
-  totalLabel: { fontSize: 14, color: '#666' },
-  totalPrice: { fontSize: 16, fontWeight: '700', color: '#1a1a1a' },
-  homeBtn: { backgroundColor: '#534AB7', borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
-  homeBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  totalLabel: { fontSize: 14, color: c.text2 },
+  totalPrice: { fontSize: 16, fontWeight: '700', color: c.text },
+  homeBtn: { backgroundColor: c.brand, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
+  homeBtnText: { color: c.white, fontSize: 15, fontWeight: '600' },
 })

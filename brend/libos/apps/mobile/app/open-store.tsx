@@ -1,14 +1,18 @@
+import { useMemo } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useT } from '@libos/shared'
 import { useLangStore } from '../store/lang'
+import { useTheme, type ThemeColors } from '../store/theme'
 
 export default function OpenStoreScreen() {
   const router = useRouter()
   const lang = useLangStore(s => s.lang)
   const tr = useT(lang)
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
 
   const title = lang === 'ru' ? 'Откройте магазин на ZYFF' : lang === 'en' ? 'Open a store on ZYFF' : "ZYFF'da do'kon oching"
   const text = lang === 'ru'
@@ -22,7 +26,7 @@ export default function OpenStoreScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{tr.openStore}</Text>
         <View style={{ width: 22 }} />
@@ -43,16 +47,16 @@ export default function OpenStoreScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 0.5, borderBottomColor: '#eee' },
-  headerTitle: { fontSize: 17, fontWeight: '600', color: '#1a1a1a' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.surface },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 0.5, borderBottomColor: c.border },
+  headerTitle: { fontSize: 17, fontWeight: '600', color: c.text },
   content: { padding: 24, alignItems: 'center' },
   icon: { fontSize: 44, marginBottom: 16 },
-  title: { fontSize: 18, fontWeight: '700', color: '#1a1a1a', marginBottom: 10, textAlign: 'center' },
-  text: { fontSize: 14, color: '#666', lineHeight: 22, textAlign: 'center', marginBottom: 24 },
-  btn: { backgroundColor: '#534AB7', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 48, alignItems: 'center', marginBottom: 12 },
-  btnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
-  btnOutline: { borderWidth: 1, borderColor: '#534AB7', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 40, alignItems: 'center' },
-  btnOutlineText: { color: '#534AB7', fontSize: 15, fontWeight: '600' },
+  title: { fontSize: 18, fontWeight: '700', color: c.text, marginBottom: 10, textAlign: 'center' },
+  text: { fontSize: 14, color: c.text2, lineHeight: 22, textAlign: 'center', marginBottom: 24 },
+  btn: { backgroundColor: c.brand, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 48, alignItems: 'center', marginBottom: 12 },
+  btnText: { color: c.white, fontSize: 15, fontWeight: '600' },
+  btnOutline: { borderWidth: 1, borderColor: c.brand, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 40, alignItems: 'center' },
+  btnOutlineText: { color: c.brand, fontSize: 15, fontWeight: '600' },
 })

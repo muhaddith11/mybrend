@@ -1,10 +1,14 @@
+import { useMemo } from 'react'
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native'
 import type { Store } from '@libos/shared'
 import { useT } from '@libos/shared'
 import { useLangStore } from '../store/lang'
+import { useTheme, type ThemeColors } from '../store/theme'
 
 export function StoreCard({ store, onPress }: { store: Store; onPress: () => void }) {
   const tr = useT(useLangStore(s => s.lang))
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   return (
     <TouchableOpacity style={styles.storeCard} onPress={onPress}>
       <View style={[styles.storeAvatar, { backgroundColor: store.themeBg }]}>
@@ -17,19 +21,14 @@ export function StoreCard({ store, onPress }: { store: Store; onPress: () => voi
       <View style={styles.storeInfo}>
         <Text style={styles.storeName}>{store.name}</Text>
         <Text style={styles.storeAddr}>{store.address}</Text>
-        <View style={styles.storeTags}>
-          {store.hasDelivery && <Tag label={tr.mTagDelivery} color="#E1F5EE" textColor="#0F6E56" />}
-          {store.hasPickup && <Tag label={tr.mTagPickup} color="#EEEDFE" textColor="#3C3489" />}
-          {store.hasCashOnDoor && <Tag label={tr.mTagCash} color="#FAEEDA" textColor="#633806" />}
-        </View>
       </View>
       <View style={styles.storeRight}>
         <Text style={styles.rating}>
           ⭐ {store.rating.toFixed(1)}{!!store.reviewCount && ` (${store.reviewCount})`}
         </Text>
         <Text style={styles.itemCount}>{store._count.products} {tr.products}</Text>
-        <View style={[styles.openBadge, { backgroundColor: store.isOpen ? '#EAF3DE' : '#FCEBEB' }]}>
-          <Text style={{ fontSize: 10, color: store.isOpen ? '#3B6D11' : '#A32D2D' }}>
+        <View style={[styles.openBadge, { backgroundColor: store.isOpen ? '#22C55E' : '#6B7280' }]}>
+          <Text style={{ fontSize: 10, color: '#fff' }}>
             {store.isOpen ? tr.open : tr.closed}
           </Text>
         </View>
@@ -38,25 +37,17 @@ export function StoreCard({ store, onPress }: { store: Store; onPress: () => voi
   )
 }
 
-function Tag({ label, color, textColor }: { label: string; color: string; textColor: string }) {
-  return (
-    <View style={[styles.tag, { backgroundColor: color }]}>
-      <Text style={{ fontSize: 10, color: textColor }}>{label}</Text>
-    </View>
-  )
-}
-
-const styles = StyleSheet.create({
-  storeCard: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12, borderWidth: 0.5, borderColor: '#D3D1C7', padding: 12, marginHorizontal: 16, alignItems: 'center', gap: 12 },
+// Ochiq/yopiq badge web bilan bir xil semantik rang (#22C55E / #6B7280),
+// shuning uchun mavzudan qat'i nazar saqlanadi.
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  storeCard: { flexDirection: 'row', backgroundColor: c.surface, borderRadius: 12, borderWidth: 0.5, borderColor: c.border, padding: 12, marginHorizontal: 16, alignItems: 'center', gap: 12 },
   storeAvatar: { width: 52, height: 52, borderRadius: 10, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   storeLogoImg: { width: '100%', height: '100%' },
   storeInfo: { flex: 1 },
-  storeName: { fontSize: 14, fontWeight: '500', color: '#1a1a1a', marginBottom: 2 },
-  storeAddr: { fontSize: 12, color: '#888780', marginBottom: 6 },
-  storeTags: { flexDirection: 'row', gap: 4, flexWrap: 'wrap' },
-  tag: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 20 },
+  storeName: { fontSize: 14, fontWeight: '500', color: c.text, marginBottom: 2 },
+  storeAddr: { fontSize: 12, color: c.text2, marginBottom: 6 },
   storeRight: { alignItems: 'flex-end', gap: 2 },
-  rating: { fontSize: 13, fontWeight: '500', color: '#1a1a1a' },
-  itemCount: { fontSize: 11, color: '#888780' },
+  rating: { fontSize: 13, fontWeight: '500', color: c.text },
+  itemCount: { fontSize: 11, color: c.text2 },
   openBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 20, marginTop: 2 },
 })

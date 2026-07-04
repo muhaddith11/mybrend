@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuthStore } from '../../store/auth'
 import { useWishlistStore, type WishlistItem } from '../../store/wishlist'
 import { useLangStore } from '../../store/lang'
+import { useTheme, type ThemeColors } from '../../store/theme'
 import { StoreCard } from '../../components/StoreCard'
 
 type Tab = 'stores' | 'products'
@@ -15,6 +16,8 @@ type Tab = 'stores' | 'products'
 export default function FavoritesScreen() {
   const router = useRouter()
   const tr = useT(useLangStore(s => s.lang))
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   const { isLoggedIn } = useAuthStore()
   const [tab, setTab] = useState<Tab>('stores')
   const wishlistItems = useWishlistStore(s => s.items)
@@ -43,7 +46,7 @@ export default function FavoritesScreen() {
       {tab === 'stores' ? (
         !isLoggedIn ? (
           <View style={styles.empty}>
-            <Ionicons name="heart-outline" size={64} color="#ddd" />
+            <Ionicons name="heart-outline" size={64} color={colors.border} />
             <Text style={styles.emptyTitle}>{tr.loginToProfile}</Text>
             <Text style={styles.emptyText}>{tr.mLoginToSeeFav}</Text>
             <TouchableOpacity style={styles.loginBtn} onPress={() => router.push('/auth/login')}>
@@ -63,7 +66,7 @@ export default function FavoritesScreen() {
                 <Text style={styles.emptyText}>{tr.mLoading}</Text>
               ) : (
                 <View style={styles.empty}>
-                  <Ionicons name="heart-outline" size={64} color="#ddd" />
+                  <Ionicons name="heart-outline" size={64} color={colors.border} />
                   <Text style={styles.emptyTitle}>{tr.mNoFavStore}</Text>
                   <Text style={styles.emptyText}>{tr.mNoFavStoreSub}</Text>
                 </View>
@@ -81,7 +84,7 @@ export default function FavoritesScreen() {
           )}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="heart-outline" size={64} color="#ddd" />
+              <Ionicons name="heart-outline" size={64} color={colors.border} />
               <Text style={styles.emptyTitle}>{tr.mNoFavProduct}</Text>
               <Text style={styles.emptyText}>{tr.mNoFavProductSub}</Text>
             </View>
@@ -93,6 +96,8 @@ export default function FavoritesScreen() {
 }
 
 function WishlistProductRow({ item, cur, onPress }: { item: WishlistItem; cur: string; onPress: () => void }) {
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   return (
     <TouchableOpacity style={styles.productRow} onPress={onPress}>
       <View style={styles.productImgWrap}>
@@ -116,29 +121,29 @@ function WishlistProductRow({ item, cur, onPress }: { item: WishlistItem; cur: s
   )
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
-  header: { padding: 20, backgroundColor: '#fff', borderBottomWidth: 0.5, borderBottomColor: '#eee' },
-  headerTitle: { fontSize: 20, fontWeight: '600', color: '#1a1a1a' },
-  tabs: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: '#eee' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
+  header: { padding: 20, backgroundColor: c.surface, borderBottomWidth: 0.5, borderBottomColor: c.border },
+  headerTitle: { fontSize: 20, fontWeight: '600', color: c.text },
+  tabs: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: c.border, backgroundColor: c.surface },
   tab: { flex: 1, paddingVertical: 12, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  tabActive: { borderBottomColor: '#534AB7' },
-  tabText: { fontSize: 14, color: '#888780', fontWeight: '500' },
-  tabTextActive: { color: '#534AB7' },
+  tabActive: { borderBottomColor: c.brand },
+  tabText: { fontSize: 14, color: c.text2, fontWeight: '500' },
+  tabTextActive: { color: c.brand },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, paddingTop: 60 },
-  emptyTitle: { fontSize: 16, fontWeight: '600', color: '#1a1a1a' },
-  emptyText: { fontSize: 13, color: '#888', textAlign: 'center', paddingHorizontal: 32 },
-  loginBtn: { marginTop: 8, backgroundColor: '#534AB7', paddingHorizontal: 32, paddingVertical: 12, borderRadius: 10 },
-  loginBtnText: { color: '#fff', fontWeight: '600', fontSize: 15 },
+  emptyTitle: { fontSize: 16, fontWeight: '600', color: c.text },
+  emptyText: { fontSize: 13, color: c.text2, textAlign: 'center', paddingHorizontal: 32 },
+  loginBtn: { marginTop: 8, backgroundColor: c.brand, paddingHorizontal: 32, paddingVertical: 12, borderRadius: 10 },
+  loginBtnText: { color: c.white, fontWeight: '600', fontSize: 15 },
   list: { paddingVertical: 16, gap: 10 },
-  productRow: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12, borderWidth: 0.5, borderColor: '#D3D1C7', padding: 12, marginHorizontal: 16, gap: 12 },
-  productImgWrap: { width: 64, height: 64, borderRadius: 8, overflow: 'hidden', backgroundColor: '#F1EFE8' },
+  productRow: { flexDirection: 'row', backgroundColor: c.surface, borderRadius: 12, borderWidth: 0.5, borderColor: c.border, padding: 12, marginHorizontal: 16, gap: 12 },
+  productImgWrap: { width: 64, height: 64, borderRadius: 8, overflow: 'hidden', backgroundColor: c.surface2 },
   productImg: { width: '100%', height: '100%' },
-  productImgPlaceholder: { width: '100%', height: '100%', backgroundColor: '#F1EFE8' },
+  productImgPlaceholder: { width: '100%', height: '100%', backgroundColor: c.surface2 },
   productInfo: { flex: 1, justifyContent: 'center' },
-  productName: { fontSize: 13, color: '#1a1a1a', marginBottom: 3 },
-  productStore: { fontSize: 11, color: '#888', marginBottom: 4 },
+  productName: { fontSize: 13, color: c.text, marginBottom: 3 },
+  productStore: { fontSize: 11, color: c.text2, marginBottom: 4 },
   productPriceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
-  productPrice: { fontSize: 13, fontWeight: '600', color: '#534AB7' },
-  productOriginalPrice: { fontSize: 11, color: '#aaa', textDecorationLine: 'line-through' },
+  productPrice: { fontSize: 13, fontWeight: '600', color: c.brand },
+  productOriginalPrice: { fontSize: 11, color: c.text3, textDecorationLine: 'line-through' },
 })

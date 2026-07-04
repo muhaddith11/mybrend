@@ -12,6 +12,9 @@ import type { Product, Store } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
 import { useLangStore } from '../../store/lang'
 import { WishlistHeartButton } from '../../components/WishlistHeartButton'
+import { LeafletWebMap } from '../../components/LeafletWebMap'
+import { BespokeStore } from '../../components/stores/BespokeStore'
+import { getStoreDesign } from '../../lib/storeDesigns'
 
 const { width } = Dimensions.get('window')
 const CARD_WIDTH = (width - 48) / 2
@@ -58,6 +61,10 @@ export default function StoreScreen() {
   }
 
   if (!store) return null
+
+  // Bu do'kon uchun maxsus dizayn bo'lsa (asma/boosner/onepro) — o'z mini-sayti
+  const design = getStoreDesign(slug)
+  if (design) return <BespokeStore store={store} design={design} />
 
   const theme = {
     primary: store.themeColor,
@@ -180,6 +187,18 @@ export default function StoreScreen() {
         ListEmptyComponent={
           <Text style={styles.empty}>{tr.mProductsNotFound}</Text>
         }
+        ListFooterComponent={
+          typeof store.lat === 'number' && typeof store.lng === 'number' ? (
+            <View style={styles.mapWrap}>
+              <Text style={styles.mapTitle}>📍 {store.address}</Text>
+              <LeafletWebMap
+                mode="display"
+                height={200}
+                stores={[{ id: store.id, name: store.name, lat: store.lat, lng: store.lng, isOpen: store.isOpen }]}
+              />
+            </View>
+          ) : null
+        }
       />
     </SafeAreaView>
   )
@@ -256,4 +275,6 @@ const styles = StyleSheet.create({
   price: { fontSize: 13, fontWeight: '600' },
   addBtn: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   empty: { textAlign: 'center', color: '#888', marginTop: 40, fontSize: 14 },
+  mapWrap: { paddingHorizontal: 12, paddingBottom: 20, paddingTop: 4 },
+  mapTitle: { fontSize: 13, color: '#444', marginBottom: 8, fontWeight: '500' },
 })

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useMemo, useState, useRef, useEffect } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, KeyboardAvoidingView, Platform,
@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { api, useT } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
 import { useLangStore } from '../../store/lang'
+import { useTheme, type ThemeColors } from '../../store/theme'
 
 const CODE_LENGTH = 6
 
@@ -17,6 +18,8 @@ export default function VerifyScreen() {
   const { phone } = useLocalSearchParams<{ phone: string }>()
   const router = useRouter()
   const tr = useT(useLangStore(s => s.lang))
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   const login = useAuthStore(s => s.login)
 
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(''))
@@ -110,7 +113,7 @@ export default function VerifyScreen() {
       >
         {/* Orqaga */}
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
 
         <View style={styles.content}>
@@ -150,7 +153,7 @@ export default function VerifyScreen() {
 
           {error ? (
             <View style={styles.errorRow}>
-              <Ionicons name="alert-circle-outline" size={14} color="#ef4444" />
+              <Ionicons name="alert-circle-outline" size={14} color={colors.danger} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           ) : null}
@@ -180,7 +183,7 @@ export default function VerifyScreen() {
             ) : (
               <TouchableOpacity onPress={handleResend} disabled={resending}>
                 {resending ? (
-                  <ActivityIndicator size="small" color="#534AB7" />
+                  <ActivityIndicator size="small" color={colors.brand} />
                 ) : (
                   <Text style={styles.resendBtn}>{tr.mResendCode}</Text>
                 )}
@@ -193,31 +196,32 @@ export default function VerifyScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f5f4ff' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
   container: { flex: 1, padding: 24 },
   backBtn: { marginTop: 8, marginBottom: 8, alignSelf: 'flex-start', padding: 4 },
   content: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  iconWrap: { width: 80, height: 80, backgroundColor: '#EEEDFE', borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
+  iconWrap: { width: 80, height: 80, backgroundColor: c.accentSoft, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
   icon: { fontSize: 36 },
-  title: { fontSize: 22, fontWeight: '700', color: '#1a1a1a', marginBottom: 10 },
-  subtitle: { fontSize: 14, color: '#666', textAlign: 'center', lineHeight: 22, marginBottom: 32 },
-  phoneText: { fontWeight: '600', color: '#1a1a1a' },
+  title: { fontSize: 22, fontWeight: '700', color: c.text, marginBottom: 10 },
+  subtitle: { fontSize: 14, color: c.text2, textAlign: 'center', lineHeight: 22, marginBottom: 32 },
+  phoneText: { fontWeight: '600', color: c.text },
   codeRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
   codeBox: {
-    width: 46, height: 56, borderRadius: 12,
-    borderWidth: 1.5, borderColor: '#e0e0e0',
-    backgroundColor: '#fff', fontSize: 22, fontWeight: '700', color: '#1a1a1a',
+    width: 48, height: 58, borderRadius: 14,
+    borderWidth: 1.5, borderColor: c.border,
+    backgroundColor: c.surface, fontSize: 24, fontWeight: '700', color: c.text,
+    textAlign: 'center', textAlignVertical: 'center', padding: 0,
   },
-  codeBoxFilled: { borderColor: '#534AB7', backgroundColor: '#f5f4ff' },
-  codeBoxError: { borderColor: '#ef4444', backgroundColor: '#fff5f5' },
+  codeBoxFilled: { borderColor: c.accent, backgroundColor: c.accentSoft },
+  codeBoxError: { borderColor: c.danger, backgroundColor: c.surface2 },
   errorRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 16 },
-  errorText: { fontSize: 13, color: '#ef4444' },
-  btn: { width: '100%', backgroundColor: '#534AB7', borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
+  errorText: { fontSize: 13, color: c.danger },
+  btn: { width: '100%', backgroundColor: c.brand, borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
   btnDisabled: { opacity: 0.4 },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  btnText: { color: c.white, fontSize: 16, fontWeight: '600' },
   resendRow: { marginTop: 20, alignItems: 'center' },
-  resendTimer: { fontSize: 13, color: '#888' },
-  timerNum: { color: '#534AB7', fontWeight: '600' },
-  resendBtn: { fontSize: 14, color: '#534AB7', fontWeight: '600' },
+  resendTimer: { fontSize: 13, color: c.text2 },
+  timerNum: { color: c.brand, fontWeight: '600' },
+  resendBtn: { fontSize: 14, color: c.brand, fontWeight: '600' },
 })

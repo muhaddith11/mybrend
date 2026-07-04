@@ -29,16 +29,17 @@ export function WishlistHeartButton({
         themeBg: resolvedStore?.themeBg,
       })}
     >
-      <Ionicons name={has ? 'heart' : 'heart-outline'} size={size} color={has ? '#ef4444' : '#fff'} />
+      <Ionicons name={has ? 'heart' : 'heart-outline'} size={size} color={has ? '#E23B3B' : '#1B1F4B'} />
     </TouchableOpacity>
   )
 }
 
+// Premium: oq doira + navy heart (mahsulot rasmi ustidagi overlay)
 const styles = StyleSheet.create({
   btn: {
-    position: 'absolute', top: 6, right: 6,
+    position: 'absolute', top: 8, right: 8,
     width: 26, height: 26, borderRadius: 13,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: 'rgba(255,255,255,0.88)',
     alignItems: 'center', justifyContent: 'center',
   },
 })

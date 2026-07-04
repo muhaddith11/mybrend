@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { View, Text, TextInput, StyleSheet, FlatList } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
@@ -6,10 +6,13 @@ import { api, useT } from '@libos/shared'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { StoreCard } from '../../components/StoreCard'
 import { useLangStore } from '../../store/lang'
+import { useTheme, type ThemeColors } from '../../store/theme'
 
 export default function StoresScreen() {
   const router = useRouter()
   const tr = useT(useLangStore(s => s.lang))
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   const [search, setSearch] = useState('')
 
   const { data, isLoading } = useQuery({
@@ -28,7 +31,7 @@ export default function StoresScreen() {
         <TextInput
           style={styles.searchInput}
           placeholder={tr.mSearchStoreName}
-          placeholderTextColor="#888780"
+          placeholderTextColor={colors.text3}
           value={search}
           onChangeText={setSearch}
         />
@@ -53,13 +56,13 @@ export default function StoresScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
   header: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
-  headerTitle: { fontSize: 20, fontWeight: '600', color: '#1a1a1a' },
-  searchBar: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginBottom: 12, backgroundColor: '#F1EFE8', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
+  headerTitle: { fontSize: 20, fontWeight: '600', color: c.text },
+  searchBar: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginBottom: 12, backgroundColor: c.surface2, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
   searchIcon: { fontSize: 16 },
-  searchInput: { flex: 1, fontSize: 14, color: '#2C2C2A' },
+  searchInput: { flex: 1, fontSize: 14, color: c.text },
   list: { paddingBottom: 24, gap: 10 },
-  empty: { textAlign: 'center', color: '#888780', marginTop: 40, fontSize: 14 },
+  empty: { textAlign: 'center', color: c.text2, marginTop: 40, fontSize: 14 },
 })

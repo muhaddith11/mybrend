@@ -33,6 +33,13 @@
       "expo-font",
       "expo-secure-store",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Mahsulot rasmini tanlash uchun galereyaga ruxsat bering.",
+          "cameraPermission": "Mahsulot rasmini olish uchun kameraga ruxsat bering."
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "android": {

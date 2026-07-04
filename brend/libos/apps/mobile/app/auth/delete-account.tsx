@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useMemo, useState, useRef } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
@@ -9,12 +9,15 @@ import { Ionicons } from '@expo/vector-icons'
 import { api, useT } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
 import { useLangStore } from '../../store/lang'
+import { useTheme, type ThemeColors } from '../../store/theme'
 
 const CODE_LENGTH = 6
 
 export default function DeleteAccountScreen() {
   const router = useRouter()
   const tr = useT(useLangStore(s => s.lang))
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   const { user, logout } = useAuthStore()
 
   const [step, setStep] = useState<'warn' | 'code'>('warn')
@@ -90,13 +93,13 @@ export default function DeleteAccountScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
 
         {step === 'warn' ? (
           <View style={styles.content}>
             <View style={styles.iconWrap}>
-              <Ionicons name="warning-outline" size={36} color="#ef4444" />
+              <Ionicons name="warning-outline" size={36} color={colors.danger} />
             </View>
 
             <Text style={styles.title}>{tr.mDeleteAccount}</Text>
@@ -165,7 +168,7 @@ export default function DeleteAccountScreen() {
 
             {error ? (
               <View style={styles.errorRow}>
-                <Ionicons name="alert-circle-outline" size={14} color="#ef4444" />
+                <Ionicons name="alert-circle-outline" size={14} color={colors.danger} />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             ) : null}
@@ -188,31 +191,32 @@ export default function DeleteAccountScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f5f4ff' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
   container: { flex: 1, padding: 24 },
   backBtn: { marginTop: 8, marginBottom: 8, alignSelf: 'flex-start', padding: 4 },
   content: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  iconWrap: { width: 80, height: 80, backgroundColor: '#fff5f5', borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
+  iconWrap: { width: 80, height: 80, backgroundColor: c.surface2, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
   icon: { fontSize: 36 },
-  title: { fontSize: 22, fontWeight: '700', color: '#1a1a1a', marginBottom: 10, textAlign: 'center' },
-  subtitle: { fontSize: 14, color: '#666', textAlign: 'center', lineHeight: 22, marginBottom: 16 },
-  phoneText: { fontWeight: '600', color: '#1a1a1a' },
+  title: { fontSize: 22, fontWeight: '700', color: c.text, marginBottom: 10, textAlign: 'center' },
+  subtitle: { fontSize: 14, color: c.text2, textAlign: 'center', lineHeight: 22, marginBottom: 16 },
+  phoneText: { fontWeight: '600', color: c.text },
   list: { alignSelf: 'stretch', marginBottom: 24, gap: 6 },
-  listItem: { fontSize: 13, color: '#666', lineHeight: 19 },
+  listItem: { fontSize: 13, color: c.text2, lineHeight: 19 },
   codeRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
   codeBox: {
-    width: 46, height: 56, borderRadius: 12,
-    borderWidth: 1.5, borderColor: '#e0e0e0',
-    backgroundColor: '#fff', fontSize: 22, fontWeight: '700', color: '#1a1a1a',
+    width: 48, height: 58, borderRadius: 14,
+    borderWidth: 1.5, borderColor: c.border,
+    backgroundColor: c.surface, fontSize: 24, fontWeight: '700', color: c.text,
+    textAlign: 'center', textAlignVertical: 'center', padding: 0,
   },
-  codeBoxFilled: { borderColor: '#ef4444', backgroundColor: '#fff5f5' },
-  codeBoxError: { borderColor: '#ef4444', backgroundColor: '#fff5f5' },
+  codeBoxFilled: { borderColor: c.danger, backgroundColor: c.surface2 },
+  codeBoxError: { borderColor: c.danger, backgroundColor: c.surface2 },
   errorRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 16 },
-  errorText: { fontSize: 13, color: '#ef4444', marginBottom: 12, textAlign: 'center' },
-  dangerBtn: { backgroundColor: '#ef4444', borderRadius: 12, paddingVertical: 16, alignItems: 'center', alignSelf: 'stretch' },
+  errorText: { fontSize: 13, color: c.danger, marginBottom: 12, textAlign: 'center' },
+  dangerBtn: { backgroundColor: c.danger, borderRadius: 12, paddingVertical: 16, alignItems: 'center', alignSelf: 'stretch' },
   btnDisabled: { opacity: 0.5 },
   dangerBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   cancelBtn: { marginTop: 12, paddingVertical: 12, alignItems: 'center' },
-  cancelBtnText: { color: '#888', fontSize: 14, fontWeight: '500' },
+  cancelBtnText: { color: c.text2, fontSize: 14, fontWeight: '500' },
 })

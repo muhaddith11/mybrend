@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
@@ -7,10 +7,13 @@ import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { api, useT } from '@libos/shared'
 import { useLangStore } from '../../store/lang'
+import { useTheme, type ThemeColors } from '../../store/theme'
 
 export default function LoginScreen() {
   const router = useRouter()
   const tr = useT(useLangStore(s => s.lang))
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   const [phone, setPhone] = useState('+998')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -55,7 +58,7 @@ export default function LoginScreen() {
             <Text style={styles.logoLetter}>Z</Text>
           </View>
           <Text style={styles.logoText}>
-            ZY<Text style={{ color: '#534AB7' }}>FF</Text>
+            ZY<Text style={{ color: colors.brand }}>FF</Text>
           </Text>
         </View>
 
@@ -74,7 +77,7 @@ export default function LoginScreen() {
               onChangeText={formatPhone}
               keyboardType="phone-pad"
               placeholder="+998 90 123 45 67"
-              placeholderTextColor="#aaa"
+              placeholderTextColor={colors.text3}
               autoFocus
               maxLength={13}
             />
@@ -104,25 +107,25 @@ export default function LoginScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f5f4ff' },
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
   container: { flex: 1, justifyContent: 'center', padding: 24 },
   logoArea: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 32 },
-  logoMark: { width: 44, height: 44, backgroundColor: '#3C3489', borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  logoLetter: { color: '#fff', fontSize: 20, fontWeight: '600' },
-  logoText: { fontSize: 28, fontWeight: '600', color: '#1a1a1a', letterSpacing: -0.5 },
-  card: { backgroundColor: '#fff', borderRadius: 20, padding: 24, shadowColor: '#534AB7', shadowOpacity: 0.08, shadowRadius: 20, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
-  title: { fontSize: 22, fontWeight: '700', color: '#1a1a1a', marginBottom: 6 },
-  subtitle: { fontSize: 14, color: '#666', marginBottom: 24, lineHeight: 20 },
-  inputWrap: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: '#e0e0e0', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 4, marginBottom: 6, backgroundColor: '#fafafa' },
-  inputError: { borderColor: '#ef4444' },
+  logoMark: { width: 44, height: 44, backgroundColor: c.brandDark, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  logoLetter: { color: c.white, fontSize: 20, fontWeight: '600' },
+  logoText: { fontSize: 28, fontWeight: '600', color: c.text, letterSpacing: -0.5 },
+  card: { backgroundColor: c.surface, borderRadius: 20, padding: 24, shadowColor: c.brand, shadowOpacity: 0.08, shadowRadius: 20, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
+  title: { fontSize: 22, fontWeight: '700', color: c.text, marginBottom: 6 },
+  subtitle: { fontSize: 14, color: c.text2, marginBottom: 24, lineHeight: 20 },
+  inputWrap: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: c.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 4, marginBottom: 6, backgroundColor: c.surface2 },
+  inputError: { borderColor: c.danger },
   flag: { fontSize: 22, marginRight: 10 },
-  input: { flex: 1, fontSize: 18, color: '#1a1a1a', paddingVertical: 12, letterSpacing: 1 },
-  errorText: { fontSize: 12, color: '#ef4444', marginBottom: 4, marginLeft: 2 },
-  hint: { fontSize: 12, color: '#aaa', marginBottom: 24, marginLeft: 2 },
-  btn: { backgroundColor: '#534AB7', borderRadius: 12, paddingVertical: 16, alignItems: 'center' },
+  input: { flex: 1, fontSize: 18, color: c.text, paddingVertical: 12, letterSpacing: 1 },
+  errorText: { fontSize: 12, color: c.danger, marginBottom: 4, marginLeft: 2 },
+  hint: { fontSize: 12, color: c.text3, marginBottom: 24, marginLeft: 2 },
+  btn: { backgroundColor: c.brand, borderRadius: 12, paddingVertical: 16, alignItems: 'center' },
   btnDisabled: { opacity: 0.6 },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  terms: { textAlign: 'center', fontSize: 12, color: '#aaa', marginTop: 24, lineHeight: 18 },
-  termsLink: { color: '#534AB7' },
+  btnText: { color: c.white, fontSize: 16, fontWeight: '600' },
+  terms: { textAlign: 'center', fontSize: 12, color: c.text3, marginTop: 24, lineHeight: 18 },
+  termsLink: { color: c.brand },
 })

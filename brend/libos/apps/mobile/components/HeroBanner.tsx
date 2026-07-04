@@ -4,9 +4,11 @@ import {
   ScrollView, Dimensions, NativeSyntheticEvent, NativeScrollEvent,
 } from 'react-native'
 import { useRouter } from 'expo-router'
+import { LinearGradient } from 'expo-linear-gradient'
 import type { Store } from '@libos/shared'
 import { useT } from '@libos/shared'
 import { useLangStore } from '../store/lang'
+import { useTheme } from '../store/theme'
 
 const { width } = Dimensions.get('window')
 const BANNER_W = width - 32
@@ -21,6 +23,7 @@ const GRADIENTS = ['#F59E0B', '#8B5CF6', '#10B981']
 export function HeroBanner({ stores }: { stores: Store[] }) {
   const router = useRouter()
   const tr = useT(useLangStore(s => s.lang))
+  const { colors } = useTheme()
   const scrollRef = useRef<ScrollView>(null)
   const [active, setActive] = useState(0)
 
@@ -65,15 +68,21 @@ export function HeroBanner({ stores }: { stores: Store[] }) {
               <TouchableOpacity
                 key="app"
                 activeOpacity={0.9}
-                style={[styles.slide, { backgroundColor: '#1E1B4B' }]}
+                style={styles.slide}
                 onPress={() => router.push('/stores')}
               >
+                <LinearGradient
+                  colors={['#1B1F4B', '#2E2A6B', '#3B2A6B']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                />
                 <View style={styles.orbBig} />
                 <View style={styles.orbSmall} />
                 <Text style={styles.appBadge}>✨ ZYFF — Qo'qon</Text>
                 <Text style={styles.appTitle}>
                   {tr.heroAppL1} {tr.heroAppHL}{'\n'}
-                  <Text style={{ color: '#FBBF24' }}>{tr.heroAppL3}</Text>
+                  <Text style={{ color: '#F5C453' }}>{tr.heroAppL3}</Text>
                 </Text>
                 <View style={styles.ctaBtn}>
                   <Text style={styles.ctaBtnText}>{tr.heroAppCta}</Text>
@@ -114,7 +123,14 @@ export function HeroBanner({ stores }: { stores: Store[] }) {
       {slides.length > 1 && (
         <View style={styles.dots}>
           {slides.map((_, i) => (
-            <View key={i} style={[styles.dot, active === i && styles.dotActive]} />
+            <View
+              key={i}
+              style={[
+                styles.dot,
+                { backgroundColor: colors.border },
+                active === i && { width: 18, backgroundColor: colors.accent },
+              ]}
+            />
           ))}
         </View>
       )}
@@ -125,18 +141,18 @@ export function HeroBanner({ stores }: { stores: Store[] }) {
 const styles = StyleSheet.create({
   wrap: { marginHorizontal: 16, marginBottom: 16 },
   slide: {
-    width: BANNER_W, height: BANNER_H, borderRadius: 16,
-    padding: 20, overflow: 'hidden', justifyContent: 'center',
+    width: BANNER_W, height: BANNER_H, borderRadius: 24,
+    padding: 22, overflow: 'hidden', justifyContent: 'center',
   },
   bannerImg: { ...StyleSheet.absoluteFillObject, width: BANNER_W, height: BANNER_H },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)' },
-  // App slide
-  orbBig: { position: 'absolute', width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(109,40,217,0.4)', top: -40, right: 0 },
-  orbSmall: { position: 'absolute', width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(245,158,11,0.3)', bottom: -10, right: 60 },
-  appBadge: { color: '#fff', fontSize: 11, fontWeight: '600', marginBottom: 8, opacity: 0.9 },
-  appTitle: { color: '#fff', fontSize: 22, fontWeight: '700', lineHeight: 28, marginBottom: 14 },
-  ctaBtn: { alignSelf: 'flex-start', backgroundColor: '#F59E0B', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 9 },
-  ctaBtnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  // App slide (premium navy & gold)
+  orbBig: { position: 'absolute', width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(227,160,8,0.16)', top: -30, right: -20 },
+  orbSmall: { position: 'absolute', width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(255,255,255,0.05)', bottom: -40, right: 40 },
+  appBadge: { color: '#F5C453', fontSize: 11, fontWeight: '700', marginBottom: 12, letterSpacing: 0.3 },
+  appTitle: { color: '#fff', fontSize: 23, fontWeight: '800', lineHeight: 30, marginBottom: 16, letterSpacing: -0.3 },
+  ctaBtn: { alignSelf: 'flex-start', backgroundColor: '#E3A008', borderRadius: 14, paddingHorizontal: 18, paddingVertical: 11 },
+  ctaBtnText: { color: '#1B1F4B', fontSize: 13, fontWeight: '700' },
   bgLetter: { position: 'absolute', right: -10, bottom: -40, fontSize: 180, fontWeight: '800', color: 'rgba(255,255,255,0.04)' },
   // Store slide
   storeInitial: { position: 'absolute', right: 10, top: 10, fontSize: 130, fontWeight: '800', color: 'rgba(255,255,255,0.15)' },
@@ -148,6 +164,5 @@ const styles = StyleSheet.create({
   visitBtnText: { color: '#1E1B4B', fontSize: 13, fontWeight: '600' },
   // Dots
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 10 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#D3D1C7' },
-  dotActive: { width: 18, backgroundColor: '#534AB7' },
+  dot: { width: 6, height: 6, borderRadius: 3 },
 })

@@ -2,22 +2,26 @@ import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useT } from '@libos/shared'
 import { useLangStore } from '../../store/lang'
+import { useTheme } from '../../store/theme'
 
 export default function TabsLayout() {
   const tr = useT(useLangStore(s => s.lang))
+  const { colors } = useTheme()
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#534AB7',
-        tabBarInactiveTintColor: '#888780',
+        tabBarActiveTintColor: colors.brand,
+        tabBarInactiveTintColor: colors.text3,
         tabBarStyle: {
+          backgroundColor: colors.surface,
           borderTopWidth: 0.5,
-          borderTopColor: '#D3D1C7',
-          paddingBottom: 6,
-          height: 60,
+          borderTopColor: colors.border,
+          paddingBottom: 12,
+          paddingTop: 8,
+          height: 76,
         },
-        tabBarLabelStyle: { fontSize: 11, marginBottom: 2 },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '600', marginBottom: 2 },
       }}
     >
       <Tabs.Screen

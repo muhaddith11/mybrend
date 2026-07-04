@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity,
   TextInput, StyleSheet, FlatList, Image, Linking,
@@ -12,13 +12,18 @@ import { StoreCard } from '../../components/StoreCard'
 import { WishlistHeartButton } from '../../components/WishlistHeartButton'
 import { HeroBanner } from '../../components/HeroBanner'
 import { HomeHeader } from '../../components/HomeHeader'
+import { LeafletWebMap, type MapStore } from '../../components/LeafletWebMap'
 import { useLangStore } from '../../store/lang'
+import { useTheme, type ThemeColors } from '../../store/theme'
 
 const GENDERS: Gender[] = ['MEN', 'WOMEN', 'KIDS']
 
 export default function HomeScreen() {
   const router = useRouter()
-  const tr = useT(useLangStore(s => s.lang))
+  const lang = useLangStore(s => s.lang)
+  const tr = useT(lang)
+  const { colors, dark } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   const [activeGender, setActiveGender] = useState<Gender>('MEN')
   const [search, setSearch] = useState('')
   const genderLabel: Record<Gender, string> = { MEN: tr.men, WOMEN: tr.women, KIDS: tr.kids }
@@ -63,7 +68,7 @@ export default function HomeScreen() {
       <TextInput
         style={styles.searchInput}
         placeholder={tr.mSearchPlaceholder}
-        placeholderTextColor="#888780"
+        placeholderTextColor={colors.text3}
         value={search}
         onChangeText={setSearch}
       />
@@ -84,6 +89,7 @@ export default function HomeScreen() {
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.searchCard}
+              activeOpacity={0.9}
               onPress={() => router.push(`/product/${item.id}`)}
             >
               <View style={styles.searchImgWrap}>
@@ -92,9 +98,22 @@ export default function HomeScreen() {
                 ) : (
                   <View style={styles.productImgPlaceholder} />
                 )}
+                {!!item.originalPrice && item.originalPrice > item.price && (
+                  <View style={styles.discountBadge}>
+                    <Text style={styles.discountBadgeText}>
+                      -{Math.round((1 - item.price / item.originalPrice) * 100)}%
+                    </Text>
+                  </View>
+                )}
+                <WishlistHeartButton product={item as Product} size={14} />
               </View>
-              <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
-              <Text style={styles.productPrice}>{item.price.toLocaleString()} {tr.som}</Text>
+              <Text style={styles.searchName} numberOfLines={2}>{item.name}</Text>
+              <View style={styles.searchPriceRow}>
+                <Text style={styles.searchPrice}>{item.price.toLocaleString()} {tr.som}</Text>
+                {!!item.originalPrice && item.originalPrice > item.price && (
+                  <Text style={styles.productOriginalPrice}>{item.originalPrice.toLocaleString()}</Text>
+                )}
+              </View>
               <Text style={styles.searchStoreName}>{item.store?.name}</Text>
             </TouchableOpacity>
           )}
@@ -123,35 +142,7 @@ export default function HomeScreen() {
 
             {!!topStores?.stores.length && <HeroBanner stores={topStores.stores} />}
 
-            {!!featured?.products.length && (
-              <ProductRow
-                title={tr.popularProducts}
-                products={featured.products}
-                cur={tr.som}
-                onPressProduct={p => router.push(`/product/${p.id}`)}
-              />
-            )}
-
-            {!!discounted?.products.length && (
-              <ProductRow
-                title={tr.discountedProducts}
-                products={discounted.products}
-                cur={tr.som}
-                onPressProduct={p => router.push(`/product/${p.id}`)}
-              />
-            )}
-
-            {/* Haftalik chegirmalar promo banneri */}
-            <View style={styles.promo}>
-              <View style={styles.promoLeft}>
-                <Text style={styles.promoIcon}>🔥</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.promoTitle}>{tr.weeklyDeals}</Text>
-                  <Text style={styles.promoSub}>{tr.weeklyDealsSub}</Text>
-                </View>
-              </View>
-            </View>
-
+            {/* Jins filtri */}
             <View style={styles.tabs}>
               {GENDERS.map(g => (
                 <TouchableOpacity
@@ -165,6 +156,14 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+
+            {/* ── DO'KONLAR (web'dagidek banner'dan keyin birinchi) ── */}
+            <View style={styles.sectionHead}>
+              <Text style={styles.sectionHeadTitle}>{tr.stores}</Text>
+              <TouchableOpacity onPress={() => router.push('/stores')}>
+                <Text style={styles.sectionHeadLink}>{tr.seeAll}</Text>
+              </TouchableOpacity>
+            </View>
           </>
         }
         ListEmptyComponent={
@@ -174,7 +173,58 @@ export default function HomeScreen() {
             <Text style={styles.empty}>{tr.mStoresNotFound}</Text>
           )
         }
-        ListFooterComponent={<HomeFooter />}
+        ListFooterComponent={
+          <>
+            {/* ── Ommabop mahsulotlar ── */}
+            {!!featured?.products.length && (
+              <ProductRow
+                title={tr.popularProducts}
+                products={featured.products}
+                cur={tr.som}
+                onPressProduct={p => router.push(`/product/${p.id}`)}
+              />
+            )}
+
+            {/* ── Haftalik chegirmalar promo ── */}
+            <View style={styles.promo}>
+              <View style={styles.promoLeft}>
+                <Text style={styles.promoIcon}>🔥</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.promoTitle}>{tr.weeklyDeals}</Text>
+                  <Text style={styles.promoSub}>{tr.weeklyDealsSub}</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* ── Chegirmadagi mahsulotlar ── */}
+            {!!discounted?.products.length && (
+              <ProductRow
+                title={tr.discountedProducts}
+                products={discounted.products}
+                cur={tr.som}
+                onPressProduct={p => router.push(`/product/${p.id}`)}
+              />
+            )}
+
+            {/* ── Do'konlar xaritasi ── */}
+            {(() => {
+              const mapStores: MapStore[] = (topStores?.stores ?? [])
+                .filter(s => typeof s.lat === 'number' && typeof s.lng === 'number')
+                .map(s => ({ id: s.id, name: s.name, lat: s.lat!, lng: s.lng!, isOpen: s.isOpen }))
+              if (mapStores.length === 0) return null
+              return (
+                <View style={styles.mapSection}>
+                  <Text style={styles.mapSectionTitle}>
+                    📍 {lang === 'ru' ? 'Магазины на карте' : lang === 'en' ? 'Stores on the map' : "Xaritada do'konlar"}
+                  </Text>
+                  <LeafletWebMap mode="display" height={220} dark={dark} stores={mapStores} />
+                </View>
+              )
+            })()}
+
+            <HomeFooter />
+          </>
+        }
       />
     </SafeAreaView>
   )
@@ -183,6 +233,8 @@ export default function HomeScreen() {
 function HomeFooter() {
   const router = useRouter()
   const tr = useT(useLangStore(s => s.lang))
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   return (
     <View style={styles.footer}>
       <View style={styles.footerBrand}>
@@ -223,6 +275,8 @@ function ProductRow({
   cur: string
   onPressProduct: (p: Product) => void
 }) {
+  const { colors } = useTheme()
+  const styles = useMemo(() => makeStyles(colors), [colors])
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -258,44 +312,54 @@ function ProductRow({
   )
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
-  searchBar: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginBottom: 12, backgroundColor: '#F1EFE8', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
+// Footer va promo banner qasddan doim to'q rangda (web footer bilan bir xil),
+// shuning uchun ular mavzudan qat'i nazar hardcoded qoladi.
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: c.bg },
+  searchBar: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 20, marginBottom: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 12, gap: 10 },
   searchIcon: { fontSize: 16 },
-  searchInput: { flex: 1, fontSize: 14, color: '#2C2C2A' },
-  tabs: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: '#D3D1C7', marginBottom: 8 },
+  searchInput: { flex: 1, fontSize: 14, color: c.text },
+  tabs: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: c.border, marginBottom: 8 },
   tab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  tabActive: { borderBottomColor: '#534AB7' },
-  tabText: { fontSize: 14, color: '#888780', fontWeight: '500' },
-  tabTextActive: { color: '#534AB7' },
+  tabActive: { borderBottomColor: c.brand },
+  tabText: { fontSize: 14, color: c.text2, fontWeight: '500' },
+  tabTextActive: { color: c.brand },
   list: { paddingBottom: 24, gap: 10 },
-  empty: { textAlign: 'center', color: '#888780', marginTop: 40, fontSize: 14 },
+  empty: { textAlign: 'center', color: c.text2, marginTop: 40, fontSize: 14 },
   section: { marginBottom: 16 },
-  sectionTitle: { fontSize: 15, fontWeight: '600', color: '#1a1a1a', marginBottom: 10, marginHorizontal: 16 },
+  sectionTitle: { fontSize: 15, fontWeight: '600', color: c.text, marginBottom: 10, marginHorizontal: 16 },
+  mapSection: { marginHorizontal: 16, marginBottom: 16 },
+  mapSectionTitle: { fontSize: 15, fontWeight: '600', color: c.text, marginBottom: 10 },
+  sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 16, marginTop: 4, marginBottom: 10 },
+  sectionHeadTitle: { fontSize: 17, fontWeight: '700', color: c.text },
+  sectionHeadLink: { fontSize: 13, fontWeight: '500', color: c.brand },
   sectionScroll: { paddingHorizontal: 16, gap: 10 },
-  productCard: { width: 130 },
-  productImgWrap: { width: 130, height: 130, borderRadius: 10, overflow: 'hidden', backgroundColor: '#F1EFE8' },
+  productCard: { width: 150, backgroundColor: c.surface, borderRadius: 18, borderWidth: 1, borderColor: c.border, overflow: 'hidden' },
+  productImgWrap: { width: '100%', height: 118, overflow: 'hidden', backgroundColor: c.surface2 },
   productImg: { width: '100%', height: '100%' },
-  productImgPlaceholder: { width: '100%', height: '100%', backgroundColor: '#F1EFE8' },
-  discountBadge: { position: 'absolute', top: 6, left: 6, backgroundColor: '#e11d48', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
-  discountBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
-  productName: { fontSize: 12, color: '#1a1a1a', marginTop: 6, lineHeight: 16, height: 32 },
-  productPriceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 2 },
-  productPrice: { fontSize: 13, fontWeight: '600', color: '#534AB7' },
-  productOriginalPrice: { fontSize: 11, color: '#aaa', textDecorationLine: 'line-through' },
+  productImgPlaceholder: { width: '100%', height: '100%', backgroundColor: c.surface2 },
+  discountBadge: { position: 'absolute', top: 8, left: 8, backgroundColor: '#E23B3B', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 },
+  discountBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
+  productName: { fontSize: 12.5, color: c.text, marginTop: 10, marginHorizontal: 12, lineHeight: 16, height: 32, fontWeight: '600' },
+  productPriceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginHorizontal: 12, marginBottom: 14, marginTop: 2 },
+  productPrice: { fontSize: 13.5, fontWeight: '800', color: c.brand },
+  productOriginalPrice: { fontSize: 11, color: c.text3, textDecorationLine: 'line-through' },
   searchGrid: { padding: 16, paddingBottom: 32 },
-  searchRow: { gap: 12, marginBottom: 16 },
-  searchCard: { flex: 1 },
-  searchImgWrap: { width: '100%', aspectRatio: 1, borderRadius: 10, overflow: 'hidden', backgroundColor: '#F1EFE8' },
-  searchStoreName: { fontSize: 11, color: '#888', marginTop: 2 },
-  promo: { marginHorizontal: 16, marginBottom: 16, backgroundColor: '#3C3489', borderRadius: 14, padding: 16 },
+  searchRow: { gap: 12, marginBottom: 12 },
+  searchCard: { flex: 1, backgroundColor: c.surface, borderRadius: 18, borderWidth: 1, borderColor: c.border, overflow: 'hidden' },
+  searchImgWrap: { width: '100%', aspectRatio: 1, overflow: 'hidden', backgroundColor: c.surface2 },
+  searchName: { fontSize: 12.5, color: c.text, fontWeight: '600', marginTop: 10, marginHorizontal: 12, lineHeight: 16, minHeight: 32 },
+  searchPriceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginHorizontal: 12, marginTop: 2 },
+  searchPrice: { fontSize: 13.5, fontWeight: '800', color: c.brand },
+  searchStoreName: { fontSize: 11, color: c.text2, marginHorizontal: 12, marginTop: 2, marginBottom: 12 },
+  promo: { marginHorizontal: 16, marginBottom: 16, backgroundColor: c.brandDark, borderRadius: 14, padding: 16 },
   promoLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   promoIcon: { fontSize: 28 },
   promoTitle: { color: '#fff', fontSize: 15, fontWeight: '700', marginBottom: 2 },
   promoSub: { color: 'rgba(255,255,255,0.8)', fontSize: 12, lineHeight: 16 },
   footer: { backgroundColor: '#1a1a1a', paddingHorizontal: 20, paddingVertical: 28, marginTop: 8 },
   footerBrand: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  footerLogoMark: { width: 30, height: 30, backgroundColor: '#534AB7', borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
+  footerLogoMark: { width: 30, height: 30, backgroundColor: '#2563EB', borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
   footerLogoLetter: { color: '#fff', fontSize: 15, fontWeight: '700' },
   footerLogoText: { color: '#fff', fontSize: 18, fontWeight: '700' },
   footerDesc: { color: 'rgba(255,255,255,0.55)', fontSize: 13, lineHeight: 19, marginBottom: 20 },
