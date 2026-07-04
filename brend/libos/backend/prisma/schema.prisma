@@ -98,6 +98,7 @@ model Store {
 
   // Do'kon qo'shimcha ma'lumotlari
   instagram    String?
+  telegram     String?  // ommaviy Telegram username yoki havola (t.me/...)
   workingHours String?
   deliveryText String?
 

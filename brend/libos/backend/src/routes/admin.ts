@@ -55,6 +55,7 @@ const storeUpdateSchema = z.object({
   cardHolder: z.string().max(100).optional(),
   paymentQr: z.string().max(1000).optional(),
   instagram: z.string().max(200).optional(),
+  telegram: z.string().max(200).optional(),
   workingHours: z.string().max(200).optional(),
   deliveryText: z.string().max(500).optional(),
 })
