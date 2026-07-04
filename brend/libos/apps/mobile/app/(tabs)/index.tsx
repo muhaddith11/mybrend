@@ -248,7 +248,7 @@ function HomeFooter() {
   return (
     <View style={styles.footer}>
       <View style={styles.footerBrand}>
-        <Image source={require('../../assets/icon.png')} style={styles.footerLogoImg} resizeMode="cover" />
+        <Text style={styles.footerLogoText}>ZY<Text style={{ color: '#E3A008' }}>FF</Text></Text>
       </View>
       <Text style={styles.footerDesc}>{tr.footerDesc}</Text>
 
@@ -368,7 +368,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   promoSub: { color: 'rgba(255,255,255,0.8)', fontSize: 12, lineHeight: 16 },
   footer: { backgroundColor: '#1a1a1a', paddingHorizontal: 20, paddingVertical: 28, marginTop: 8 },
   footerBrand: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  footerLogoImg: { width: 132, height: 44 },
+  footerLogoText: { fontSize: 22, fontWeight: '800', letterSpacing: 1.5, color: '#fff' },
   footerDesc: { color: 'rgba(255,255,255,0.55)', fontSize: 13, lineHeight: 19, marginBottom: 20 },
   footerLinks: { gap: 10, marginBottom: 20 },
   footerLink: { color: 'rgba(255,255,255,0.8)', fontSize: 14 },
