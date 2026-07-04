@@ -22,10 +22,13 @@ export default function OrdersScreen() {
     PENDING: tr.stPending, CONFIRMED: tr.stConfirmed, PREPARING: tr.stPreparing,
     DELIVERING: tr.stDelivering, DELIVERED: tr.stDelivered, CANCELLED: tr.stCancelled,
   }
-  const { data: orders = [], isLoading } = useQuery({
+  // Backend /orders/my { orders: [...] } shaklida qaytaradi — myOrders() to'g'ri
+  // shaklni beradi (my() bare massiv kutib bo'sh ro'yxat chiqarardi).
+  const { data, isLoading } = useQuery({
     queryKey: ['my-orders'],
-    queryFn: () => api.orders.my(),
+    queryFn: () => api.orders.myOrders(),
   })
+  const orders = data?.orders ?? []
 
   return (
     <SafeAreaView style={styles.safe}>

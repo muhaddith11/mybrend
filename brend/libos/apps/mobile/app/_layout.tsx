@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { Platform } from 'react-native'
 import { Stack } from 'expo-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
@@ -27,6 +28,16 @@ export default function RootLayout() {
     SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, SpaceGrotesk_700Bold,
     Inter_400Regular, Inter_600SemiBold, Inter_800ExtraBold,
   })
+
+  // Web'da TextInput fokusda xunuk qora ramka (outline) chiqadi — barcha
+  // input/textarea'lardan global o'chiramiz (native'da bu e'tiborsiz).
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      const style = document.createElement('style')
+      style.textContent = 'input, textarea, select { outline: none !important; }'
+      document.head.appendChild(style)
+    }
+  }, [])
 
   // Ilova ochilganda saqlangan token(lar)ni yuklash
   useEffect(() => {
