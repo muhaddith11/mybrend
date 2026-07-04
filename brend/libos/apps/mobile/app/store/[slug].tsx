@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useCartStore } from '../../store/cart'
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, FlatList, Image, Dimensions, Linking,
@@ -13,6 +12,7 @@ import type { Product, Store } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
 import { useLangStore } from '../../store/lang'
 import { WishlistHeartButton } from '../../components/WishlistHeartButton'
+import { AddToCartButton } from '../../components/AddToCartButton'
 import { BespokeStore } from '../../components/stores/BespokeStore'
 import { getStoreDesign } from '../../lib/storeDesigns'
 import { instagramUrl, telegramUrl, telHref, resolveImg } from '../../lib/links'
@@ -26,7 +26,6 @@ export default function StoreScreen() {
   const queryClient = useQueryClient()
   const tr = useT(useLangStore(s => s.lang))
   const { isLoggedIn } = useAuthStore()
-  const addToCart = useCartStore(s => s.addItem)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
   const { data: store, isLoading } = useQuery({
@@ -191,25 +190,6 @@ export default function StoreScreen() {
             themeColor={theme.primary}
             cur={tr.som}
             onPress={() => router.push(`/product/${item.id}`)}
-            onAdd={() => {
-              // Razmer/rang bor bo'lsa — to'g'ridan-to'g'ri qo'shmaymiz, mahsulot
-              // sahifasiga o'tamiz (u yerda tanlab qo'shadi). Aks holda tez qo'shish.
-              const needsVariant = !!((item as any).sizes?.length || (item as any).colors?.length
-                || (item.variants && item.variants.length > 0))
-              if (needsVariant) {
-                router.push(`/product/${item.id}`)
-                return false
-              }
-              addToCart({
-                productId: item.id,
-                name: item.name,
-                price: item.price,
-                image: resolveImg(item.images?.[0]),
-                storeId: store.id,
-                storeName: store.name,
-              })
-              return true
-            }}
           />
         )}
         ListEmptyComponent={
@@ -271,24 +251,14 @@ export default function StoreScreen() {
 }
 
 function ProductCard({
-  product, store, themeColor, cur, onPress, onAdd,
+  product, store, themeColor, cur, onPress,
 }: {
   product: Product
   store: Store
   themeColor: string
   cur: string
   onPress: () => void
-  onAdd: () => boolean
 }) {
-  const [added, setAdded] = useState(false)
-  const handleAdd = () => {
-    // onAdd true qaytarsa — savatga qo'shildi (✓ ko'rsatamiz); false — mahsulot
-    // sahifasiga o'tildi (variant tanlash uchun), ✓ ko'rsatmaymiz.
-    if (onAdd()) {
-      setAdded(true)
-      setTimeout(() => setAdded(false), 1500)
-    }
-  }
   return (
     <TouchableOpacity style={[styles.card, { width: CARD_WIDTH }]} onPress={onPress}>
       <View style={styles.cardImg}>
@@ -303,17 +273,10 @@ function ProductCard({
       </View>
       <View style={styles.cardBody}>
         <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
-        <View style={styles.cardFooter}>
-          <Text style={[styles.price, { color: themeColor }]}>
-            {product.price.toLocaleString()} {cur}
-          </Text>
-          <TouchableOpacity
-            style={[styles.addBtn, { backgroundColor: added ? '#22c55e' : themeColor }]}
-            onPress={handleAdd}
-          >
-            <Ionicons name={added ? 'checkmark' : 'add'} size={18} color="#fff" />
-          </TouchableOpacity>
-        </View>
+        <Text style={[styles.price, { color: themeColor }]}>
+          {product.price.toLocaleString()} {cur}
+        </Text>
+        <AddToCartButton product={product} storeId={store.id} storeName={store.name} bg={themeColor} style={styles.cardAddBtn} />
       </View>
     </TouchableOpacity>
   )
@@ -349,10 +312,9 @@ const styles = StyleSheet.create({
   img: { width: '100%', height: '100%' },
   imgPlaceholder: { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' },
   cardBody: { padding: 10 },
-  productName: { fontSize: 13, color: '#1a1a1a', marginBottom: 8, lineHeight: 18 },
-  cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  price: { fontSize: 13, fontWeight: '600' },
-  addBtn: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  productName: { fontSize: 13, color: '#1a1a1a', marginBottom: 6, lineHeight: 18 },
+  price: { fontSize: 14, fontWeight: '700', marginBottom: 8 },
+  cardAddBtn: { borderRadius: 10 },
   empty: { textAlign: 'center', color: '#888', marginTop: 40, fontSize: 14 },
   // ── Website uslubidagi kontakt footer ──
   footer: { marginTop: 8, paddingHorizontal: 24, paddingTop: 30, paddingBottom: 36, alignItems: 'center' },

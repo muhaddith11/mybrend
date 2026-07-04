@@ -1,31 +1,37 @@
 import { useState } from 'react'
-import { TouchableOpacity, StyleSheet, type StyleProp, type ViewStyle } from 'react-native'
+import { TouchableOpacity, Text, StyleSheet, type StyleProp, type ViewStyle } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import type { Product } from '@libos/shared'
 import { useCartStore } from '../store/cart'
+import { useLangStore } from '../store/lang'
 import { resolveImg } from '../lib/links'
 
-// Mahsulot kartochkasidagi "savatga qo'shish" tugmasi.
+// Mahsulot kartochkasi TAGIDAGI "savatga qo'shish" tugmasi (to'liq kenglikda bar).
+// Rangi (bg) har joyga mos beriladi: ZYFF (brand — tungi rejimда moslashadi),
+// bespoke do'kon (design.accent), oddiy do'kon (themeColor).
 // Razmer/rang (variant) bor mahsulotда to'g'ridan-to'g'ri qo'shmaydi — mahsulot
-// sahifasiga o'tadi (u yerda tanlab qo'shiladi). Oddiy mahsulotда darhol qo'shadi
-// va qisqa vaqt ✓ ko'rsatadi.
+// sahifasiga o'tadi (u yerda tanlab qo'shiladi). Oddiy mahsulotда darhol qo'shadi.
 export function AddToCartButton({
-  product, storeId, storeName, bg, size = 30, style,
+  product, storeId, storeName, bg, textColor = '#fff', style,
 }: {
   product: Product
   storeId?: string
   storeName?: string
   bg: string
-  size?: number
+  textColor?: string
   style?: StyleProp<ViewStyle>
 }) {
   const router = useRouter()
+  const lang = useLangStore(s => s.lang)
   const addToCart = useCartStore(s => s.addItem)
   const [added, setAdded] = useState(false)
 
+  const label = added
+    ? (lang === 'ru' ? 'Добавлено' : lang === 'en' ? 'Added' : "Qo'shildi")
+    : (lang === 'ru' ? 'В корзину' : lang === 'en' ? 'Add' : 'Savatga')
+
   const onPress = (e?: any) => {
-    // Kartochka ustida — bosilganda mahsulotга o'tib ketmasin (web bubbling)
     e?.stopPropagation?.()
     const needsVariant = !!(
       (product as any).sizes?.length ||
@@ -50,20 +56,20 @@ export function AddToCartButton({
 
   return (
     <TouchableOpacity
-      style={[styles.btn, { width: size, height: size, borderRadius: size / 2, backgroundColor: added ? '#22c55e' : bg }, style]}
-      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+      style={[styles.btn, { backgroundColor: added ? '#22c55e' : bg }, style]}
       activeOpacity={0.85}
       onPress={onPress}
     >
-      <Ionicons name={added ? 'checkmark' : 'bag-add-outline'} size={Math.round(size * 0.55)} color="#fff" />
+      <Ionicons name={added ? 'checkmark' : 'bag-add-outline'} size={15} color={added ? '#fff' : textColor} />
+      <Text style={[styles.label, { color: added ? '#fff' : textColor }]} numberOfLines={1}>{label}</Text>
     </TouchableOpacity>
   )
 }
 
 const styles = StyleSheet.create({
   btn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 3,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingVertical: 9, paddingHorizontal: 10, borderRadius: 10,
   },
+  label: { fontSize: 12, fontWeight: '700' },
 })
