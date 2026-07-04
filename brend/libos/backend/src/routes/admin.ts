@@ -58,6 +58,7 @@ const storeUpdateSchema = z.object({
   telegram: z.string().max(200).optional(),
   workingHours: z.string().max(200).optional(),
   deliveryText: z.string().max(500).optional(),
+  lookbook: z.array(z.string().max(1000)).max(40).optional(),
 })
 
 // categorySlug'ni kategoriya ID'siga aylantiradi. Avval shu do'konning O'Z

@@ -102,6 +102,9 @@ model Store {
   workingHours String?
   deliveryText String?
 
+  // Lookbook — tayyor obrazlar galereyasi (rasm URL'lari, admin yuklaydi)
+  lookbook     String[] @default([])
+
   // Qaysi bo'limlarda ko'rinadi
   genders   Gender[]
 
