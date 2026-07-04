@@ -23,3 +23,13 @@ venv/
 Thumbs.db
 
 .vercel
+
+# Claude Code lokal sozlamalari
+.claude/
+
+# Marketing materiallari (ilovaga aloqasi yo'q)
+marketing/
+
+# Dizayn handoff (dizayn kodga qo'llangan — faqat ma'lumot uchun edi)
+Premium mobil dizayn/
+Premium mobil dizayn.zip
