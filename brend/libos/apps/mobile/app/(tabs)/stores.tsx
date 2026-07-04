@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { View, Text, TextInput, StyleSheet, FlatList } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
@@ -14,10 +14,16 @@ export default function StoresScreen() {
   const { colors } = useTheme()
   const styles = useMemo(() => makeStyles(colors), [colors])
   const [search, setSearch] = useState('')
+  // Har harfda tarmoq so'rovi yubormaslik uchun 300ms debounce
+  const [debounced, setDebounced] = useState('')
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(search.trim()), 300)
+    return () => clearTimeout(t)
+  }, [search])
 
   const { data, isLoading } = useQuery({
-    queryKey: ['all-stores', search],
-    queryFn: () => api.stores.list({ search }),
+    queryKey: ['all-stores', debounced],
+    queryFn: () => api.stores.list({ search: debounced }),
   })
 
   return (

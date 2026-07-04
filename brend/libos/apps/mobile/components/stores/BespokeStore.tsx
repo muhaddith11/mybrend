@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Image, Dimensions, useWindowDimensions,
+  Image, Dimensions, useWindowDimensions, Linking,
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -17,7 +17,9 @@ import type { Product, Store } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
 import { useLangStore } from '../../store/lang'
 import { WishlistHeartButton } from '../WishlistHeartButton'
+import { LeafletWebMap } from '../LeafletWebMap'
 import type { StoreDesign } from '../../lib/storeDesigns'
+import { instagramUrl, telegramUrl, telHref } from '../../lib/links'
 
 const { width } = Dimensions.get('window')
 const CARD_W = (width - 32 - 12) / 2
@@ -53,13 +55,25 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
   }
 
   const categories = Array.from(
-    new Map(store.products.map(p => [p.category.id, p.category])).values()
+    new Map(store.products.filter(p => p.category).map(p => [p.category!.id, p.category!])).values()
   )
   const filtered = selectedCategory
-    ? store.products.filter(p => p.category.id === selectedCategory)
+    ? store.products.filter(p => p.category?.id === selectedCategory)
     : store.products
   const featured = store.products.filter(p => (p as any).featured).slice(0, 6)
   const featuredList = featured.length ? featured : store.products.slice(0, 6)
+
+  // ── Kontakt ma'lumotlari (website uslubidagi footer uchun) ──
+  const lang = useLangStore(s => s.lang)
+  const phone = (store as any).phone as string | undefined
+  const igUrl = instagramUrl((store as any).instagram)
+  const tgUrl = telegramUrl((store as any).telegram)
+  const hours = (store as any).workingHours as string | undefined
+  const hasCoords = typeof store.lat === 'number' && typeof store.lng === 'number'
+  const L = {
+    contact: lang === 'ru' ? 'КОНТАКТЫ' : lang === 'en' ? 'CONTACT' : 'ALOQA',
+    hours: lang === 'ru' ? 'Часы работы' : lang === 'en' ? 'Working hours' : 'Ish vaqti',
+  }
 
   // Scroll indikator sakrashi (web'dagi kabi)
   const bounce = useSharedValue(0)
@@ -182,6 +196,69 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
           ))}
           {filtered.length === 0 && <Text style={styles.empty}>{tr.mProductsNotFound}</Text>}
         </View>
+
+        {/* ── ALOQA / FOOTER (website uslubida) ── */}
+        <View style={styles.contactSection}>
+          <Text style={styles.contactKicker}>{L.contact}</Text>
+          <View style={[styles.divider, { alignSelf: 'center' }]} />
+          <Text style={styles.contactName}>{store.name}</Text>
+
+          <View style={styles.contactList}>
+            {!!phone && (
+              <TouchableOpacity style={styles.contactRow} activeOpacity={0.7} onPress={() => Linking.openURL(telHref(phone)!)}>
+                <Ionicons name="call-outline" size={17} color={design.accent} />
+                <Text style={styles.contactText}>{phone}</Text>
+              </TouchableOpacity>
+            )}
+            {!!store.address && (
+              <TouchableOpacity
+                style={styles.contactRow}
+                activeOpacity={hasCoords ? 0.7 : 1}
+                onPress={() => hasCoords && Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}`)}
+              >
+                <Ionicons name="location-outline" size={17} color={design.accent} />
+                <Text style={styles.contactText}>{store.address}</Text>
+              </TouchableOpacity>
+            )}
+            {!!hours && (
+              <View style={styles.contactRow}>
+                <Ionicons name="time-outline" size={17} color={design.accent} />
+                <Text style={styles.contactText}>{L.hours}: {hours}</Text>
+              </View>
+            )}
+          </View>
+
+          {(!!igUrl || !!tgUrl) && (
+            <View style={styles.socialRow}>
+              {!!igUrl && (
+                <TouchableOpacity style={styles.socialBtn} activeOpacity={0.85} onPress={() => Linking.openURL(igUrl)}>
+                  <Ionicons name="logo-instagram" size={18} color={design.accentText} />
+                  <Text style={styles.socialBtnText}>Instagram</Text>
+                </TouchableOpacity>
+              )}
+              {!!tgUrl && (
+                <TouchableOpacity style={styles.socialBtn} activeOpacity={0.85} onPress={() => Linking.openURL(tgUrl)}>
+                  <Ionicons name="paper-plane-outline" size={17} color={design.accentText} />
+                  <Text style={styles.socialBtnText}>Telegram</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
+          {hasCoords && (
+            <View style={styles.contactMap}>
+              <LeafletWebMap
+                mode="display"
+                height={190}
+                dark={design.mode === 'dark'}
+                stores={[{ id: store.id, name: store.name, lat: store.lat!, lng: store.lng!, isOpen: store.isOpen }]}
+              />
+            </View>
+          )}
+
+          <Text style={styles.established}>{design.established} · {design.location}</Text>
+          <Text style={styles.copy}>© 2026 {store.name} — ZYFF</Text>
+        </View>
       </ScrollView>
     </View>
   )
@@ -267,4 +344,18 @@ const makeStyles = (d: StoreDesign) => StyleSheet.create({
   gridPrice: { fontFamily: d.fonts.bodyBold, fontSize: 14, color: d.accent, marginTop: 2 },
   imgFill: { width: '100%', height: '100%' },
   empty: { fontFamily: d.fonts.body, color: d.textMuted, textAlign: 'center', width: '100%', marginTop: 30 },
+
+  // ── Kontakt / footer ──
+  contactSection: { marginTop: 40, paddingTop: 34, paddingHorizontal: 24, paddingBottom: 40, alignItems: 'center', borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: d.border, backgroundColor: d.surface },
+  contactKicker: { fontFamily: d.fonts.bodyBold, fontSize: 12, letterSpacing: 3, color: d.accent, marginBottom: 12 },
+  contactName: { fontFamily: d.fonts.heading, fontSize: 26, color: d.text, marginBottom: 20, textAlign: 'center' },
+  contactList: { alignSelf: 'stretch', gap: 12, marginBottom: 22 },
+  contactRow: { flexDirection: 'row', alignItems: 'center', gap: 12, justifyContent: 'center' },
+  contactText: { fontFamily: d.fonts.body, fontSize: 15, color: d.text, textAlign: 'center' },
+  socialRow: { flexDirection: 'row', gap: 12, marginBottom: 26 },
+  socialBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: d.accent, paddingHorizontal: 22, paddingVertical: 12, borderRadius: d.radius },
+  socialBtnText: { fontFamily: d.fonts.bodyBold, fontSize: 13, letterSpacing: 0.5, color: d.accentText },
+  contactMap: { alignSelf: 'stretch', borderRadius: d.radius, overflow: 'hidden', marginBottom: 24, borderWidth: StyleSheet.hairlineWidth, borderColor: d.border },
+  established: { fontFamily: d.fonts.body, fontSize: 12, letterSpacing: 1, color: d.textMuted, marginBottom: 8, textAlign: 'center' },
+  copy: { fontFamily: d.fonts.body, fontSize: 11, color: d.textMuted, opacity: 0.7, textAlign: 'center' },
 })

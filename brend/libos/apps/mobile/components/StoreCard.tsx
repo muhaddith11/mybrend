@@ -24,9 +24,9 @@ export function StoreCard({ store, onPress }: { store: Store; onPress: () => voi
       </View>
       <View style={styles.storeRight}>
         <Text style={styles.rating}>
-          ⭐ {store.rating.toFixed(1)}{!!store.reviewCount && ` (${store.reviewCount})`}
+          ⭐ {(store.rating ?? 0).toFixed(1)}{!!store.reviewCount && ` (${store.reviewCount})`}
         </Text>
-        <Text style={styles.itemCount}>{store._count.products} {tr.products}</Text>
+        <Text style={styles.itemCount}>{store._count?.products ?? 0} {tr.products}</Text>
         <View style={[styles.openBadge, { backgroundColor: store.isOpen ? '#22C55E' : '#6B7280' }]}>
           <Text style={{ fontSize: 10, color: '#fff' }}>
             {store.isOpen ? tr.open : tr.closed}

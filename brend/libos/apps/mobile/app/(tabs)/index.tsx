@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity,
   TextInput, StyleSheet, FlatList, Image, Linking,
@@ -29,6 +29,13 @@ export default function HomeScreen() {
   const genderLabel: Record<Gender, string> = { MEN: tr.men, WOMEN: tr.women, KIDS: tr.kids }
 
   const searchQuery = search.trim()
+  // Qidiruv so'rovini 300ms kechiktiramiz (har harfda tarmoq so'rovi ketmasin).
+  // Ko'rinishni almashtirish esa darhol (searchQuery orqali).
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(searchQuery), 300)
+    return () => clearTimeout(t)
+  }, [searchQuery])
 
   const { data, isLoading } = useQuery({
     queryKey: ['stores', activeGender],
@@ -50,9 +57,9 @@ export default function HomeScreen() {
 
   // Butun mahsulotlar bo'ylab qidiruv (bitta do'kon nomi bilan cheklanmaydi)
   const { data: searchResults, isLoading: searchLoading } = useQuery({
-    queryKey: ['products', 'search', searchQuery],
-    queryFn: () => api.products.search(searchQuery),
-    enabled: !!searchQuery,
+    queryKey: ['products', 'search', debouncedQuery],
+    queryFn: () => api.products.search(debouncedQuery),
+    enabled: !!debouncedQuery,
   })
 
   // Banner uchun eng yaxshi do'konlar (gender'dan mustaqil — tab almashtirilganda o'zgarmasin)
@@ -119,7 +126,9 @@ export default function HomeScreen() {
           )}
           ListEmptyComponent={
             <Text style={styles.empty}>
-              {searchLoading ? tr.mSearching : `"${searchQuery}" ${tr.mNothingFound}`}
+              {(searchLoading || searchQuery !== debouncedQuery)
+                ? tr.mSearching
+                : `"${searchQuery}" ${tr.mNothingFound}`}
             </Text>
           }
         />
@@ -238,8 +247,7 @@ function HomeFooter() {
   return (
     <View style={styles.footer}>
       <View style={styles.footerBrand}>
-        <View style={styles.footerLogoMark}><Text style={styles.footerLogoLetter}>Z</Text></View>
-        <Text style={styles.footerLogoText}>ZYFF</Text>
+        <Image source={require('../../assets/icon.png')} style={styles.footerLogoImg} resizeMode="cover" />
       </View>
       <Text style={styles.footerDesc}>{tr.footerDesc}</Text>
 
@@ -359,9 +367,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   promoSub: { color: 'rgba(255,255,255,0.8)', fontSize: 12, lineHeight: 16 },
   footer: { backgroundColor: '#1a1a1a', paddingHorizontal: 20, paddingVertical: 28, marginTop: 8 },
   footerBrand: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  footerLogoMark: { width: 30, height: 30, backgroundColor: '#2563EB', borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
-  footerLogoLetter: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  footerLogoText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  footerLogoImg: { width: 104, height: 34 },
   footerDesc: { color: 'rgba(255,255,255,0.55)', fontSize: 13, lineHeight: 19, marginBottom: 20 },
   footerLinks: { gap: 10, marginBottom: 20 },
   footerLink: { color: 'rgba(255,255,255,0.8)', fontSize: 14 },

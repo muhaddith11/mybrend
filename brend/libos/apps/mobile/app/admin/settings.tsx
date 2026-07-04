@@ -35,6 +35,7 @@ export default function AdminSettings() {
         phone: store.phone ?? '',
         workingHours: store.workingHours ?? '',
         instagram: store.instagram ?? '',
+        telegram: (store as any).telegram ?? '',
         deliveryTime: store.deliveryTime != null ? String(store.deliveryTime) : '',
         cardNumber: store.cardNumber ?? '',
         cardHolder: store.cardHolder ?? '',
@@ -53,6 +54,7 @@ export default function AdminSettings() {
       phone: form.phone || undefined,
       workingHours: form.workingHours || undefined,
       instagram: form.instagram || undefined,
+      telegram: form.telegram || undefined,
       deliveryTime: form.deliveryTime ? parseInt(form.deliveryTime, 10) : undefined,
       cardNumber: form.cardNumber || undefined,
       cardHolder: form.cardHolder || undefined,
@@ -109,7 +111,8 @@ export default function AdminSettings() {
           {F('Manzil', 'address')}
           {F('Telefon', 'phone')}
           {F('Ish vaqti', 'workingHours')}
-          {F('Instagram', 'instagram')}
+          {F('Instagram (username yoki havola)', 'instagram')}
+          {F('Telegram (username yoki havola)', 'telegram')}
           {F('Yetkazish vaqti (daqiqa)', 'deliveryTime', { keyboard: 'numeric' })}
           {F('Tavsif', 'description', { multiline: true })}
 

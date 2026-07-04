@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import { useCartStore } from '../../store/cart'
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, FlatList, Image, Dimensions,
+  StyleSheet, FlatList, Image, Dimensions, Linking,
 } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -15,6 +16,7 @@ import { WishlistHeartButton } from '../../components/WishlistHeartButton'
 import { LeafletWebMap } from '../../components/LeafletWebMap'
 import { BespokeStore } from '../../components/stores/BespokeStore'
 import { getStoreDesign } from '../../lib/storeDesigns'
+import { instagramUrl, telegramUrl, telHref } from '../../lib/links'
 
 const { width } = Dimensions.get('window')
 const CARD_WIDTH = (width - 48) / 2
@@ -25,6 +27,7 @@ export default function StoreScreen() {
   const queryClient = useQueryClient()
   const tr = useT(useLangStore(s => s.lang))
   const { isLoggedIn } = useAuthStore()
+  const addToCart = useCartStore(s => s.addItem)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
   const { data: store, isLoading } = useQuery({
@@ -71,14 +74,21 @@ export default function StoreScreen() {
     bg: store.themeBg,
   }
 
-  // Kategoriyalarni mahsulotlardan chiqarish
+  // Kategoriyalarni mahsulotlardan chiqarish (kategoriyasiz mahsulot bo'lishi mumkin)
   const categories = Array.from(
-    new Map(store.products.map(p => [p.category.id, p.category])).values()
+    new Map(store.products.filter(p => p.category).map(p => [p.category!.id, p.category!])).values()
   )
 
   const filtered = selectedCategory
-    ? store.products.filter(p => p.category.id === selectedCategory)
+    ? store.products.filter(p => p.category?.id === selectedCategory)
     : store.products
+
+  // Kontakt (website uslubidagi footer uchun)
+  const phone = (store as any).phone as string | undefined
+  const igUrl = instagramUrl((store as any).instagram)
+  const tgUrl = telegramUrl((store as any).telegram)
+  const workingHours = (store as any).workingHours as string | undefined
+  const hasCoords = typeof store.lat === 'number' && typeof store.lng === 'number'
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.bg }]}>
@@ -91,7 +101,7 @@ export default function StoreScreen() {
           <Text style={styles.headerName}>{store.name}</Text>
           <View style={styles.headerMeta}>
             <Ionicons name="star" size={12} color="#FFD700" />
-            <Text style={styles.headerRating}> {store.rating.toFixed(1)}</Text>
+            <Text style={styles.headerRating}> {(store.rating ?? 0).toFixed(1)}</Text>
             <Text style={styles.headerDot}> · </Text>
             <View style={[styles.openDot, { backgroundColor: store.isOpen ? '#4ade80' : '#f87171' }]} />
             <Text style={styles.headerOpen}> {store.isOpen ? tr.open : tr.closed}</Text>
@@ -182,22 +192,78 @@ export default function StoreScreen() {
             themeColor={theme.primary}
             cur={tr.som}
             onPress={() => router.push(`/product/${item.id}`)}
+            onAdd={() => addToCart({
+              productId: item.id,
+              name: item.name,
+              price: item.price,
+              image: item.images?.[0],
+              storeId: store.id,
+              storeName: store.name,
+            })}
           />
         )}
         ListEmptyComponent={
           <Text style={styles.empty}>{tr.mProductsNotFound}</Text>
         }
         ListFooterComponent={
-          typeof store.lat === 'number' && typeof store.lng === 'number' ? (
-            <View style={styles.mapWrap}>
-              <Text style={styles.mapTitle}>📍 {store.address}</Text>
-              <LeafletWebMap
-                mode="display"
-                height={200}
-                stores={[{ id: store.id, name: store.name, lat: store.lat, lng: store.lng, isOpen: store.isOpen }]}
-              />
+          <View style={[styles.footer, { backgroundColor: theme.primary }]}>
+            <Text style={styles.footerName}>{store.name}</Text>
+            <View style={styles.footerAccent} />
+
+            <View style={styles.footerList}>
+              {!!phone && (
+                <TouchableOpacity style={styles.footerRow} activeOpacity={0.7} onPress={() => Linking.openURL(telHref(phone)!)}>
+                  <Ionicons name="call-outline" size={16} color="#fff" />
+                  <Text style={styles.footerText}>{phone}</Text>
+                </TouchableOpacity>
+              )}
+              {!!store.address && (
+                <TouchableOpacity
+                  style={styles.footerRow}
+                  activeOpacity={hasCoords ? 0.7 : 1}
+                  onPress={() => hasCoords && Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}`)}
+                >
+                  <Ionicons name="location-outline" size={16} color="#fff" />
+                  <Text style={styles.footerText}>{store.address}</Text>
+                </TouchableOpacity>
+              )}
+              {!!workingHours && (
+                <View style={styles.footerRow}>
+                  <Ionicons name="time-outline" size={16} color="#fff" />
+                  <Text style={styles.footerText}>{workingHours}</Text>
+                </View>
+              )}
             </View>
-          ) : null
+
+            {(!!igUrl || !!tgUrl) && (
+              <View style={styles.footerSocial}>
+                {!!igUrl && (
+                  <TouchableOpacity style={styles.footerSocialBtn} activeOpacity={0.85} onPress={() => Linking.openURL(igUrl)}>
+                    <Ionicons name="logo-instagram" size={17} color={theme.primary} />
+                    <Text style={[styles.footerSocialText, { color: theme.primary }]}>Instagram</Text>
+                  </TouchableOpacity>
+                )}
+                {!!tgUrl && (
+                  <TouchableOpacity style={styles.footerSocialBtn} activeOpacity={0.85} onPress={() => Linking.openURL(tgUrl)}>
+                    <Ionicons name="paper-plane-outline" size={16} color={theme.primary} />
+                    <Text style={[styles.footerSocialText, { color: theme.primary }]}>Telegram</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+
+            {hasCoords && (
+              <View style={styles.footerMap}>
+                <LeafletWebMap
+                  mode="display"
+                  height={190}
+                  stores={[{ id: store.id, name: store.name, lat: store.lat!, lng: store.lng!, isOpen: store.isOpen }]}
+                />
+              </View>
+            )}
+
+            <Text style={styles.footerCopy}>© 2026 {store.name} — ZYFF</Text>
+          </View>
         }
       />
     </SafeAreaView>
@@ -205,18 +271,25 @@ export default function StoreScreen() {
 }
 
 function ProductCard({
-  product, store, themeColor, cur, onPress,
+  product, store, themeColor, cur, onPress, onAdd,
 }: {
   product: Product
   store: Store
   themeColor: string
   cur: string
   onPress: () => void
+  onAdd: () => void
 }) {
+  const [added, setAdded] = useState(false)
+  const handleAdd = () => {
+    onAdd()
+    setAdded(true)
+    setTimeout(() => setAdded(false), 1500)
+  }
   return (
     <TouchableOpacity style={[styles.card, { width: CARD_WIDTH }]} onPress={onPress}>
       <View style={styles.cardImg}>
-        {product.images[0] ? (
+        {product.images?.[0] ? (
           <Image source={{ uri: product.images[0] }} style={styles.img} resizeMode="cover" />
         ) : (
           <View style={[styles.imgPlaceholder, { backgroundColor: themeColor + '22' }]}>
@@ -231,8 +304,11 @@ function ProductCard({
           <Text style={[styles.price, { color: themeColor }]}>
             {product.price.toLocaleString()} {cur}
           </Text>
-          <TouchableOpacity style={[styles.addBtn, { backgroundColor: themeColor }]}>
-            <Ionicons name="add" size={18} color="#fff" />
+          <TouchableOpacity
+            style={[styles.addBtn, { backgroundColor: added ? '#22c55e' : themeColor }]}
+            onPress={handleAdd}
+          >
+            <Ionicons name={added ? 'checkmark' : 'add'} size={18} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
@@ -275,6 +351,16 @@ const styles = StyleSheet.create({
   price: { fontSize: 13, fontWeight: '600' },
   addBtn: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   empty: { textAlign: 'center', color: '#888', marginTop: 40, fontSize: 14 },
-  mapWrap: { paddingHorizontal: 12, paddingBottom: 20, paddingTop: 4 },
-  mapTitle: { fontSize: 13, color: '#444', marginBottom: 8, fontWeight: '500' },
+  // ── Website uslubidagi kontakt footer ──
+  footer: { marginTop: 8, paddingHorizontal: 24, paddingTop: 30, paddingBottom: 36, alignItems: 'center' },
+  footerName: { fontSize: 22, fontWeight: '700', color: '#fff', marginBottom: 10, textAlign: 'center' },
+  footerAccent: { width: 40, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.5)', marginBottom: 20 },
+  footerList: { alignSelf: 'stretch', gap: 12, marginBottom: 20 },
+  footerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, justifyContent: 'center' },
+  footerText: { fontSize: 14, color: 'rgba(255,255,255,0.92)', textAlign: 'center' },
+  footerSocial: { flexDirection: 'row', gap: 12, marginBottom: 24 },
+  footerSocialBtn: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#fff', paddingHorizontal: 20, paddingVertical: 11, borderRadius: 12 },
+  footerSocialText: { fontSize: 13, fontWeight: '700' },
+  footerMap: { alignSelf: 'stretch', borderRadius: 14, overflow: 'hidden', marginBottom: 22 },
+  footerCopy: { fontSize: 11, color: 'rgba(255,255,255,0.6)', textAlign: 'center' },
 })

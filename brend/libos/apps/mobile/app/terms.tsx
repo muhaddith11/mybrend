@@ -3,42 +3,75 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking } from 'r
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import type { Lang } from '@libos/shared'
+import { useLangStore } from '../store/lang'
 import { useTheme, type ThemeColors } from '../store/theme'
 
-// Web /terms sahifasi bilan bir xil matn (o'zbekcha, statik)
-const SECTIONS: { h: string; p?: string; li?: string[] }[] = [
-  {
-    h: '1. Platforma roli',
-    p: "ZYFF — xaridorlar va do'konlarni (sotuvchilarni) bog'lovchi marketplace. Mahsulotlar do'konlarga tegishli; oldi-sotdi shartnomasi xaridor va tegishli do'kon o'rtasida tuziladi. ZYFF mahsulot sifati yoki yetkazib berish uchun bevosita sotuvchi javobgar ekanini ta'kidlaydi.",
-  },
-  {
-    h: "2. Buyurtma va to'lov",
-    p: "Buyurtmalar har do'kon bo'yicha alohida rasmiylashtiriladi. To'lov naqd (yetkazib berishda) yoki karta orqali (bot vositasida to'g'ridan-to'g'ri sotuvchiga) amalga oshiriladi. To'lov tasdig'i sotuvchi tomonidan beriladi.",
-  },
-  {
-    h: '3. Yetkazib berish',
-    p: "Yetkazib berish shartlari va muddatlari tegishli do'kon tomonidan belgilanadi.",
-  },
-  {
-    h: '4. Foydalanuvchi majburiyatlari',
-    li: [
-      "To'g'ri va haqqoniy ma'lumot kiritish;",
-      'Platformadan qonuniy maqsadlarda foydalanish;',
-      'Boshqalarning huquqlarini buzmaslik.',
+type Section = { h: string; p?: string; li?: string[] }
+type Content = { title: string; updated: string; lead: string; sections: Section[]; contact: string }
+
+// Web /terms sahifasi bilan bir xil matn — uz/ru/en (shared'ga tegmasdan, mobil ichida)
+const CONTENT: Record<Lang, Content> = {
+  uz: {
+    title: 'Foydalanish shartlari',
+    updated: 'Oxirgi yangilanish: 2026-yil 28-iyun',
+    lead: "ZYFF platformasidan foydalanish orqali siz quyidagi shartlarga rozilik bildirasiz. Iltimos ularni diqqat bilan o'qing.",
+    contact: 'Aloqa:',
+    sections: [
+      { h: '1. Platforma roli', p: "ZYFF — xaridorlar va do'konlarni (sotuvchilarni) bog'lovchi marketplace. Mahsulotlar do'konlarga tegishli; oldi-sotdi shartnomasi xaridor va tegishli do'kon o'rtasida tuziladi. ZYFF mahsulot sifati yoki yetkazib berish uchun bevosita sotuvchi javobgar ekanini ta'kidlaydi." },
+      { h: "2. Buyurtma va to'lov", p: "Buyurtmalar har do'kon bo'yicha alohida rasmiylashtiriladi. To'lov naqd (yetkazib berishda) yoki karta orqali (bot vositasida to'g'ridan-to'g'ri sotuvchiga) amalga oshiriladi. To'lov tasdig'i sotuvchi tomonidan beriladi." },
+      { h: '3. Yetkazib berish', p: "Yetkazib berish shartlari va muddatlari tegishli do'kon tomonidan belgilanadi." },
+      { h: '4. Foydalanuvchi majburiyatlari', li: [
+        "To'g'ri va haqqoniy ma'lumot kiritish;",
+        'Platformadan qonuniy maqsadlarda foydalanish;',
+        'Boshqalarning huquqlarini buzmaslik.',
+      ] },
+      { h: '5. Javobgarlik', p: "ZYFF platformaning uzluksiz ishlashiga harakat qiladi, lekin texnik uzilishlar yoki sotuvchilar harakati natijasidagi zararlar uchun javobgarlikni o'z zimmasiga olmaydi." },
+      { h: "6. O'zgartirishlar", p: "Shartlar yangilanishi mumkin; yangilangan versiya shu sahifada e'lon qilinadi." },
     ],
   },
-  {
-    h: '5. Javobgarlik',
-    p: "ZYFF platformaning uzluksiz ishlashiga harakat qiladi, lekin texnik uzilishlar yoki sotuvchilar harakati natijasidagi zararlar uchun javobgarlikni o'z zimmasiga olmaydi.",
+  ru: {
+    title: 'Условия использования',
+    updated: 'Последнее обновление: 28 июня 2026 г.',
+    lead: 'Используя платформу ZYFF, вы соглашаетесь со следующими условиями. Пожалуйста, внимательно ознакомьтесь с ними.',
+    contact: 'Контакты:',
+    sections: [
+      { h: '1. Роль платформы', p: 'ZYFF — маркетплейс, связывающий покупателей и магазины (продавцов). Товары принадлежат магазинам; договор купли-продажи заключается между покупателем и соответствующим магазином. ZYFF подчёркивает, что за качество товара и доставку напрямую отвечает продавец.' },
+      { h: '2. Заказ и оплата', p: 'Заказы оформляются отдельно по каждому магазину. Оплата производится наличными (при доставке) или картой (переводом напрямую продавцу через бот). Подтверждение оплаты предоставляет продавец.' },
+      { h: '3. Доставка', p: 'Условия и сроки доставки устанавливаются соответствующим магазином.' },
+      { h: '4. Обязанности пользователя', li: [
+        'Вводить верную и достоверную информацию;',
+        'Использовать платформу в законных целях;',
+        'Не нарушать права других лиц.',
+      ] },
+      { h: '5. Ответственность', p: 'ZYFF стремится обеспечить бесперебойную работу платформы, но не несёт ответственности за ущерб, вызванный техническими сбоями или действиями продавцов.' },
+      { h: '6. Изменения', p: 'Условия могут обновляться; обновлённая версия публикуется на этой странице.' },
+    ],
   },
-  {
-    h: "6. O'zgartirishlar",
-    p: "Shartlar yangilanishi mumkin; yangilangan versiya shu sahifada e'lon qilinadi.",
+  en: {
+    title: 'Terms of Use',
+    updated: 'Last updated: 28 June 2026',
+    lead: 'By using the ZYFF platform, you agree to the following terms. Please read them carefully.',
+    contact: 'Contact:',
+    sections: [
+      { h: '1. Platform role', p: 'ZYFF is a marketplace connecting buyers and stores (sellers). Products belong to the stores; the sales contract is concluded between the buyer and the relevant store. ZYFF emphasizes that the seller is directly responsible for product quality and delivery.' },
+      { h: '2. Orders and payment', p: 'Orders are placed separately for each store. Payment is made in cash (on delivery) or by card (transferred directly to the seller via the bot). Payment confirmation is provided by the seller.' },
+      { h: '3. Delivery', p: 'Delivery terms and times are set by the relevant store.' },
+      { h: '4. User obligations', li: [
+        'Provide accurate and truthful information;',
+        'Use the platform for lawful purposes;',
+        'Do not violate the rights of others.',
+      ] },
+      { h: '5. Liability', p: 'ZYFF strives to keep the platform running smoothly but is not liable for damages caused by technical failures or the actions of sellers.' },
+      { h: '6. Changes', p: 'The terms may be updated; the updated version will be posted on this page.' },
+    ],
   },
-]
+}
 
 export default function TermsScreen() {
   const router = useRouter()
+  const lang = useLangStore(s => s.lang)
+  const c = CONTENT[lang] ?? CONTENT.uz
   const { colors } = useTheme()
   const styles = useMemo(() => makeStyles(colors), [colors])
 
@@ -48,18 +81,15 @@ export default function TermsScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Foydalanish shartlari</Text>
+        <Text style={styles.headerTitle}>{c.title}</Text>
         <View style={{ width: 22 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.updated}>Oxirgi yangilanish: 2026-yil 28-iyun</Text>
-        <Text style={styles.lead}>
-          ZYFF platformasidan foydalanish orqali siz quyidagi shartlarga rozilik bildirasiz.
-          Iltimos ularni diqqat bilan o'qing.
-        </Text>
+        <Text style={styles.updated}>{c.updated}</Text>
+        <Text style={styles.lead}>{c.lead}</Text>
 
-        {SECTIONS.map(s => (
+        {c.sections.map(s => (
           <View key={s.h} style={styles.section}>
             <Text style={styles.h2}>{s.h}</Text>
             {s.p ? <Text style={styles.p}>{s.p}</Text> : null}
@@ -70,7 +100,7 @@ export default function TermsScreen() {
         ))}
 
         <View style={styles.contact}>
-          <Text style={styles.p}>Aloqa:</Text>
+          <Text style={styles.p}>{c.contact}</Text>
           <TouchableOpacity onPress={() => Linking.openURL('mailto:info@zyff.uz')}>
             <Text style={styles.link}>info@zyff.uz</Text>
           </TouchableOpacity>

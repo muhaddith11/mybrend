@@ -44,8 +44,8 @@ export default function ProductScreen() {
   const themeColor = (product as any).store?.themeColor ?? colors.brand
   const images: string[] = product.images ?? []
   const inStock = product.inStock ?? true
-  const sizes = [...new Set(product.variants.map(v => v.size).filter(Boolean))]
-  const variantColors = [...new Set(product.variants.map(v => v.color).filter(Boolean))]
+  const sizes = [...new Set((product.variants ?? []).map(v => v.size).filter(Boolean))]
+  const variantColors = [...new Set((product.variants ?? []).map(v => v.color).filter(Boolean))]
 
   const isWishlisted = wishlistHas(product.id)
   const handleToggleWishlist = () => {
@@ -54,7 +54,7 @@ export default function ProductScreen() {
       name: product.name,
       price: product.price,
       originalPrice: product.originalPrice,
-      image: product.images[0],
+      image: images[0],
       storeId: product.storeId,
       storeName: (product as any).store?.name ?? '',
       storeSlug: (product as any).store?.slug ?? '',
@@ -67,7 +67,7 @@ export default function ProductScreen() {
       productId: product.id,
       name: product.name,
       price: product.price,
-      image: product.images[0],
+      image: images[0],
       storeId: product.storeId,
       storeName: (product as any).store?.name ?? '',
       size: selectedSize ?? undefined,

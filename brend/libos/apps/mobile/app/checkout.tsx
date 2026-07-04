@@ -21,7 +21,8 @@ type PaymentType = 'CASH' | 'CLICK' | 'PAYME' | 'TRANSFER'
 
 export default function CheckoutScreen() {
   const router = useRouter()
-  const tr = useT(useLangStore(s => s.lang))
+  const lang = useLangStore(s => s.lang)
+  const tr = useT(lang)
   const { colors, dark } = useTheme()
   const styles = useMemo(() => makeStyles(colors), [colors])
   const { storeId } = useLocalSearchParams<{ storeId: string }>()
@@ -85,6 +86,10 @@ export default function CheckoutScreen() {
   }
 
   const handleOrder = async () => {
+    if (items.length === 0) {
+      Alert.alert(tr.mErrorTitle, tr.mOrderFailed)
+      return
+    }
     if (delivery === 'DELIVERY' && !addrFilled) {
       Alert.alert(tr.mAddrTitle, tr.mAddrRequired)
       return
@@ -103,7 +108,8 @@ export default function CheckoutScreen() {
         items: items.map(i => ({
           productId: i.productId,
           quantity: i.quantity,
-          variantId: undefined,
+          size: i.size,
+          color: i.color,
         })),
       })
 
@@ -200,7 +206,13 @@ export default function CheckoutScreen() {
             />
             {mapAddress
               ? <Text style={styles.mapAddr}>📍 {mapAddress}</Text>
-              : <Text style={styles.mapHint}>🗺️ Xaritadan uyingizni belgilang (ixtiyoriy)</Text>}
+              : <Text style={styles.mapHint}>
+                  {lang === 'ru'
+                    ? '🗺️ Отметьте свой дом на карте (необязательно)'
+                    : lang === 'en'
+                    ? '🗺️ Mark your home on the map (optional)'
+                    : '🗺️ Xaritadan uyingizni belgilang (ixtiyoriy)'}
+                </Text>}
 
             {/* Kvartira / Hovli */}
             <View style={styles.addrToggle}>

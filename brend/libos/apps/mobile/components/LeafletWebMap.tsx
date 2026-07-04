@@ -100,12 +100,19 @@ function buildHtml(opts: {
 
     if (mode === 'picker') {
       var marker = null;
+      var geocoding = false;
       var initial = ${initialJson};
       if (initial) { marker = L.marker([initial.lat, initial.lng]).addTo(map); }
       map.on('click', function (e) {
         var lat = e.latlng.lat, lng = e.latlng.lng;
         if (marker) { marker.setLatLng([lat, lng]); } else { marker = L.marker([lat, lng]).addTo(map); }
         post({ type: 'picking', lat: lat, lng: lng });
+        // Nominatim foydalanish siyosati: bir vaqtda bitta so'rov (spam'ni oldini olish)
+        if (geocoding) {
+          post({ type: 'select', lat: lat, lng: lng, address: lat.toFixed(5) + ', ' + lng.toFixed(5) });
+          return;
+        }
+        geocoding = true;
         fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lng + '&format=json&accept-language=uz')
           .then(function (r) { return r.json(); })
           .then(function (d) {
@@ -122,7 +129,8 @@ function buildHtml(opts: {
           .catch(function () {
             var addr = lat.toFixed(5) + ', ' + lng.toFixed(5);
             post({ type: 'select', lat: lat, lng: lng, address: addr });
-          });
+          })
+          .finally(function () { geocoding = false; });
       });
     }
   </script>

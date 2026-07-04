@@ -30,12 +30,12 @@ export default function VerifyScreen() {
 
   const inputs = useRef<TextInput[]>([])
 
-  // Qayta yuborish taymer
+  // Qayta yuborish taymer — bitta interval (0 ga yetganda to'xtaydi, qayta
+  // yuborilganda resendTimer 60 ga qaytarilib yana sanaydi)
   useEffect(() => {
-    if (resendTimer <= 0) return
-    const t = setInterval(() => setResendTimer(s => s - 1), 1000)
+    const t = setInterval(() => setResendTimer(s => (s <= 0 ? 0 : s - 1)), 1000)
     return () => clearInterval(t)
-  }, [resendTimer])
+  }, [])
 
   const handleChange = (text: string, index: number) => {
     // Faqat raqam
@@ -103,7 +103,7 @@ export default function VerifyScreen() {
     }
   }
 
-  const maskedPhone = phone.replace(/(\+\d{3})(\d{2})(\d{3})(\d{2})(\d{2})/, '$1 $2 *** $4 $5')
+  const maskedPhone = (phone ?? '').replace(/(\+\d{3})(\d{2})(\d{3})(\d{2})(\d{2})/, '$1 $2 *** $4 $5')
 
   return (
     <SafeAreaView style={styles.safe}>

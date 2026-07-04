@@ -149,7 +149,9 @@ export default function ProfileScreen() {
         onPress={() => router.push(adminToken ? '/admin' : '/admin/login')}
       >
         <Ionicons name="storefront-outline" size={20} color={colors.accent} />
-        <Text style={styles.ownerLabel}>Do'kon egasi paneli</Text>
+        <Text style={styles.ownerLabel}>
+          {lang === 'ru' ? 'Панель продавца' : lang === 'en' ? 'Seller panel' : "Do'kon egasi paneli"}
+        </Text>
         <Ionicons name="chevron-forward" size={16} color={colors.text3} />
       </TouchableOpacity>
 

@@ -21,6 +21,25 @@ export default function AboutScreen() {
     ? 'ZYFF is a multi-brand clothing marketplace in Kokand, Uzbekistan. We bring the city’s best stores together in one place — search, compare and order directly.'
     : "ZYFF — Qo'qon shahridagi ko'p brendli kiyim marketplace platformasi. Biz shahardagi eng yaxshi do'konlarni bir joyda birlashtiramiz: qidiring, solishtiring va to'g'ridan-to'g'ri buyurtma bering."
 
+  const blocks: { t: string; b: string }[] =
+    lang === 'ru'
+      ? [
+          { t: 'Наши магазины', b: 'На платформе представлены Asma Design (премиальная мужская одежда), Boosner (100% оригинальные бренды — Adidas, Calvin Klein, New Balance) и One Pro Boutique (современная мужская одежда). У каждого магазина своя страница, товары и служба доставки.' },
+          { t: 'Как это работает', b: 'Найдите товар → выберите магазин → добавьте в корзину → оформите заказ. Оплата наличными или картой (перевод через бот). Доставка по всему Узбекистану.' },
+          { t: 'Расположение и контакты', b: '📍 г. Коканд, Узбекистан\n🌐 zyff.uz · 📷 Instagram: @zyff.uz' },
+        ]
+      : lang === 'en'
+      ? [
+          { t: 'Our stores', b: 'The platform features Asma Design (premium menswear), Boosner (100% original brands — Adidas, Calvin Klein, New Balance) and One Pro Boutique (modern menswear). Each store has its own page, products and delivery service.' },
+          { t: 'How it works', b: 'Find a product → choose a store → add to cart → place your order. Payment by cash or card (transfer via bot). Delivery across Uzbekistan.' },
+          { t: 'Location & contact', b: '📍 Kokand, Uzbekistan\n🌐 zyff.uz · 📷 Instagram: @zyff.uz' },
+        ]
+      : [
+          { t: "Bizning do'konlarimiz", b: "Platformamizda Asma Design (premium erkaklar kiyimi), Boosner (100% original brendlar — Adidas, Calvin Klein, New Balance) va One Pro Boutique (zamonaviy erkaklar kiyimi) kabi do'konlar mavjud. Har bir do'kon o'z sahifasiga, mahsulotlariga va yetkazib berish xizmatiga ega." },
+          { t: 'Qanday ishlaydi', b: "Mahsulotni qidiring → do'konni tanlang → savatga qo'shing → buyurtma bering. To'lov naqd yoki karta (bot orqali o'tkazma) orqali. O'zbekiston bo'ylab yetkazib berish mavjud." },
+          { t: 'Joylashuv va aloqa', b: "📍 Qo'qon shahri, O'zbekiston\n🌐 zyff.uz · 📷 Instagram: @zyff.uz" },
+        ]
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
@@ -35,32 +54,12 @@ export default function AboutScreen() {
         <Text style={styles.icon}>🛍️</Text>
         <Text style={styles.intro}>{intro}</Text>
 
-        <View style={styles.block}>
-          <Text style={styles.blockTitle}>Bizning do'konlarimiz</Text>
-          <Text style={styles.blockText}>
-            Platformamizda Asma Design (premium erkaklar kiyimi), Boosner (100% original
-            brendlar — Adidas, Calvin Klein, New Balance) va One Pro Boutique (zamonaviy
-            erkaklar kiyimi) kabi do'konlar mavjud. Har bir do'kon o'z sahifasiga,
-            mahsulotlariga va yetkazib berish xizmatiga ega.
-          </Text>
-        </View>
-
-        <View style={styles.block}>
-          <Text style={styles.blockTitle}>Qanday ishlaydi</Text>
-          <Text style={styles.blockText}>
-            Mahsulotni qidiring → do'konni tanlang → savatga qo'shing → buyurtma bering.
-            To'lov naqd, karta yoki online (Click/Payme) orqali. O'zbekiston bo'ylab
-            yetkazib berish mavjud.
-          </Text>
-        </View>
-
-        <View style={styles.block}>
-          <Text style={styles.blockTitle}>Joylashuv va aloqa</Text>
-          <Text style={styles.blockText}>
-            📍 Qo'qon shahri, O'zbekiston{'\n'}
-            🌐 zyff.uz · 📷 Instagram: @zyff.uz
-          </Text>
-        </View>
+        {blocks.map(bl => (
+          <View key={bl.t} style={styles.block}>
+            <Text style={styles.blockTitle}>{bl.t}</Text>
+            <Text style={styles.blockText}>{bl.b}</Text>
+          </View>
+        ))}
 
         <TouchableOpacity style={styles.btn} onPress={() => router.push('/stores')}>
           <Text style={styles.btnText}>{tr.heroAppCta.replace(' →', '')}</Text>
