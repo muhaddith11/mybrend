@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { api, useT } from '@libos/shared'
 import { useLangStore } from '../../store/lang'
+import { useCartStore } from '../../store/cart'
 import { useTheme, type ThemeColors } from '../../store/theme'
 
 type Step = { key: string; label: string; icon: string }
@@ -44,6 +45,17 @@ export default function OrderScreen() {
     queryFn: () => api.orders.byId(id),
     refetchInterval: 10000, // har 10 soniyada yangilanadi
   })
+
+  // Bot orqali karta to'lovi (TRANSFER): buyurtma checkout'да savatdan
+  // o'chirilmagan edi — do'kon egasi to'lovni tasdiqlab, buyurtma CONFIRMED
+  // bo'lgandagina o'sha do'kon savatini tozalaymiz.
+  const clearStore = useCartStore(s => s.clearStore)
+  useEffect(() => {
+    if (order?.status === 'CONFIRMED' && (order as any).paymentMethod === 'transfer') {
+      const sid = (order as any).storeId ?? (order as any).store?.id
+      if (sid) clearStore(sid)
+    }
+  }, [order?.status])
 
   if (!order) {
     return (

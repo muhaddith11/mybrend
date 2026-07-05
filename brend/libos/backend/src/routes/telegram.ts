@@ -8,6 +8,7 @@ import {
   tgAnswerCallback,
   tgEditMessageText,
   setBotWebhook,
+  sendOrderNotification,
   esc,
 } from '../plugins/telegram.js'
 
@@ -281,7 +282,15 @@ async function handleCallback(
 
   const payment = await prisma.payment.findUnique({
     where: { id: paymentId },
-    include: { order: { include: { store: true, user: { select: { phone: true } } } } },
+    include: {
+      order: {
+        include: {
+          store: true,
+          user: { select: { phone: true } },
+          items: { include: { product: true } },
+        },
+      },
+    },
   })
 
   if (!payment) {
@@ -322,6 +331,13 @@ async function handleCallback(
       sendSms(phone, `ZYFF: to'lovingiz tasdiqlandi, buyurtmangiz qabul qilindi. Rahmat!`)
         .catch((err) => app.log.error({ err, orderId: payment.orderId }, 'Tasdiq SMS yuborilmadi'))
     }
+    // To'lov tasdiqlandi — endi egaga to'liq buyurtma ma'lumotini yuboramiz
+    // (tayyorlash/yetkazish uchun). Create'да TRANSFER bo'lgani uchun yuborilmagan edi.
+    sendOrderNotification({
+      ...payment.order,
+      chatId: payment.order.store.telegramChatId,
+      user: { phone: payment.customerPhone || payment.order.user?.phone || 'Noma\'lum', name: null },
+    }).catch((err) => app.log.error({ err, orderId: payment.orderId }, 'Tasdiqdan keyingi buyurtma xabari yuborilmadi'))
   } else {
     await prisma.$transaction(async (tx) => {
       await tx.payment.update({ where: { id: payment.id }, data: { status: 'CANCELLED' } })

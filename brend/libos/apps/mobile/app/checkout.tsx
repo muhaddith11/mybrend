@@ -114,7 +114,12 @@ export default function CheckoutScreen() {
         })),
       })
 
-      clearStore(storeId)
+      // TRANSFER (bot orqali karta/QR): to'lov do'kon egasi tomonidan
+      // tasdiqlanmaguncha savatdan o'chirilmaydi — buyurtma kuzatuv sahifasi
+      // holat CONFIRMED bo'lganда tozalaydi. Naqd/boshqada — darhol tozalaymiz.
+      if (payment !== 'TRANSFER') {
+        clearStore(storeId)
+      }
 
       // Click/Payme → paymentUrl, TRANSFER (bot orqali) → botUrl. Ikkalasi ham
       // tashqi sahifaga/botga yo'naltiradi (veb bilan bir xil mantiq).

@@ -179,13 +179,15 @@ export default async function ordersRoutes(app: FastifyInstance) {
       throw e
     }
 
-    // Telegram xabari — buyurtmani bloklamaydi (fire-and-forget), lekin xato
-    // bo'lsa jimgina yutilmaydi, logga yoziladi (kuzatib turish uchun).
-    sendOrderNotification({
-      ...order,
-      chatId: order.store.telegramChatId,
-      user: { phone, name: body.customerName },
-    }).catch((err) => req.log.error({ err, orderId: order.id }, 'Telegram buyurtma xabari yuborilmadi'))
+    // Telegram xabari — buyurtmani bloklamaydi (fire-and-forget), xato logga yoziladi.
+    // TRANSFER'да egaga xabar to'lov tasdiqlangandan keyin (telegram.ts); naqdда darhol.
+    if (body.paymentMethod !== 'transfer') {
+      sendOrderNotification({
+        ...order,
+        chatId: order.store.telegramChatId,
+        user: { phone, name: body.customerName },
+      }).catch((err) => req.log.error({ err, orderId: order.id }, 'Telegram buyurtma xabari yuborilmadi'))
+    }
 
     // Online to'lov tanlangan bo'lsa — to'lov sahifasi URL'ini qaytaramiz.
     // Mijoz shu manzilga yo'naltiriladi; tasdiqlash provayder webhook'i orqali keladi.
@@ -274,12 +276,17 @@ export default async function ordersRoutes(app: FastifyInstance) {
       throw e
     }
 
-    // Telegram xabari — fire-and-forget, xato logga yoziladi
-    sendOrderNotification({
-      ...order,
-      chatId: order.store.telegramChatId,
-      user: user ?? { phone: 'Noma\'lum', name: null },
-    }).catch((err) => req.log.error({ err, orderId: order.id }, 'Telegram buyurtma xabari yuborilmadi'))
+    // Telegram xabari — fire-and-forget, xato logga yoziladi.
+    // TRANSFER (bot orqali to'lov)'да egaga buyurtma xabari DARHOL yuborilmaydi —
+    // faqat to'lov tasdiqlangandan keyin (telegram.ts confirm callback). Naqd/boshqa
+    // usullarда darhol yuboriladi (to'lov bosqichi yo'q).
+    if (body.paymentProvider !== 'TRANSFER') {
+      sendOrderNotification({
+        ...order,
+        chatId: order.store.telegramChatId,
+        user: user ?? { phone: 'Noma\'lum', name: null },
+      }).catch((err) => req.log.error({ err, orderId: order.id }, 'Telegram buyurtma xabari yuborilmadi'))
+    }
 
     // Online to'lov tanlangan bo'lsa — to'lov sahifasi URL'ini qaytaramiz.
     // Click/Payme: provayder webhook'i tasdiqlaydi. TRANSFER: mijoz botga o'tadi,
