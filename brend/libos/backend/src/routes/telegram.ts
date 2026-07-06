@@ -236,20 +236,29 @@ async function handleReceiptPhoto(prisma: PrismaClient, chatId: number, fileId: 
   await prisma.payment.update({ where: { id: payment.id }, data: { receiptFileId: fileId } })
   await tgSendMessage(chatId, '✅ Chek qabul qilindi! Do\'kon to\'lovni tasdiqlashini kuting.')
 
-  // Egaga faqat chek + to'lanishi kerak summa yuboriladi (to'lovni tekshirish
-  // uchun). Buyurtma tafsilotlari (mahsulot, manzil, mijoz) esa ega to'lovni
-  // TASDIQLAGANIDAN keyin yuboriladi (pay_ok callback → sendOrderNotification).
+  // Chek bosqichida ega mahsulot ro'yxati + summani ko'radi (to'lovni tekshirish
+  // uchun — qaysi mahsulotга qancha to'lanyapti). Yetkazish tafsilotlari (manzil,
+  // mijoz telefoni) esa faqat ega to'lovni TASDIQLAGANIDAN keyin yuboriladi
+  // (pay_ok callback → sendOrderNotification).
   const order = payment.order
   const ownerChat = order.store.telegramChatId
   if (!ownerChat) return
 
+  const itemLines = order.items
+    .map((i) => {
+      const v = [i.size, i.color].filter(Boolean).join('/')
+      return `  • ${esc(i.product.nameUz || i.product.name)} ×${i.quantity}${v ? ` (${esc(v)})` : ''}`
+    })
+    .join('\n')
+
   const caption = [
     `🧾 <b>Yangi to'lov cheki</b> — ${esc(order.store.name)}`,
     ``,
+    itemLines,
     `💰 <b>To'lanishi kerak:</b> ${order.totalPrice.toLocaleString()} so'm`,
     `🔖 <code>${esc(order.id.slice(-8))}</code>`,
     ``,
-    `Chekni tekshiring. ✅ Tasdiqlasangiz — buyurtma ma'lumotlari yuboriladi.`,
+    `Chekni tekshiring. ✅ Tasdiqlasangiz — manzil va mijoz ma'lumoti yuboriladi.`,
   ].join('\n')
 
   const keyboard = {
