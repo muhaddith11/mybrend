@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Image, Dimensions, useWindowDimensions, Linking,
+  Image, Dimensions, useWindowDimensions, Linking, Alert, Modal, Pressable,
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -13,7 +13,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, useT } from '@libos/shared'
-import type { Product, Store } from '@libos/shared'
+import type { Product, Store, LookbookLook } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
 import { useLangStore } from '../../store/lang'
 import { WishlistHeartButton } from '../WishlistHeartButton'
@@ -34,6 +34,7 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
   const qc = useQueryClient()
   const styles = useMemo(() => makeStyles(design), [design])
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [openLook, setOpenLook] = useState<LookbookLook | null>(null)
   const scrollRef = useRef<ScrollView>(null)
   const gridY = useRef(0)
   const lookbookY = useRef(0)
@@ -46,9 +47,24 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
     enabled: isLoggedIn,
   })
   const isFavorited = !!favorites?.stores.some(s => s.id === store.id)
+  // Optimistik yangilanish + xato ko'rsatish (store/[slug] bilan bir xil mantiq).
   const toggleFavorite = useMutation({
     mutationFn: () => api.stores.toggleFavorite(store.id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['favorites'] }),
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: ['favorites'] })
+      const prev = qc.getQueryData<{ stores: Store[] }>(['favorites'])
+      qc.setQueryData<{ stores: Store[] }>(['favorites'], (old) => {
+        const stores = old?.stores ?? []
+        const exists = stores.some(s => s.id === store.id)
+        return { stores: exists ? stores.filter(s => s.id !== store.id) : [...stores, store] }
+      })
+      return { prev }
+    },
+    onError: (e: any, _v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(['favorites'], ctx.prev)
+      Alert.alert(tr.mErrorTitle, e?.message ?? tr.mErrorGeneric)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['favorites'] }),
   })
   const onHeart = () => {
     if (!isLoggedIn) { router.push('/auth/login'); return }
@@ -71,8 +87,13 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
   const tgUrl = telegramUrl((store as any).telegram)
   const hours = (store as any).workingHours as string | undefined
   const hasCoords = typeof store.lat === 'number' && typeof store.lng === 'number'
-  const lookbook = (store as any).lookbook as string[] | undefined
-  const hasLookbook = Array.isArray(lookbook) && lookbook.length > 0
+  // Yangi lookbook (rasm + mahsulotlar). Bo'lmasa — eski rasm-only lookbook'ga tushamiz.
+  const lookbookLooks = (store as any).lookbookLooks as LookbookLook[] | undefined
+  const oldLookbook = (store as any).lookbook as string[] | undefined
+  const looks: LookbookLook[] = Array.isArray(lookbookLooks) && lookbookLooks.length > 0
+    ? lookbookLooks
+    : Array.isArray(oldLookbook) ? oldLookbook.map(uri => ({ image: uri, productIds: [] })) : []
+  const hasLookbook = looks.length > 0
   const L = {
     contact: lang === 'ru' ? 'КОНТАКТЫ' : lang === 'en' ? 'CONTACT' : 'ALOQA',
     hours: lang === 'ru' ? 'Часы работы' : lang === 'en' ? 'Working hours' : 'Ish vaqti',
@@ -193,10 +214,21 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
             <Text style={styles.sectionKicker}>LOOKBOOK</Text>
             <View style={styles.divider} />
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 14, paddingRight: 16 }}>
-              {lookbook!.map((uri, i) => (
-                <View key={i} style={styles.lookCard}>
-                  <Image source={{ uri: resolveImg(uri) }} style={styles.imgFill} resizeMode="cover" />
-                </View>
+              {looks.map((look, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={styles.lookCard}
+                  activeOpacity={0.9}
+                  onPress={() => look.productIds.length > 0 ? setOpenLook(look) : undefined}
+                >
+                  <Image source={{ uri: resolveImg(look.image) }} style={styles.imgFill} resizeMode="cover" />
+                  {look.productIds.length > 0 && (
+                    <View style={styles.lookBadge}>
+                      <Ionicons name="pricetags" size={11} color="#fff" />
+                      <Text style={styles.lookBadgeText}>{look.productIds.length}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
               ))}
             </ScrollView>
           </View>
@@ -276,6 +308,54 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
           <Text style={styles.copy}>© 2026 {store.name} — ZYFF</Text>
         </View>
       </ScrollView>
+
+      {/* Look bosilganда — shu obraz qaysi mahsulotlardan yasalgani */}
+      <Modal visible={!!openLook} transparent animationType="slide" onRequestClose={() => setOpenLook(null)}>
+        <Pressable style={styles.lookModalOverlay} onPress={() => setOpenLook(null)}>
+          <Pressable style={styles.lookModalCard} onPress={() => {}}>
+            <View style={styles.lookModalHead}>
+              <Text style={styles.lookModalTitle}>{design.hero.ctaLookbook ?? 'LOOKBOOK'}</Text>
+              <TouchableOpacity onPress={() => setOpenLook(null)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <Ionicons name="close" size={22} color={design.text} />
+              </TouchableOpacity>
+            </View>
+            {openLook && (
+              <Image source={{ uri: resolveImg(openLook.image) }} style={styles.lookModalImg} resizeMode="cover" />
+            )}
+            <Text style={styles.lookModalSub}>
+              {lang === 'ru' ? 'Товары из этого образа' : lang === 'en' ? 'Products in this look' : 'Bu obrazdagi mahsulotlar'}
+            </Text>
+            <ScrollView style={{ maxHeight: 280 }}>
+              {(openLook?.productIds ?? [])
+                .map(pid => store.products.find(p => p.id === pid))
+                .filter((p): p is Product => !!p)
+                .map(p => (
+                  <TouchableOpacity
+                    key={p.id}
+                    style={styles.lookProdRow}
+                    onPress={() => { setOpenLook(null); router.push(`/product/${p.id}`) }}
+                  >
+                    <View style={styles.lookProdImgWrap}>
+                      {p.images?.[0]
+                        ? <Image source={{ uri: resolveImg(p.images[0]) }} style={styles.imgFill} resizeMode="cover" />
+                        : <View style={styles.imgFill} />}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.lookProdName} numberOfLines={1}>{p.name}</Text>
+                      <Text style={styles.lookProdPrice}>{p.price.toLocaleString()} {tr.som}</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={design.textMuted} />
+                  </TouchableOpacity>
+                ))}
+              {openLook && openLook.productIds.every(pid => !store.products.find(p => p.id === pid)) && (
+                <Text style={styles.lookEmpty}>
+                  {lang === 'ru' ? 'Товары недоступны' : lang === 'en' ? 'Products unavailable' : "Mahsulotlar mavjud emas"}
+                </Text>
+              )}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   )
 }
@@ -339,6 +419,19 @@ const makeStyles = (d: StoreDesign) => StyleSheet.create({
   ctaSecondary: { borderWidth: 1, borderColor: d.accent, paddingHorizontal: 26, paddingVertical: 12, borderRadius: d.radius, backgroundColor: 'transparent' },
   ctaSecondaryText: { fontFamily: d.fonts.bodyBold, fontSize: 13, letterSpacing: 1.5, color: d.accent, textTransform: 'uppercase' },
   lookCard: { width: 260, height: 360, borderRadius: d.radius, overflow: 'hidden', backgroundColor: d.surface },
+  lookBadge: { position: 'absolute', top: 12, right: 12, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5 },
+  lookBadgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  lookModalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  lookModalCard: { backgroundColor: d.bg, borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingHorizontal: 18, paddingTop: 14, paddingBottom: 28 },
+  lookModalHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  lookModalTitle: { fontFamily: d.fonts.bodyBold, fontSize: 14, letterSpacing: 2, color: d.text, textTransform: 'uppercase' },
+  lookModalImg: { width: '100%', height: 220, borderRadius: d.radius, backgroundColor: d.surface, marginBottom: 14 },
+  lookModalSub: { fontFamily: d.fonts.bodyBold, fontSize: 12, letterSpacing: 1, color: d.textMuted, marginBottom: 8, textTransform: 'uppercase' },
+  lookProdRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: d.border },
+  lookProdImgWrap: { width: 52, height: 66, borderRadius: 8, overflow: 'hidden', backgroundColor: d.surface },
+  lookProdName: { fontFamily: d.fonts.body, fontSize: 14, color: d.text, marginBottom: 3 },
+  lookProdPrice: { fontFamily: d.fonts.bodyBold, fontSize: 13, color: d.accent },
+  lookEmpty: { fontFamily: d.fonts.body, fontSize: 13, color: d.textMuted, textAlign: 'center', paddingVertical: 20 },
   scrollIndicator: { position: 'absolute', bottom: 20, alignSelf: 'center', zIndex: 3 },
 
   section: { paddingTop: 32, paddingLeft: 16 },

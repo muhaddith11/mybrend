@@ -86,7 +86,7 @@ export default function AdminLoginScreen() {
 }
 
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
-  safe: { flex: 1, backgroundColor: c.brandLight },
+  safe: { flex: 1, backgroundColor: c.bg },
   container: { flex: 1, padding: 24, justifyContent: 'center' },
   backBtn: { position: 'absolute', top: 16, left: 16, padding: 4 },
   iconWrap: { width: 80, height: 80, borderRadius: 24, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: 16 },

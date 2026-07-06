@@ -8,6 +8,7 @@ import { api, useT } from '@libos/shared'
 import { useLangStore } from '../../store/lang'
 import { useCartStore } from '../../store/cart'
 import { useTheme, type ThemeColors } from '../../store/theme'
+import { ErrorState } from '../../components/ErrorState'
 
 type Step = { key: string; label: string; icon: string }
 
@@ -40,10 +41,15 @@ export default function OrderScreen() {
     CASH_ON_DOOR: tr.mDelivCashDoor,
   }
 
-  const { data: order } = useQuery({
+  const { data: order, isLoading, isError, refetch } = useQuery({
     queryKey: ['order', id],
     queryFn: () => api.orders.byId(id),
-    refetchInterval: 10000, // har 10 soniyada yangilanadi
+    // Har 10s yangilanadi, lekin buyurtma yakuniy holatga (yetkazildi/bekor)
+    // yetgach so'rovni to'xtatamiz — batareya/trafik behuda sarflanmaydi.
+    refetchInterval: (query) => {
+      const s = query.state.data?.status
+      return s === 'DELIVERED' || s === 'CANCELLED' ? false : 10000
+    },
   })
 
   // Bot orqali karta to'lovi (TRANSFER): buyurtma checkout'да savatdan
@@ -60,9 +66,13 @@ export default function OrderScreen() {
   if (!order) {
     return (
       <SafeAreaView style={styles.safe}>
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.brand} />
-        </View>
+        {isError && !isLoading ? (
+          <ErrorState onRetry={() => refetch()} />
+        ) : (
+          <View style={styles.center}>
+            <ActivityIndicator color={colors.brand} />
+          </View>
+        )}
       </SafeAreaView>
     )
   }

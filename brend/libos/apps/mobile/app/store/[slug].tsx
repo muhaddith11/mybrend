@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, FlatList, Image, Dimensions, Linking,
+  StyleSheet, FlatList, Image, Dimensions, Linking, Alert,
 } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -14,6 +14,7 @@ import { useLangStore } from '../../store/lang'
 import { WishlistHeartButton } from '../../components/WishlistHeartButton'
 import { AddToCartButton } from '../../components/AddToCartButton'
 import { BespokeStore } from '../../components/stores/BespokeStore'
+import { ErrorState } from '../../components/ErrorState'
 import { getStoreDesign } from '../../lib/storeDesigns'
 import { instagramUrl, telegramUrl, telHref, resolveImg } from '../../lib/links'
 
@@ -28,7 +29,7 @@ export default function StoreScreen() {
   const { isLoggedIn } = useAuthStore()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
-  const { data: store, isLoading } = useQuery({
+  const { data: store, isLoading, refetch } = useQuery({
     queryKey: ['store', slug],
     queryFn: () => api.stores.bySlug(slug),
   })
@@ -40,9 +41,25 @@ export default function StoreScreen() {
   })
   const isFavorited = !!store && !!favorites?.stores.some(s => s.id === store.id)
 
+  // Optimistik: heart darhol to'ladi/bo'shaydi; xato bo'lsa orqaga qaytariladi va
+  // sababi ko'rsatiladi (avval sokin yiqilardi — "ishlamayapti"ga o'xshardi).
   const toggleFavorite = useMutation({
     mutationFn: () => api.stores.toggleFavorite(store!.id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['favorites'] }),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['favorites'] })
+      const prev = queryClient.getQueryData<{ stores: Store[] }>(['favorites'])
+      queryClient.setQueryData<{ stores: Store[] }>(['favorites'], (old) => {
+        const stores = old?.stores ?? []
+        const exists = stores.some(s => s.id === store!.id)
+        return { stores: exists ? stores.filter(s => s.id !== store!.id) : [...stores, store!] }
+      })
+      return { prev }
+    },
+    onError: (e: any, _v, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(['favorites'], ctx.prev)
+      Alert.alert(tr.mErrorTitle, e?.message ?? tr.mErrorGeneric)
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['favorites'] }),
   })
 
   const handleHeartPress = () => {
@@ -61,7 +78,13 @@ export default function StoreScreen() {
     )
   }
 
-  if (!store) return null
+  if (!store) {
+    return (
+      <View style={styles.loading}>
+        <ErrorState onRetry={() => refetch()} />
+      </View>
+    )
+  }
 
   // Bu do'kon uchun maxsus dizayn bo'lsa (asma/boosner/onepro) — o'z mini-sayti
   const design = getStoreDesign(slug)

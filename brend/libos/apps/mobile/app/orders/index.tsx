@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { api, useT } from '@libos/shared'
 import { useLangStore } from '../../store/lang'
 import { useTheme, type ThemeColors } from '../../store/theme'
+import { ErrorState } from '../../components/ErrorState'
 
 const STATUS_COLOR: Record<string, string> = {
   PENDING: '#f59e0b', CONFIRMED: '#3b82f6', PREPARING: '#8b5cf6',
@@ -24,7 +25,7 @@ export default function OrdersScreen() {
   }
   // Backend /orders/my { orders: [...] } shaklida qaytaradi — myOrders() to'g'ri
   // shaklni beradi (my() bare massiv kutib bo'sh ro'yxat chiqarardi).
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['my-orders'],
     queryFn: () => api.orders.myOrders(),
   })
@@ -69,7 +70,9 @@ export default function OrdersScreen() {
           </TouchableOpacity>
         )}
         ListEmptyComponent={
-          isLoading ? null : (
+          isLoading ? null : isError ? (
+            <ErrorState onRetry={() => refetch()} compact />
+          ) : (
             <View style={styles.empty}>
               <Ionicons name="receipt-outline" size={56} color={colors.border} />
               <Text style={styles.emptyText}>{tr.noOrders}</Text>

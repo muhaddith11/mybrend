@@ -1,17 +1,18 @@
 import { useState } from 'react'
 import { TouchableOpacity, Text, StyleSheet, type StyleProp, type ViewStyle } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { useRouter } from 'expo-router'
 import type { Product } from '@libos/shared'
 import { useCartStore } from '../store/cart'
 import { useLangStore } from '../store/lang'
 import { resolveImg } from '../lib/links'
+import { VariantPickerModal } from './VariantPickerModal'
 
 // Mahsulot kartochkasi TAGIDAGI "savatga qo'shish" tugmasi (to'liq kenglikda bar).
 // Rangi (bg) har joyga mos beriladi: ZYFF (brand — tungi rejimда moslashadi),
 // bespoke do'kon (design.accent), oddiy do'kon (themeColor).
-// Razmer/rang (variant) bor mahsulotда to'g'ridan-to'g'ri qo'shmaydi — mahsulot
-// sahifasiga o'tadi (u yerda tanlab qo'shiladi). Oddiy mahsulotда darhol qo'shadi.
+// Razmer/rang (variant) bor mahsulotда mahsulot sahifasiga o'tmaydi — o'rtada
+// modal ochilib rang/o'lcham tanlanadi va shu yerda savatga qo'shiladi.
+// Oddiy mahsulotда darhol qo'shadi.
 export function AddToCartButton({
   product, storeId, storeName, bg, textColor = '#fff', style,
 }: {
@@ -22,10 +23,10 @@ export function AddToCartButton({
   textColor?: string
   style?: StyleProp<ViewStyle>
 }) {
-  const router = useRouter()
   const lang = useLangStore(s => s.lang)
   const addToCart = useCartStore(s => s.addItem)
   const [added, setAdded] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   const label = added
     ? (lang === 'ru' ? 'Добавлено' : lang === 'en' ? 'Added' : "Qo'shildi")
@@ -39,7 +40,8 @@ export function AddToCartButton({
       (product.variants && product.variants.length > 0)
     )
     if (needsVariant) {
-      router.push(`/product/${product.id}`)
+      // Mahsulot sahifasiga o'tmaymiz — o'rtada rang/o'lcham tanlash oynasi.
+      setPickerOpen(true)
       return
     }
     addToCart({
@@ -55,14 +57,25 @@ export function AddToCartButton({
   }
 
   return (
-    <TouchableOpacity
-      style={[styles.btn, { backgroundColor: added ? '#22c55e' : bg }, style]}
-      activeOpacity={0.85}
-      onPress={onPress}
-    >
-      <Ionicons name={added ? 'checkmark' : 'bag-add-outline'} size={15} color={added ? '#fff' : textColor} />
-      <Text style={[styles.label, { color: added ? '#fff' : textColor }]} numberOfLines={1}>{label}</Text>
-    </TouchableOpacity>
+    <>
+      <TouchableOpacity
+        style={[styles.btn, { backgroundColor: added ? '#22c55e' : bg }, style]}
+        activeOpacity={0.85}
+        onPress={onPress}
+      >
+        <Ionicons name={added ? 'checkmark' : 'bag-add-outline'} size={15} color={added ? '#fff' : textColor} />
+        <Text style={[styles.label, { color: added ? '#fff' : textColor }]} numberOfLines={1}>{label}</Text>
+      </TouchableOpacity>
+
+      <VariantPickerModal
+        product={pickerOpen ? product : null}
+        storeId={storeId}
+        storeName={storeName}
+        themeColor={bg}
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+      />
+    </>
   )
 }
 

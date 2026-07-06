@@ -59,6 +59,16 @@ const storeUpdateSchema = z.object({
   workingHours: z.string().max(200).optional(),
   deliveryText: z.string().max(500).optional(),
   lookbook: z.array(z.string().max(1000)).max(40).optional(),
+  // Yangi lookbook: har bir look = rasm + shu do'kon mahsulotlari (ID'lar).
+  lookbookLooks: z
+    .array(
+      z.object({
+        image: z.string().max(1000),
+        productIds: z.array(z.string().max(50)).max(12).default([]),
+      })
+    )
+    .max(40)
+    .optional(),
 })
 
 // categorySlug'ni kategoriya ID'siga aylantiradi. Avval shu do'konning O'Z

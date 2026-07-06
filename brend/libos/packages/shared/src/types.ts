@@ -23,7 +23,16 @@ export interface Store {
   themeBg?: string
   lat?: number
   lng?: number
+  // Eski lookbook (rasm URL'lari). Yangi: mahsulotlarga bog'langan "look"lar.
+  lookbook?: string[]
+  lookbookLooks?: LookbookLook[]
   _count?: { products: number }
+}
+
+// Lookbook "look" = 1 rasm + shu do'kon mahsulotlaridan tuzilgan obraz.
+export interface LookbookLook {
+  image: string
+  productIds: string[]
 }
 
 export interface Product {

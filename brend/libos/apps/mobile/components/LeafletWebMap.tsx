@@ -1,5 +1,5 @@
 import { useMemo, createElement } from 'react'
-import { View, StyleSheet, Linking, Platform } from 'react-native'
+import { View, StyleSheet, Linking, Platform, ActivityIndicator } from 'react-native'
 import { WebView } from 'react-native-webview'
 
 // WebView ichida Leaflet (OpenStreetMap/CARTO) — web bilan bir xil xarita,
@@ -179,7 +179,15 @@ export function LeafletWebMap({ mode, height = 260, dark = false, initial, onSel
         javaScriptEnabled
         domStorageEnabled
         scrollEnabled={false}
+        nestedScrollEnabled
         style={styles.web}
+        // Leaflet CDN'dan yuklanadi — sekin tarmoqda bo'sh ekran o'rniga spinner.
+        startInLoadingState
+        renderLoading={() => (
+          <View style={styles.loading}>
+            <ActivityIndicator color="#F59E0B" />
+          </View>
+        )}
       />
     </View>
   )
@@ -188,4 +196,5 @@ export function LeafletWebMap({ mode, height = 260, dark = false, initial, onSel
 const styles = StyleSheet.create({
   wrap: { width: '100%', borderRadius: 12, overflow: 'hidden' },
   web: { flex: 1, backgroundColor: 'transparent' },
+  loading: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
 })

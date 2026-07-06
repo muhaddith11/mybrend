@@ -4,6 +4,7 @@ import cors from '@fastify/cors'
 import helmet from '@fastify/helmet'
 import rateLimit from '@fastify/rate-limit'
 import jwt from '@fastify/jwt'
+import multipart from '@fastify/multipart'
 import { PrismaClient } from '@prisma/client'
 import { env } from './env.js' // boot'da env'ni tekshiradi (fail-fast)
 
@@ -71,6 +72,9 @@ app.register(cors, {
   },
 })
 app.register(jwt, { secret: env.JWT_SECRET })
+// Rasm yuklash (Supabase Storage) — multipart/form-data. Vercel body limitini
+// hisobga olib fayl hajmini 6MB bilan cheklaymiz.
+app.register(multipart, { limits: { fileSize: 6 * 1024 * 1024, files: 1 } })
 
 // Global dekoratorlar
 app.decorate('prisma', prisma)

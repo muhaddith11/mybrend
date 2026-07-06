@@ -13,8 +13,23 @@ import { Inter_400Regular, Inter_600SemiBold, Inter_800ExtraBold } from '@expo-g
 import { useAuthStore } from '../store/auth'
 import { useAdminStore } from '../store/admin'
 import { Onboarding } from '../components/Onboarding'
+import { ErrorBoundary } from '../components/ErrorBoundary'
+import { initSentry } from '../lib/sentry'
 
-const queryClient = new QueryClient()
+// Sentry'ni ilova yuklanishidan oldin ishga tushiramiz (DSN bo'lsa).
+initSentry()
+
+// Ishlab chiqarish uchun mos standartlar: zaif tarmoqda 2 marta qayta urinadi,
+// ma'lumot 30s davomida "fresh" (ortiqcha so'rov yubormaydi).
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 30_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
 
 export default function RootLayout() {
   const loadFromStorage = useAuthStore(s => s.loadFromStorage)
@@ -48,6 +63,7 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
+        <ErrorBoundary>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="auth/login" options={{ presentation: 'modal' }} />
@@ -65,6 +81,7 @@ export default function RootLayout() {
           <Stack.Screen name="admin" options={{ presentation: 'card' }} />
         </Stack>
         <Onboarding />
+        </ErrorBoundary>
       </SafeAreaProvider>
     </QueryClientProvider>
   )

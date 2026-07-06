@@ -23,10 +23,10 @@ export default function AdminSettings() {
 
   const [form, setForm] = useState<Record<string, any>>({})
   const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }))
-  const [lbUploading, setLbUploading] = useState(false)
+  const [uploadingField, setUploadingField] = useState<string | null>(null)
 
-  // Lookbook rasmini kamera/galereyadan olib Cloudinary'ga yuklaydi va ro'yxatga qo'shadi
-  const pickLookbook = async (from: 'camera' | 'library') => {
+  // Do'kon rasmini (logo yoki banner) kamera/galereyadan olib Cloudinary'ga yuklaydi.
+  const pickImage = async (field: 'logo' | 'banner', from: 'camera' | 'library') => {
     const perm = from === 'camera'
       ? await ImagePicker.requestCameraPermissionsAsync()
       : await ImagePicker.requestMediaLibraryPermissionsAsync()
@@ -35,17 +35,17 @@ export default function AdminSettings() {
       return
     }
     const res = from === 'camera'
-      ? await ImagePicker.launchCameraAsync({ quality: 0.75 })
-      : await ImagePicker.launchImageLibraryAsync({ quality: 0.75, mediaTypes: ImagePicker.MediaTypeOptions.Images })
+      ? await ImagePicker.launchCameraAsync({ quality: 0.6 })
+      : await ImagePicker.launchImageLibraryAsync({ quality: 0.6, mediaTypes: ImagePicker.MediaTypeOptions.Images })
     if (res.canceled || !res.assets?.[0]) return
-    setLbUploading(true)
+    setUploadingField(field)
     try {
       const url = await uploadImage(res.assets[0].uri, token!)
-      setForm(f => ({ ...f, lookbook: [...(Array.isArray(f.lookbook) ? f.lookbook : []), url] }))
+      set(field, url)
     } catch (e: any) {
       Alert.alert('Xatolik', e.message ?? "Rasmni yuklab bo'lmadi")
     } finally {
-      setLbUploading(false)
+      setUploadingField(null)
     }
   }
 
@@ -58,13 +58,14 @@ export default function AdminSettings() {
   useEffect(() => {
     if (store) {
       setForm({
+        logo: store.logo ?? '',
+        banner: (store as any).banner ?? '',
         description: store.description ?? '',
         address: store.address ?? '',
         phone: store.phone ?? '',
         workingHours: store.workingHours ?? '',
         instagram: store.instagram ?? '',
         telegram: (store as any).telegram ?? '',
-        lookbook: Array.isArray((store as any).lookbook) ? (store as any).lookbook : [],
         deliveryTime: store.deliveryTime != null ? String(store.deliveryTime) : '',
         cardNumber: store.cardNumber ?? '',
         cardHolder: store.cardHolder ?? '',
@@ -78,13 +79,14 @@ export default function AdminSettings() {
 
   const save = useMutation({
     mutationFn: () => adminApi.updateStore(token!, {
+      logo: form.logo || undefined,
+      banner: form.banner || undefined,
       description: form.description || undefined,
       address: form.address || undefined,
       phone: form.phone || undefined,
       workingHours: form.workingHours || undefined,
       instagram: form.instagram || undefined,
       telegram: form.telegram || undefined,
-      lookbook: Array.isArray(form.lookbook) ? form.lookbook : undefined,
       deliveryTime: form.deliveryTime ? parseInt(form.deliveryTime, 10) : undefined,
       cardNumber: form.cardNumber || undefined,
       cardHolder: form.cardHolder || undefined,
@@ -138,6 +140,47 @@ export default function AdminSettings() {
         <ActivityIndicator color={colors.brand} style={{ marginTop: 40 }} />
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
+          {/* Do'kon rasmlari — logo (ro'yxatdagi rasm) + banner (do'kon sahifasi shapkasi) */}
+          <Text style={styles.sectionTitle}>Do'kon rasmi</Text>
+          <View style={styles.imgRow}>
+            <View style={styles.imgCol}>
+              <Text style={styles.imgColLabel}>Logo (ro'yxatda ko'rinadi)</Text>
+              <View style={styles.logoPreview}>
+                {form.logo
+                  ? <Image source={{ uri: resolveImg(form.logo) }} style={styles.imgFill} resizeMode="cover" />
+                  : <Ionicons name="storefront-outline" size={28} color={colors.text3} />}
+                {uploadingField === 'logo' && <View style={styles.imgLoading}><ActivityIndicator color="#fff" /></View>}
+              </View>
+              <View style={styles.imgBtns}>
+                <TouchableOpacity style={styles.imgBtn} onPress={() => pickImage('logo', 'camera')} disabled={!!uploadingField}>
+                  <Ionicons name="camera-outline" size={18} color={colors.brand} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.imgBtn} onPress={() => pickImage('logo', 'library')} disabled={!!uploadingField}>
+                  <Ionicons name="images-outline" size={18} color={colors.brand} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          <Text style={styles.imgColLabel}>Banner (do'kon sahifasi shapkasi)</Text>
+          <View style={styles.bannerPreview}>
+            {form.banner
+              ? <Image source={{ uri: resolveImg(form.banner) }} style={styles.imgFill} resizeMode="cover" />
+              : <Ionicons name="image-outline" size={28} color={colors.text3} />}
+            {uploadingField === 'banner' && <View style={styles.imgLoading}><ActivityIndicator color="#fff" /></View>}
+          </View>
+          <View style={styles.imgBtns}>
+            <TouchableOpacity style={[styles.imgBtn, styles.imgBtnWide]} onPress={() => pickImage('banner', 'camera')} disabled={!!uploadingField}>
+              <Ionicons name="camera-outline" size={18} color={colors.brand} />
+              <Text style={styles.imgBtnText}>Kamera</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.imgBtn, styles.imgBtnWide]} onPress={() => pickImage('banner', 'library')} disabled={!!uploadingField}>
+              <Ionicons name="images-outline" size={18} color={colors.brand} />
+              <Text style={styles.imgBtnText}>Galereya</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.sectionTitle}>Ma'lumot</Text>
           {F('Manzil', 'address')}
           {F('Telefon', 'phone')}
           {F('Ish vaqti', 'workingHours')}
@@ -149,40 +192,6 @@ export default function AdminSettings() {
           <Text style={styles.sectionTitle}>To'lov (bot orqali o'tkazma)</Text>
           {F('Karta raqami', 'cardNumber', { keyboard: 'numeric' })}
           {F('Karta egasi', 'cardHolder')}
-
-          <Text style={styles.sectionTitle}>Lookbook (tayyor obrazlar)</Text>
-          <Text style={styles.lbHint}>Do'kon sahifasida chiroyli galereya sifatida ko'rinadi. Model/obraz rasmlarini yuklang.</Text>
-          {Array.isArray(form.lookbook) && form.lookbook.length > 0 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 8 }}>
-              {form.lookbook.map((uri: string, idx: number) => (
-                <View key={uri + idx} style={styles.lbThumb}>
-                  <Image source={{ uri: resolveImg(uri) }} style={styles.lbThumbImg} resizeMode="cover" />
-                  <TouchableOpacity
-                    style={styles.lbDel}
-                    onPress={() => setForm(f => ({ ...f, lookbook: (f.lookbook as string[]).filter((_, i) => i !== idx) }))}
-                  >
-                    <Ionicons name="close" size={13} color="#fff" />
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </ScrollView>
-          )}
-          <View style={styles.lbBtns}>
-            <TouchableOpacity style={styles.lbBtn} onPress={() => pickLookbook('camera')} disabled={lbUploading}>
-              <Ionicons name="camera-outline" size={20} color={colors.brand} />
-              <Text style={styles.lbBtnText}>Kamera</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.lbBtn} onPress={() => pickLookbook('library')} disabled={lbUploading}>
-              <Ionicons name="images-outline" size={20} color={colors.brand} />
-              <Text style={styles.lbBtnText}>Galereya</Text>
-            </TouchableOpacity>
-          </View>
-          {lbUploading && (
-            <View style={styles.lbUploading}>
-              <ActivityIndicator size="small" color={colors.brand} />
-              <Text style={styles.lbHint}>Yuklanmoqda…</Text>
-            </View>
-          )}
 
           <Text style={styles.sectionTitle}>Xizmatlar</Text>
           {T("Do'kon ochiq", 'isOpen')}
@@ -212,12 +221,15 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   switchLabel: { fontSize: 14, color: c.text },
   saveBtn: { backgroundColor: c.brand, borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 24 },
   saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  lbHint: { fontSize: 12, color: c.text3, marginTop: 4, lineHeight: 17 },
-  lbThumb: { width: 96, height: 128, borderRadius: 12, overflow: 'hidden', position: 'relative', backgroundColor: c.surface2 },
-  lbThumbImg: { width: '100%', height: '100%' },
-  lbDel: { position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
-  lbBtns: { flexDirection: 'row', gap: 10, marginTop: 10 },
-  lbBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 13, borderRadius: 12, borderWidth: 1.5, borderColor: c.border, backgroundColor: c.surface },
-  lbBtnText: { fontSize: 14, fontWeight: '600', color: c.text },
-  lbUploading: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
+  imgRow: { flexDirection: 'row', gap: 16, marginTop: 4 },
+  imgCol: { alignItems: 'flex-start' },
+  imgColLabel: { fontSize: 12, color: c.text3, marginTop: 12, marginBottom: 6 },
+  logoPreview: { width: 88, height: 88, borderRadius: 14, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  bannerPreview: { width: '100%', height: 120, borderRadius: 14, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  imgFill: { width: '100%', height: '100%' },
+  imgLoading: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
+  imgBtns: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  imgBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1.5, borderColor: c.border, backgroundColor: c.surface },
+  imgBtnWide: { flex: 1 },
+  imgBtnText: { fontSize: 13, fontWeight: '600', color: c.text },
 })

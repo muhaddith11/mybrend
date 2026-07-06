@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { api, useT } from '@libos/shared'
 import { useLangStore } from '../../store/lang'
 import { useTheme, type ThemeColors } from '../../store/theme'
+import { Logo } from '../../components/Logo'
 
 export default function LoginScreen() {
   const router = useRouter()
@@ -57,9 +58,7 @@ export default function LoginScreen() {
           <View style={styles.logoMark}>
             <Text style={styles.logoLetter}>Z</Text>
           </View>
-          <Text style={styles.logoText}>
-            ZY<Text style={{ color: colors.brand }}>FF</Text>
-          </Text>
+          <Logo size={28} weight="600" letterSpacing={-0.5} accentColor={colors.brand} />
         </View>
 
         <View style={styles.card}>
@@ -113,7 +112,6 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   logoArea: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 32 },
   logoMark: { width: 44, height: 44, backgroundColor: c.brandDark, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   logoLetter: { color: c.white, fontSize: 20, fontWeight: '600' },
-  logoText: { fontSize: 28, fontWeight: '600', color: c.text, letterSpacing: -0.5 },
   card: { backgroundColor: c.surface, borderRadius: 20, padding: 24, shadowColor: c.brand, shadowOpacity: 0.08, shadowRadius: 20, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
   title: { fontSize: 22, fontWeight: '700', color: c.text, marginBottom: 6 },
   subtitle: { fontSize: 14, color: c.text2, marginBottom: 24, lineHeight: 20 },

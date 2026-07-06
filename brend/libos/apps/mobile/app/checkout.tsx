@@ -40,6 +40,9 @@ export default function CheckoutScreen() {
   const [kvartira, setKvartira] = useState('')
   const [uy, setUy] = useState('')
   const [note, setNote] = useState('')
+  // Barmoq xarita ustida bo'lganда sahifa scroll'ini o'chiramiz — aks holda
+  // xaritani surganда butun sahifa suriladi (xaritani boshqarib bo'lmaydi).
+  const [mapActive, setMapActive] = useState(false)
   // Xaritadan tanlangan aniq joylashuv (web bilan bir xil — lat/lng)
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [mapAddress, setMapAddress] = useState('')
@@ -145,7 +148,7 @@ export default function CheckoutScreen() {
         <View style={{ width: 22 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} scrollEnabled={!mapActive}>
 
         {/* Do'kon */}
         <View style={styles.section}>
@@ -202,14 +205,21 @@ export default function CheckoutScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>{tr.mDeliveryAddr}</Text>
 
-            {/* Xarita — aniq joyni belgilash (web bilan bir xil) */}
-            <LeafletWebMap
-              mode="picker"
-              height={240}
-              dark={dark}
-              initial={coords}
-              onSelect={(lat, lng, address) => { setCoords({ lat, lng }); setMapAddress(address) }}
-            />
+            {/* Xarita — aniq joyni belgilash (web bilan bir xil).
+                Barmoq xaritaga tegsa sahifa scroll'i o'chadi (xaritani erkin suriladi). */}
+            <View
+              onTouchStart={() => setMapActive(true)}
+              onTouchEnd={() => setMapActive(false)}
+              onTouchCancel={() => setMapActive(false)}
+            >
+              <LeafletWebMap
+                mode="picker"
+                height={240}
+                dark={dark}
+                initial={coords}
+                onSelect={(lat, lng, address) => { setCoords({ lat, lng }); setMapAddress(address) }}
+              />
+            </View>
             {mapAddress
               ? <Text style={styles.mapAddr}>📍 {mapAddress}</Text>
               : <Text style={styles.mapHint}>

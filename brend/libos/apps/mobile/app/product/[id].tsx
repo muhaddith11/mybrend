@@ -14,6 +14,7 @@ import { useLangStore } from '../../store/lang'
 import { useTheme, type ThemeColors } from '../../store/theme'
 import { getStoreDesign } from '../../lib/storeDesigns'
 import { resolveImg } from '../../lib/links'
+import { ErrorState } from '../../components/ErrorState'
 
 const { width } = Dimensions.get('window')
 
@@ -34,7 +35,7 @@ export default function ProductScreen() {
   const [added, setAdded] = useState(false)
   const [selectErr, setSelectErr] = useState('')
 
-  const { data: product, isLoading } = useQuery({
+  const { data: product, isLoading, refetch } = useQuery({
     queryKey: ['product', id],
     queryFn: () => api.products.byId(id),
   })
@@ -56,7 +57,13 @@ export default function ProductScreen() {
   if (isLoading) {
     return <View style={styles.loading}><Text style={{ color: pc.text2 }}>{tr.mLoading}</Text></View>
   }
-  if (!product) return null
+  if (!product) {
+    return (
+      <SafeAreaView style={styles.loading}>
+        <ErrorState onRetry={() => refetch()} />
+      </SafeAreaView>
+    )
+  }
 
   const themeColor = design?.accent ?? (product as any).store?.themeColor ?? colors.brand
   const images: string[] = (product.images ?? []).map(resolveImg).filter(Boolean) as string[]

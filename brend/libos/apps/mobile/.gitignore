@@ -4,3 +4,8 @@
 
 expo-env.d.ts
 # @end expo-cli
+
+# Store submit credentials (maxfiy — hech qachon commit qilinmaydi)
+credentials/
+*.p8
+google-play-service-account.json

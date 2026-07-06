@@ -9,6 +9,8 @@ import { api, useT } from '@libos/shared'
 import type { Gender, Product } from '@libos/shared'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { StoreCard } from '../../components/StoreCard'
+import { Logo } from '../../components/Logo'
+import { ErrorState } from '../../components/ErrorState'
 import { WishlistHeartButton } from '../../components/WishlistHeartButton'
 import { AddToCartButton } from '../../components/AddToCartButton'
 import { HeroBanner } from '../../components/HeroBanner'
@@ -43,7 +45,7 @@ export default function HomeScreen() {
     return () => clearTimeout(t)
   }, [searchQuery])
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['stores', activeGender],
     queryFn: () => api.stores.list({ gender: activeGender }),
     enabled: !searchQuery,
@@ -185,6 +187,8 @@ export default function HomeScreen() {
         ListEmptyComponent={
           isLoading ? (
             <Text style={styles.empty}>{tr.mLoading}</Text>
+          ) : isError ? (
+            <ErrorState onRetry={() => refetch()} compact />
           ) : (
             <Text style={styles.empty}>{tr.mStoresNotFound}</Text>
           )
@@ -254,7 +258,7 @@ function HomeFooter() {
   return (
     <View style={styles.footer}>
       <View style={styles.footerBrand}>
-        <Text style={styles.footerLogoText}>ZY<Text style={{ color: '#E3A008' }}>FF</Text></Text>
+        <Logo size={22} color="#fff" accentColor="#E3A008" />
       </View>
       <Text style={styles.footerDesc}>{tr.footerDesc}</Text>
 
@@ -376,7 +380,6 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   promoSub: { color: 'rgba(255,255,255,0.8)', fontSize: 12, lineHeight: 16 },
   footer: { backgroundColor: '#1a1a1a', paddingHorizontal: 20, paddingVertical: 28, marginTop: 8 },
   footerBrand: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  footerLogoText: { fontSize: 22, fontWeight: '800', letterSpacing: 1.5, color: '#fff' },
   footerDesc: { color: 'rgba(255,255,255,0.55)', fontSize: 13, lineHeight: 19, marginBottom: 20 },
   footerLinks: { gap: 10, marginBottom: 20 },
   footerLink: { color: 'rgba(255,255,255,0.8)', fontSize: 14 },

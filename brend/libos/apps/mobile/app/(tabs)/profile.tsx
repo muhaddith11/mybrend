@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, Switch, Modal, Pressable, ScrollView } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, Switch, Modal, Pressable, ScrollView, Alert } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
@@ -8,7 +8,6 @@ import { useAuthStore } from '../../store/auth'
 import { useLangStore } from '../../store/lang'
 import { useTheme, useThemeStore, type ThemeColors } from '../../store/theme'
 import { useAvatarStore, PERSON_EMOJIS } from '../../store/avatar'
-import { useAdminStore } from '../../store/admin'
 
 const LANGS: { code: Lang; flag: string; label: string }[] = [
   { code: 'uz', flag: '🇺🇿', label: "O'zbek" },
@@ -23,10 +22,19 @@ export default function ProfileScreen() {
   const { colors, dark } = useTheme()
   const toggleTheme = useThemeStore(s => s.toggle)
   const { emoji, setEmoji } = useAvatarStore()
-  const adminToken = useAdminStore(s => s.token)
   const [showPicker, setShowPicker] = useState(false)
   const tr = useT(lang)
   const styles = useMemo(() => makeStyles(colors), [colors])
+
+  // Chiqishdan oldin tasdiq so'raymiz — tasodifan bosib qo'yilmasin.
+  const confirmLogout = () => {
+    const title = lang === 'ru' ? 'Выйти из аккаунта?' : lang === 'en' ? 'Log out?' : 'Hisobdan chiqasizmi?'
+    const cancel = lang === 'ru' ? 'Отмена' : lang === 'en' ? 'Cancel' : 'Bekor qilish'
+    Alert.alert(title, undefined, [
+      { text: cancel, style: 'cancel' },
+      { text: tr.logout, style: 'destructive', onPress: () => { logout() } },
+    ])
+  }
 
   const menuItems = [
     { icon: 'receipt-outline', label: tr.myOrders, onPress: () => router.push('/orders') },
@@ -101,7 +109,7 @@ export default function ProfileScreen() {
 
           {settingsBlock}
 
-          <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
+          <TouchableOpacity style={styles.logoutBtn} onPress={confirmLogout}>
             <Ionicons name="log-out-outline" size={18} color={colors.danger} />
             <Text style={styles.logoutText}>{tr.logout}</Text>
           </TouchableOpacity>
@@ -143,10 +151,11 @@ export default function ProfileScreen() {
         </>
       )}
 
-      {/* Do'kon egasi paneli (har doim ko'rinadi — buyer login'dan alohida) */}
+      {/* Do'kon egasi paneli (har doim ko'rinadi — buyer login'dan alohida).
+          Xavfsizlik: panelga har kirganda login/parol so'raladi (token saqlanmaydi). */}
       <TouchableOpacity
         style={styles.ownerBtn}
-        onPress={() => router.push(adminToken ? '/admin' : '/admin/login')}
+        onPress={() => router.push('/admin/login')}
       >
         <Ionicons name="storefront-outline" size={20} color={colors.accent} />
         <Text style={styles.ownerLabel}>

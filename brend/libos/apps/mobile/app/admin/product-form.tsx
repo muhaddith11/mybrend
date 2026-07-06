@@ -92,8 +92,8 @@ export default function ProductForm() {
       return
     }
     const res = from === 'camera'
-      ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
-      : await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ImagePicker.MediaTypeOptions.Images })
+      ? await ImagePicker.launchCameraAsync({ quality: 0.6 })
+      : await ImagePicker.launchImageLibraryAsync({ quality: 0.6, mediaTypes: ImagePicker.MediaTypeOptions.Images })
     if (res.canceled || !res.assets?.[0]) return
     setUploading(true)
     try {

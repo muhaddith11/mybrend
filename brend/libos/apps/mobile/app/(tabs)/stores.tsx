@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { api, useT } from '@libos/shared'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { StoreCard } from '../../components/StoreCard'
+import { ErrorState } from '../../components/ErrorState'
 import { useLangStore } from '../../store/lang'
 import { useTheme, type ThemeColors } from '../../store/theme'
 
@@ -21,7 +22,7 @@ export default function StoresScreen() {
     return () => clearTimeout(t)
   }, [search])
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['all-stores', debounced],
     queryFn: () => api.stores.list({ search: debounced }),
   })
@@ -53,6 +54,8 @@ export default function StoresScreen() {
         ListEmptyComponent={
           isLoading ? (
             <Text style={styles.empty}>{tr.mLoading}</Text>
+          ) : isError ? (
+            <ErrorState onRetry={() => refetch()} compact />
           ) : (
             <Text style={styles.empty}>{tr.mStoresNotFound}</Text>
           )
