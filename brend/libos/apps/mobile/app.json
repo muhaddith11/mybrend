@@ -21,7 +21,11 @@
         "foregroundImage": "./assets/adaptive-foreground.png",
         "backgroundColor": "#000000"
       },
-      "package": "uz.zyff.app"
+      "package": "uz.zyff.app",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -60,6 +64,12 @@
       "eas": {
         "projectId": "b56d7ee9-41ae-4fc3-9ecd-833e133ea6cd"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/b56d7ee9-41ae-4fc3-9ecd-833e133ea6cd"
     }
   }
 }
