@@ -274,7 +274,28 @@ export default async function adminRoutes(app: FastifyInstance) {
       where: { OR: [{ storeId: null }, ...(store ? [{ storeId: store.id }] : [])] },
       orderBy: { name: 'asc' },
     })
-    return reply.send(cats)
+    // Dublikatlarni yig'amiz: bir xil nom yoki birlik/ko'plik (–lar) variantlari
+    // (masalan "Futbolka" va "Futbolkalar") bitta bo'lsin — har guruhdan birlik,
+    // qisqaroq nom qoladi. Ma'lumot o'chirilmaydi, faqat ro'yxat tozalanadi.
+    const norm = (n: string) => n.toLowerCase().replace(/\s+/g, ' ').trim().replace(/lar$/, '')
+    const groups = new Map<string, typeof cats>()
+    for (const c of cats) {
+      const k = norm(c.name)
+      const arr = groups.get(k) ?? []
+      arr.push(c)
+      groups.set(k, arr)
+    }
+    const pick = (arr: typeof cats) =>
+      arr.slice().sort((a, b) => {
+        const al = /lar$/i.test(a.name) ? 1 : 0
+        const bl = /lar$/i.test(b.name) ? 1 : 0
+        if (al !== bl) return al - bl // –lar bilan tugamaydigani (birlik) oldin
+        if (a.name.length !== b.name.length) return a.name.length - b.name.length // qisqaroq
+        if (!!a.storeId !== !!b.storeId) return a.storeId ? 1 : -1 // global oldin
+        return a.id < b.id ? -1 : 1
+      })[0]
+    const deduped = [...groups.values()].map(pick).sort((a, b) => a.name.localeCompare(b.name))
+    return reply.send(deduped)
   })
 
   // Statistika

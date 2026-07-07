@@ -62,6 +62,9 @@ export default function CheckoutScreen() {
   }
   // Xaritadan joy tanlangan bo'lsa ham, strukturali manzil to'ldirilgan bo'lsa ham — yaroqli
   const addrFilled = !!coords || (!!mahalla.trim() && (addrKind === 'apartment' ? !!kvartira.trim() : !!uy.trim()))
+  // Manzil kerak bo'lgan usullar: yetkazib berish VA eshik oldida naqd — ikkalasi ham
+  // eshikka yetkaziladi. Faqat PICKUP (o'zim olib ketaman) manzil talab qilmaydi.
+  const needsAddress = delivery === 'DELIVERY' || delivery === 'CASH_ON_DOOR'
   const [loading, setLoading] = useState(false)
 
   const items = itemsByStore()[storeId] ?? []
@@ -94,7 +97,7 @@ export default function CheckoutScreen() {
       Alert.alert(tr.mErrorTitle, tr.mOrderFailed)
       return
     }
-    if (delivery === 'DELIVERY' && !addrFilled) {
+    if (needsAddress && !addrFilled) {
       Alert.alert(tr.mAddrTitle, tr.mAddrRequired)
       return
     }
@@ -104,9 +107,9 @@ export default function CheckoutScreen() {
       const order = await api.orders.create({
         storeId,
         deliveryType: delivery,
-        address: delivery === 'DELIVERY' ? ([mapAddress, composeAddress()].filter(Boolean).join(' — ') || undefined) : undefined,
-        lat: delivery === 'DELIVERY' ? coords?.lat : undefined,
-        lng: delivery === 'DELIVERY' ? coords?.lng : undefined,
+        address: needsAddress ? ([mapAddress, composeAddress()].filter(Boolean).join(' — ') || undefined) : undefined,
+        lat: needsAddress ? coords?.lat : undefined,
+        lng: needsAddress ? coords?.lng : undefined,
         note: note.trim() || undefined,
         paymentProvider: payment === 'CASH' ? undefined : payment,
         items: items.map(i => ({
@@ -200,8 +203,8 @@ export default function CheckoutScreen() {
           ))}
         </View>
 
-        {/* Manzil (faqat yetkazish uchun) — strukturali */}
-        {delivery === 'DELIVERY' && (
+        {/* Manzil — yetkazish va eshik oldida naqd uchun (strukturali) */}
+        {needsAddress && (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>{tr.mDeliveryAddr}</Text>
 
