@@ -69,6 +69,7 @@ export default function AdminSettings() {
         deliveryTime: store.deliveryTime != null ? String(store.deliveryTime) : '',
         cardNumber: store.cardNumber ?? '',
         cardHolder: store.cardHolder ?? '',
+        telegramChatId: (store as any).telegramChatId ?? '',
         isOpen: store.isOpen ?? true,
         hasDelivery: store.hasDelivery ?? true,
         hasPickup: store.hasPickup ?? true,
@@ -90,6 +91,7 @@ export default function AdminSettings() {
       deliveryTime: form.deliveryTime ? parseInt(form.deliveryTime, 10) : undefined,
       cardNumber: form.cardNumber || undefined,
       cardHolder: form.cardHolder || undefined,
+      telegramChatId: form.telegramChatId || undefined,
       isOpen: form.isOpen,
       hasDelivery: form.hasDelivery,
       hasPickup: form.hasPickup,
@@ -192,6 +194,12 @@ export default function AdminSettings() {
           <Text style={styles.sectionTitle}>To'lov (bot orqali o'tkazma)</Text>
           {F('Karta raqami', 'cardNumber', { keyboard: 'numeric' })}
           {F('Karta egasi', 'cardHolder')}
+          {F('Telegram ID (bot xabarlari)', 'telegramChatId', { keyboard: 'numeric' })}
+          <Text style={styles.hint}>
+            🤖 Buyurtma va karta to'lovi tasdig'i xabarlari shu Telegram ID'ga keladi.
+            ID'ni olish: do'kon botini oching → «/start» yuboring → bot sizning ID'ingizni
+            qaytaradi → shu yerga kiriting.
+          </Text>
 
           <Text style={styles.sectionTitle}>Xizmatlar</Text>
           {T("Do'kon ochiq", 'isOpen')}
@@ -214,6 +222,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   headerTitle: { fontSize: 17, fontWeight: '600', color: c.text },
   content: { padding: 16, paddingBottom: 40 },
   label: { fontSize: 13, fontWeight: '600', color: c.text2, marginBottom: 6, marginTop: 8 },
+  hint: { fontSize: 12, color: c.text3, lineHeight: 17, marginTop: 6, marginBottom: 2 },
   input: { borderWidth: 1, borderColor: c.border, borderRadius: 10, padding: 12, fontSize: 15, color: c.text, backgroundColor: c.surface },
   inputMultiline: { minHeight: 70, textAlignVertical: 'top' },
   sectionTitle: { fontSize: 13, fontWeight: '700', color: c.text3, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 20, marginBottom: 4 },

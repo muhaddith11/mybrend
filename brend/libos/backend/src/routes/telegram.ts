@@ -106,7 +106,19 @@ async function handleStart(prisma: PrismaClient, chatId: number, text: string) {
   const orderId = text.split(/\s+/)[1]?.trim()
 
   if (!orderId) {
-    await tgSendMessage(chatId, '👋 Salom! To\'lov uchun ilovadagi buyurtma havolasidan keling.')
+    // Do'kon egasi ham shu botni ishlatadi — o'z Telegram ID'sini ko'rsatamiz,
+    // uni ilova → Sozlamalar → "Telegram ID (bot xabarlari)" ga kiritadi. Shundan
+    // keyin buyurtma va to'lov tasdig'i xabarlari aynan shu egaga keladi.
+    await tgSendMessage(
+      chatId,
+      '👋 Salom!\n\n' +
+        '🆔 Sizning Telegram ID: <code>' + chatId + '</code>\n' +
+        '(raqam ustiga bosib nusxalang)\n\n' +
+        '🏪 Do\'kon egasi bo\'lsangiz — shu ID\'ni ilovada:\n' +
+        'Admin → Sozlamalar → «Telegram ID (bot xabarlari)» ga kiriting.\n' +
+        'Shundan keyin buyurtma va to\'lov tasdig\'i xabarlari shu yerga keladi.\n\n' +
+        '🛒 Xaridor bo\'lsangiz — to\'lov uchun ilovadagi buyurtma havolasidan keling.',
+    )
     return
   }
 

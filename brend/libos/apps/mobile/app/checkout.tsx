@@ -158,7 +158,7 @@ export default function CheckoutScreen() {
           <Text style={styles.sectionLabel}>{tr.mStore}</Text>
           <View style={styles.storeRow}>
             <Ionicons name="storefront-outline" size={18} color={colors.brand} />
-            <Text style={styles.storeRowName}>{storeName}</Text>
+            <Text style={styles.storeRowName}>{store?.name || storeName}</Text>
           </View>
         </View>
 
