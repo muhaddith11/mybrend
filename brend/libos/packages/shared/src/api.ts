@@ -15,9 +15,11 @@ export function setToken(token: string | null) {
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   }
+  // Content-Type faqat body bo'lganda — bodysiz so'rovda (GET, sevimli toggle,
+  // DELETE) 'application/json' Fastify tomonidan "Body cannot be empty" deb rad etiladi.
+  if (options.body != null) headers['Content-Type'] = 'application/json'
   if (authToken) headers['Authorization'] = `Bearer ${authToken}`
 
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers })

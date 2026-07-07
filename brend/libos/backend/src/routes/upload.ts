@@ -56,45 +56,69 @@ export default async function uploadRoutes(app: FastifyInstance) {
     'image/webp': 'webp', 'image/heic': 'heic', 'image/gif': 'gif',
   }
   app.post('/upload', { preHandler: [authUserOrOwner] }, async (req, reply) => {
-    const supabaseUrl = process.env.SUPABASE_URL?.replace(/\/$/, '')
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    const bucket = process.env.SUPABASE_BUCKET ?? 'zyff'
+    // BOM va bo'sh joylarni tozalaymiz — Vercel env'ga nusxa-joylashda ﻿ yoki
+    // yangi qator tushib qolsa, `fetch` "Invalid URL" deb yiqilib 500 berardi.
+    const supabaseUrl = process.env.SUPABASE_URL
+      ?.replace(/^﻿/, '').trim().replace(/\/$/, '')
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/^﻿/, '').trim()
+    const bucket = (process.env.SUPABASE_BUCKET ?? 'zyff').trim()
     if (!supabaseUrl || !serviceKey) {
-      return reply.status(503).send({ error: 'Rasm xizmati sozlanmagan' })
+      return reply.status(503).send({ error: 'Rasm xizmati sozlanmagan (SUPABASE_URL/KEY yo\'q)' })
+    }
+    // URL yaroqli bo'lsin — aks holda pastdagi fetch ushlanmagan istisno berardi.
+    let origin: string
+    try {
+      origin = new URL(supabaseUrl).origin
+    } catch {
+      return reply.status(503).send({ error: 'SUPABASE_URL yaroqsiz' })
     }
 
-    const file = await (req as any).file()
-    if (!file) return reply.status(400).send({ error: 'Fayl topilmadi' })
+    try {
+      const file = await (req as any).file()
+      if (!file) return reply.status(400).send({ error: 'Fayl topilmadi' })
 
-    const buffer = await file.toBuffer()
-    const mime: string = file.mimetype || 'image/jpeg'
-    if (!mime.startsWith('image/')) {
-      return reply.status(400).send({ error: 'Faqat rasm yuklash mumkin' })
+      const buffer = await file.toBuffer()
+      const mime: string = file.mimetype || 'image/jpeg'
+      if (!mime.startsWith('image/')) {
+        return reply.status(400).send({ error: 'Faqat rasm yuklash mumkin' })
+      }
+      const ext = EXT_BY_MIME[mime] ?? 'jpg'
+      const rand = Math.random().toString(36).slice(2, 10)
+      const path = `uploads/${Date.now()}-${rand}.${ext}`
+
+      const up = await fetch(`${origin}/storage/v1/object/${bucket}/${path}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${serviceKey}`,
+          // Supabase'ning yangi (sb_secret_...) va eski (service_role JWT) kalit
+          // tizimlari ikkalasi bilan ham ishlashi uchun apikey ham yuboramiz.
+          apikey: serviceKey,
+          'Content-Type': mime,
+          'cache-control': '3600',
+          'x-upsert': 'true',
+        },
+        body: buffer,
+      })
+      if (!up.ok) {
+        const txt = await up.text().catch(() => '')
+        app.log.error(`Supabase upload xato (${up.status}): ${txt}`)
+        // Sababni mijozga qisqa ko'rsatamiz (bucket yo'q / public emas / kalit xato).
+        const hint = up.status === 404 ? 'bucket topilmadi'
+          : up.status === 400 ? 'bucket/so\'rov xato'
+          : up.status === 401 || up.status === 403 ? 'kalit yoki ruxsat xato'
+          : `Supabase ${up.status}`
+        return reply.status(502).send({ error: `Rasmni yuklab bo'lmadi (${hint})` })
+      }
+
+      const url = `${origin}/storage/v1/object/public/${bucket}/${path}`
+      return reply.send({ url, secure_url: url })
+    } catch (err: any) {
+      // Fayl juda katta (multipart limiti) yoki tarmoq xatosi — 500 emas, toza xabar.
+      if (err?.code === 'FST_REQ_FILE_TOO_LARGE') {
+        return reply.status(413).send({ error: 'Rasm hajmi juda katta (maks 6MB)' })
+      }
+      app.log.error(err)
+      return reply.status(502).send({ error: "Rasmni yuklab bo'lmadi (server)" })
     }
-    const ext = EXT_BY_MIME[mime] ?? 'jpg'
-    const rand = Math.random().toString(36).slice(2, 10)
-    const path = `uploads/${Date.now()}-${rand}.${ext}`
-
-    const up = await fetch(`${supabaseUrl}/storage/v1/object/${bucket}/${path}`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${serviceKey}`,
-        // Supabase'ning yangi (sb_secret_...) va eski (service_role JWT) kalit
-        // tizimlari ikkalasi bilan ham ishlashi uchun apikey ham yuboramiz.
-        apikey: serviceKey,
-        'Content-Type': mime,
-        'cache-control': '3600',
-        'x-upsert': 'true',
-      },
-      body: buffer,
-    })
-    if (!up.ok) {
-      const txt = await up.text().catch(() => '')
-      app.log.error(`Supabase upload xato (${up.status}): ${txt}`)
-      return reply.status(502).send({ error: "Rasmni yuklab bo'lmadi" })
-    }
-
-    const url = `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`
-    return reply.send({ url, secure_url: url })
   })
 }

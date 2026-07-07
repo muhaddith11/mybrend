@@ -19,8 +19,9 @@ const productSchema = z.object({
   nameUz: z.string().max(200).optional(),
   description: z.string().max(5000).optional(),
   descriptionUz: z.string().max(5000).optional(),
-  price: z.number().positive(),
-  originalPrice: z.number().optional(),
+  // DB'da narx `Int` — float kelsa Prisma rad etib 500 berardi, shuning uchun yaxlitlaymiz.
+  price: z.number().positive().transform((v) => Math.round(v)),
+  originalPrice: z.number().optional().transform((v) => (v === undefined ? undefined : Math.round(v))),
   images: z.array(z.string().max(1000)).max(20).default([]),
   sizes: z.array(z.string().max(50)).max(50).default([]),
   colors: z.array(z.string().max(50)).max(50).default([]),

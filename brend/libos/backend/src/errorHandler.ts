@@ -21,5 +21,9 @@ export async function errorHandler(err: FastifyError, req: FastifyRequest, reply
   // Serverless'da funksiya "muzlab" qolishidan oldin event yuborib ulgurish uchun.
   // Sentry ishga tushmagan bo'lsa (test/dev) — darrov resolve bo'ladi.
   await Sentry.flush(2000)
-  return reply.status(500).send({ error: 'Server xatosi' })
+  // Prisma xato kodi (P2002 unique, P2003 FK, ...) xavfsiz — mijozga ko'rsatamiz,
+  // shunda ilovada 500'ning sababini loglarsiz ham aniqlab bo'ladi.
+  const code = (err as { code?: string }).code
+  const suffix = code && /^P\d+/.test(code) ? ` (${code})` : ''
+  return reply.status(500).send({ error: `Server xatosi${suffix}` })
 }

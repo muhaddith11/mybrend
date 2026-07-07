@@ -12,9 +12,11 @@ async function adminRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   }
+  // Content-Type faqat body bo'lganda — bodysiz so'rovda (GET, DELETE) 'application/json'
+  // Fastify tomonidan "Body cannot be empty" deb rad etiladi.
+  if (options.body != null) headers['Content-Type'] = 'application/json'
   if (token) headers['Authorization'] = `Bearer ${token}`
 
   const res = await fetch(`${BASE_URL}/admin${path}`, { ...options, headers })

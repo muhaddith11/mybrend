@@ -29,6 +29,23 @@ const prisma = new PrismaClient()
 
 const app = Fastify({ logger: { level: 'info' } })
 
+// Bo'sh JSON body'ni xatoga aylantirmaymiz. Bodysiz POST/DELETE so'rovlari
+// (masalan sevimlilarni almashtirish yoki mahsulot o'chirish) mijozdan
+// 'Content-Type: application/json' sarlavhasi bilan kelsa, Fastify'ning standart
+// parseri "Body cannot be empty when content-type is set to 'application/json'"
+// deb 400 qaytarardi. Bu yerda bo'sh body → undefined qilamiz; body talab qiladigan
+// routelar esa Zod validatsiyasida toza xato beradi.
+app.addContentTypeParser('application/json', { parseAs: 'string' }, (_req, body, done) => {
+  const s = (body as string) ?? ''
+  if (s.trim() === '') return done(null, undefined)
+  try {
+    done(null, JSON.parse(s))
+  } catch (err) {
+    ;(err as any).statusCode = 400
+    done(err as Error, undefined)
+  }
+})
+
 // Pluginlar
 // Helmet — xavfsizlik HTTP sarlavhalari (X-Frame-Options, X-Content-Type-Options, HSTS, ...).
 // CSP o'chirilgan (API faqat JSON qaytaradi), CORP esa cross-origin — aks holda web→API so'rovlari bloklanardi.
