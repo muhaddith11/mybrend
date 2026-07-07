@@ -112,7 +112,7 @@ export default async function uploadRoutes(app: FastifyInstance) {
           : up.status === 400 ? 'bucket/so\'rov xato'
           : up.status === 401 || up.status === 403 ? 'kalit yoki ruxsat xato'
           : `Supabase ${up.status}`
-        return reply.status(502).send({ error: `Rasmni yuklab bo'lmadi (${hint})`, debug: `${up.status}:${txt.slice(0, 200)}`, bucket })
+        return reply.status(502).send({ error: `Rasmni yuklab bo'lmadi (${hint})` })
       }
 
       const url = `${origin}/storage/v1/object/public/${bucket}/${path}`
