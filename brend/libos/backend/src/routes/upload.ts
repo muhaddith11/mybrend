@@ -61,7 +61,8 @@ export default async function uploadRoutes(app: FastifyInstance) {
     const supabaseUrl = process.env.SUPABASE_URL
       ?.replace(/^﻿/, '').trim().replace(/\/$/, '')
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/^﻿/, '').trim()
-    const bucket = (process.env.SUPABASE_BUCKET ?? 'zyff').trim()
+    // Supabase'dagi mavjud public bucket nomi. Boshqasi kerak bo'lsa SUPABASE_BUCKET env bilan almashtiriladi.
+    const bucket = (process.env.SUPABASE_BUCKET ?? 'products').trim()
     if (!supabaseUrl || !serviceKey) {
       return reply.status(503).send({ error: 'Rasm xizmati sozlanmagan (SUPABASE_URL/KEY yo\'q)' })
     }
