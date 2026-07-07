@@ -277,7 +277,9 @@ export default async function adminRoutes(app: FastifyInstance) {
     // Dublikatlarni yig'amiz: bir xil nom yoki birlik/ko'plik (–lar) variantlari
     // (masalan "Futbolka" va "Futbolkalar") bitta bo'lsin — har guruhdan birlik,
     // qisqaroq nom qoladi. Ma'lumot o'chirilmaydi, faqat ro'yxat tozalanadi.
-    const norm = (n: string) => n.toLowerCase().replace(/\s+/g, ' ').trim().replace(/lar$/, '')
+    // birlik/ko'plik (–lar) + imlo variantlari (poyafzal↔poyabzal) bir kalitga tushsin.
+    const norm = (n: string) =>
+      n.toLowerCase().replace(/\s+/g, ' ').trim().replace(/lar$/, '').replace('poyafzal', 'poyabzal')
     const groups = new Map<string, typeof cats>()
     for (const c of cats) {
       const k = norm(c.name)
