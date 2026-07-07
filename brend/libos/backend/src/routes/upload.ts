@@ -66,7 +66,7 @@ export default async function uploadRoutes(app: FastifyInstance) {
     if (supabaseUrl && !/^https?:\/\//i.test(supabaseUrl)) supabaseUrl = `https://${supabaseUrl}`
     const serviceKey = cleanEnv(process.env.SUPABASE_SERVICE_ROLE_KEY)
     // Supabase'dagi mavjud public bucket nomi. Boshqasi kerak bo'lsa SUPABASE_BUCKET env bilan almashtiriladi.
-    const bucket = (process.env.SUPABASE_BUCKET ?? 'products').trim()
+    const bucket = cleanEnv(process.env.SUPABASE_BUCKET) || 'products'
     if (!supabaseUrl || !serviceKey) {
       return reply.status(503).send({ error: 'Rasm xizmati sozlanmagan (SUPABASE_URL/KEY yo\'q)' })
     }
@@ -112,7 +112,7 @@ export default async function uploadRoutes(app: FastifyInstance) {
           : up.status === 400 ? 'bucket/so\'rov xato'
           : up.status === 401 || up.status === 403 ? 'kalit yoki ruxsat xato'
           : `Supabase ${up.status}`
-        return reply.status(502).send({ error: `Rasmni yuklab bo'lmadi (${hint})` })
+        return reply.status(502).send({ error: `Rasmni yuklab bo'lmadi (${hint})`, debug: `${up.status}:${txt.slice(0, 200)}`, bucket })
       }
 
       const url = `${origin}/storage/v1/object/public/${bucket}/${path}`
