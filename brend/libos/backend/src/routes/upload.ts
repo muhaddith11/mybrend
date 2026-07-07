@@ -56,14 +56,15 @@ export default async function uploadRoutes(app: FastifyInstance) {
     'image/webp': 'webp', 'image/heic': 'heic', 'image/gif': 'gif',
   }
   app.post('/upload', { preHandler: [authUserOrOwner] }, async (req, reply) => {
-    // BOM va bo'sh joylarni tozalaymiz — Vercel env'ga nusxa-joylashda ﻿ yoki
-    // yangi qator tushib qolsa, `fetch` "Invalid URL" deb yiqilib 500 berardi.
-    let supabaseUrl = process.env.SUPABASE_URL
-      ?.replace(/^﻿/, '').trim().replace(/\/$/, '')
-    // Protokol tushib qolgan bo'lsa (masalan "abc.supabase.co") qo'shamiz — aks holda
-    // `new URL()` yiqilib, yuklash "SUPABASE_URL yaroqsiz" berardi.
+    // Env qiymatini tozalaymiz: BOM (﻿), bo'sh joy, va xato bilan qo'shilgan
+    // "NAME = " prefiksi (Vercel'ga butun qatorni nusxa-joylashtirganda tushadi) —
+    // aks holda `new URL()`/Supabase yiqilib rasm yuklash 500 berardi.
+    const cleanEnv = (s?: string) =>
+      s?.replace(/^﻿/, '').trim().replace(/^[A-Za-z_][A-Za-z0-9_]*\s*=\s*/, '').trim()
+    let supabaseUrl = cleanEnv(process.env.SUPABASE_URL)?.replace(/\/$/, '')
+    // Protokol tushib qolgan bo'lsa (masalan "abc.supabase.co") qo'shamiz.
     if (supabaseUrl && !/^https?:\/\//i.test(supabaseUrl)) supabaseUrl = `https://${supabaseUrl}`
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/^﻿/, '').trim()
+    const serviceKey = cleanEnv(process.env.SUPABASE_SERVICE_ROLE_KEY)
     // Supabase'dagi mavjud public bucket nomi. Boshqasi kerak bo'lsa SUPABASE_BUCKET env bilan almashtiriladi.
     const bucket = (process.env.SUPABASE_BUCKET ?? 'products').trim()
     if (!supabaseUrl || !serviceKey) {
@@ -74,8 +75,7 @@ export default async function uploadRoutes(app: FastifyInstance) {
     try {
       origin = new URL(supabaseUrl).origin
     } catch {
-      // VAQTINCHA DIAGNOSTIKA: env qiymatini ko'rsatamiz (URL maxfiy emas).
-      return reply.status(503).send({ error: 'SUPABASE_URL yaroqsiz', debug: JSON.stringify(process.env.SUPABASE_URL) })
+      return reply.status(503).send({ error: 'SUPABASE_URL yaroqsiz' })
     }
 
     try {
