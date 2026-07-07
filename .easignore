@@ -1,0 +1,29 @@
+# .easignore — EAS Build arxiviga KIRMAYDIGAN fayllar.
+# DIQQAT: bu fayl bo'lsa, EAS .gitignore o'rniga SHUNI ishlatadi — shuning uchun
+# maxfiy fayllar va standart ignoralar ham shu yerda takrorlanadi.
+
+# --- Bog'liqliklar va build artefaktlari (EAS build serverida qayta yaratiladi) ---
+**/node_modules
+**/.next
+**/.expo
+**/.turbo
+**/dist
+**/build
+*.tsbuildinfo
+**/.vercel
+
+# --- Maxfiy fayllar (EAS'ga hech qachon yuklanmasin) ---
+**/.env
+**/.env.*
+*.local
+
+# --- Loglar / OS / test natijalari ---
+*.log
+.DS_Store
+Thumbs.db
+**/test-results
+**/playwright-report
+**/playwright/.cache
+
+# --- Mobil build uchun keraksiz og'ir qismlar ---
+marketing
