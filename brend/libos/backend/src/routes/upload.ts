@@ -58,8 +58,11 @@ export default async function uploadRoutes(app: FastifyInstance) {
   app.post('/upload', { preHandler: [authUserOrOwner] }, async (req, reply) => {
     // BOM va bo'sh joylarni tozalaymiz — Vercel env'ga nusxa-joylashda ﻿ yoki
     // yangi qator tushib qolsa, `fetch` "Invalid URL" deb yiqilib 500 berardi.
-    const supabaseUrl = process.env.SUPABASE_URL
+    let supabaseUrl = process.env.SUPABASE_URL
       ?.replace(/^﻿/, '').trim().replace(/\/$/, '')
+    // Protokol tushib qolgan bo'lsa (masalan "abc.supabase.co") qo'shamiz — aks holda
+    // `new URL()` yiqilib, yuklash "SUPABASE_URL yaroqsiz" berardi.
+    if (supabaseUrl && !/^https?:\/\//i.test(supabaseUrl)) supabaseUrl = `https://${supabaseUrl}`
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/^﻿/, '').trim()
     // Supabase'dagi mavjud public bucket nomi. Boshqasi kerak bo'lsa SUPABASE_BUCKET env bilan almashtiriladi.
     const bucket = (process.env.SUPABASE_BUCKET ?? 'products').trim()
