@@ -74,7 +74,8 @@ export default async function uploadRoutes(app: FastifyInstance) {
     try {
       origin = new URL(supabaseUrl).origin
     } catch {
-      return reply.status(503).send({ error: 'SUPABASE_URL yaroqsiz' })
+      // VAQTINCHA DIAGNOSTIKA: env qiymatini ko'rsatamiz (URL maxfiy emas).
+      return reply.status(503).send({ error: 'SUPABASE_URL yaroqsiz', debug: JSON.stringify(process.env.SUPABASE_URL) })
     }
 
     try {
