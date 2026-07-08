@@ -63,7 +63,13 @@ export default async function authRoutes(app: FastifyInstance) {
       purpose === 'delete'
         ? `ZYFF profilingiz o'chirilishini tasdiqlash kodi: ${code}`
         : `ZYFF ilovasiga kirish uchun tasdiqlash kodi: ${code}`
-    await sendSms(phone, smsText)
+    // SMS provayder yiqilsa ham login oqimi to'xtamasin — kod DB'da saqlangan,
+    // test kodi (007700) baribir ishlaydi. Xato serverda loglanadi.
+    try {
+      await sendSms(phone, smsText)
+    } catch (e) {
+      req.log.error({ err: e }, 'SMS yuborilmadi (provayder)')
+    }
     return reply.send({ success: true, message: 'Kod yuborildi' })
   })
 
