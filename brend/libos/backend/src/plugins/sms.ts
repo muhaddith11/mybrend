@@ -1,59 +1,42 @@
-// Eskiz.uz SMS gateway
+// TextUp.uz SMS gateway (SMSPortal REST API asosida)
+// Auth: HTTP Basic (apiKey:apiSecret). Endpoint: POST /bulkmessages
+// Body: { messages: [{ content, destination }] }
 
-let eskizToken: string | null = null
-let tokenExpiry = 0
+// Baza URL — kerak bo'lsa TEXTUP_API_URL env bilan almashtiriladi. BOM/probel tozalanadi.
+const API_URL = (process.env.TEXTUP_API_URL || 'https://rest.smsportal.com/bulkmessages')
+  .replace(/^﻿/, '')
+  .trim()
 
-async function getEskizToken(): Promise<string> {
-  if (eskizToken && Date.now() < tokenExpiry) return eskizToken
+const cleanEnv = (s?: string) =>
+  s?.replace(/^﻿/, '').trim().replace(/^[A-Za-z_][A-Za-z0-9_]*\s*=\s*/, '').trim()
 
-  const res = await fetch('https://notify.eskiz.uz/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: process.env.ESKIZ_EMAIL,
-      password: process.env.ESKIZ_PASSWORD,
-    }),
-  })
+export async function sendSms(phone: string, message: string): Promise<void> {
+  const apiKey = cleanEnv(process.env.TEXTUP_API_KEY)
+  const apiSecret = cleanEnv(process.env.TEXTUP_API_SECRET)
 
-  if (!res.ok) throw new Error('Eskiz login failed')
-  const data = await res.json()
-  eskizToken = data.data.token
-  tokenExpiry = Date.now() + 29 * 60 * 1000 // 29 daqiqa
-  return eskizToken!
-}
-
-export async function sendSms(phone: string, message: string, _retry = 0): Promise<void> {
-  // Dev muhitda SMS yuborilmaydi
-  if (process.env.NODE_ENV !== 'production' || !process.env.ESKIZ_EMAIL) {
+  // Dev muhitda yoki kalitlar yo'q bo'lsa — SMS yuborilmaydi, konsolga yoziladi.
+  // (007700 universal test kodi baribir ishlaydi.)
+  if (process.env.NODE_ENV !== 'production' || !apiKey || !apiSecret) {
     console.log(`[SMS DEV] ${phone}: ${message}`)
     return
   }
 
-  const token = await getEskizToken()
-  const normalizedPhone = phone.replace(/\D/g, '') // +998901234567 → 998901234567
+  const destination = phone.replace(/\D/g, '') // +998901234567 → 998901234567
+  const auth = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64')
 
-  const res = await fetch('https://notify.eskiz.uz/api/message/sms/send', {
+  const res = await fetch(API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      Authorization: `Basic ${auth}`,
     },
     body: JSON.stringify({
-      mobile_phone: normalizedPhone,
-      message,
-      from: process.env.ESKIZ_FROM ?? '4546',
-      callback_url: '',
+      messages: [{ content: message, destination }],
     }),
   })
 
   if (!res.ok) {
-    const err = await res.json()
-    // Token muddati o'tgan bo'lsa, yangilab BIR MARTA qayta urinish.
-    // _retry hisoblagichsiz, token doim "expired" bersa cheksiz rekursiya bo'lardi.
-    if (err.message?.includes('token') && _retry < 1) {
-      eskizToken = null
-      return sendSms(phone, message, _retry + 1)
-    }
-    throw new Error(`SMS yuborilmadi: ${err.message}`)
+    const err = await res.text().catch(() => '')
+    throw new Error(`SMS yuborilmadi (${res.status}): ${err.slice(0, 200)}`)
   }
 }
