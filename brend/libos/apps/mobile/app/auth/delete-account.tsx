@@ -32,7 +32,7 @@ export default function DeleteAccountScreen() {
     setLoading(true)
     setError('')
     try {
-      await api.auth.sendOtp(user.phone)
+      await api.auth.sendOtp(user.phone, 'delete')
       setStep('code')
     } catch (e: any) {
       setError(e.message ?? tr.mErrorGeneric)

@@ -4,7 +4,8 @@ import { PrismaClient } from '@prisma/client'
 import { sendSms } from '../plugins/sms.js'
 import { phoneSchema } from '../lib/phone.js'
 
-const sendOtpSchema = z.object({ phone: phoneSchema })
+// purpose: 'login' (kirish) yoki 'delete' (profilni o'chirish) — SMS matni farqlanadi
+const sendOtpSchema = z.object({ phone: phoneSchema, purpose: z.enum(['login', 'delete']).optional() })
 const verifyOtpSchema = z.object({ phone: phoneSchema, code: z.string().length(6) })
 const deleteAccountSchema = z.object({ code: z.string().length(6) })
 
@@ -36,7 +37,7 @@ export default async function authRoutes(app: FastifyInstance) {
   const MAX_OTP_ATTEMPTS = 5 // shuncha noto'g'ri urinishdan keyin yangi kod kerak
 
   app.post('/send-otp', sendOtpRateLimit, async (req, reply) => {
-    const { phone } = sendOtpSchema.parse(req.body)
+    const { phone, purpose } = sendOtpSchema.parse(req.body)
 
     // Rate-limit: oxirgi kod yaqinda yuborilgan bo'lsa — kutish
     const existing = await prisma.user.findUnique({ where: { phone } })
@@ -58,7 +59,11 @@ export default async function authRoutes(app: FastifyInstance) {
       create: { phone, otp: code, otpExpiry: expiry, lastOtpSentAt: new Date(), otpAttempts: 0 },
     })
 
-    await sendSms(phone, `ZYFF tasdiqlash kodi: ${code}`)
+    const smsText =
+      purpose === 'delete'
+        ? `ZYFF profilingiz o'chirilishini tasdiqlash kodi: ${code}`
+        : `ZYFF ilovasiga kirish uchun tasdiqlash kodi: ${code}`
+    await sendSms(phone, smsText)
     return reply.send({ success: true, message: 'Kod yuborildi' })
   })
 

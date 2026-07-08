@@ -36,9 +36,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export const api = {
   auth: {
-    sendOtp: (phone: string) =>
+    sendOtp: (phone: string, purpose?: 'login' | 'delete') =>
       request<{ success: boolean }>('/auth/send-otp', {
-        method: 'POST', body: JSON.stringify({ phone }),
+        method: 'POST', body: JSON.stringify({ phone, ...(purpose ? { purpose } : {}) }),
       }),
     verifyOtp: (phone: string, code: string) =>
       request<{ token: string; user: User }>('/auth/verify-otp', {
