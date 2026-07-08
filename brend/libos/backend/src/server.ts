@@ -132,21 +132,6 @@ app.get('/health', async () => ({
   timestamp: new Date().toISOString(),
 }))
 
-// VAQTINCHA DIAGNOSTIKA: Vercel datacenter TextUp API'ga yeta oladimi?
-// 404 => geo-blok (chet el IP bloklangan); 400/401 => yetadi (mavjud email topildi).
-app.get('/_diag/textup', async () => {
-  try {
-    const res = await fetch('https://api-auth.textup.uz/v1/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'Muhaddithhrahimov7@gmail.com', password: 'diag-wrong' }),
-    })
-    return { status: res.status, geoBlocked: res.status === 404, reachable: res.status !== 404 }
-  } catch (e) {
-    return { fetchError: String(e) }
-  }
-})
-
 // Vercel serverless handler
 export default async function handler(req: any, res: any) {
   await app.ready()
