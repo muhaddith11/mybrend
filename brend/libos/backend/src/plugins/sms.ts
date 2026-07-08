@@ -1,6 +1,8 @@
 // TextUp.uz SMS gateway
-// Oqim: email/parol bilan login → accessToken (JWT) → /v1/send bilan yuborish.
-// Env: TEXTUP_EMAIL, TEXTUP_PASSWORD, TEXTUP_USER_ID (UUID), TEXTUP_NICKNAME_ID (ixtiyoriy).
+// Oqim: email/parol bilan login → accessToken (JWT) + user.id → /v1/send bilan yuborish.
+// Env: TEXTUP_EMAIL, TEXTUP_PASSWORD (majburiy), TEXTUP_NICKNAME_ID (ixtiyoriy).
+// userId login javobidan (user.id) avtomatik olinadi — qo'lda kiritish shart emas.
+// Kerak bo'lsa TEXTUP_USER_ID env bilan majburan bekor qilinadi.
 
 const AUTH_URL = 'https://api-auth.textup.uz/v1/login'
 const SEND_URL = 'https://sms-api.textup.uz/v1/send'
@@ -10,6 +12,7 @@ const cleanEnv = (s?: string) =>
   s?.replace(/^﻿/, '').trim().replace(/^[A-Za-z_][A-Za-z0-9_]*\s*=\s*/, '').trim()
 
 let accessToken: string | null = null
+let cachedUserId: string | null = null
 let tokenExpiry = 0
 
 async function getToken(): Promise<string> {
@@ -26,6 +29,7 @@ async function getToken(): Promise<string> {
   if (!res.ok) throw new Error('TextUp login failed')
   const data = await res.json()
   accessToken = data.accessToken
+  cachedUserId = data.user?.id ?? null // /v1/send uchun kerak — login javobidan olamiz
   tokenExpiry = Date.now() + 20 * 60 * 1000 // 20 daqiqa (401'da baribir yangilanadi)
   return accessToken!
 }
@@ -38,9 +42,10 @@ export async function sendSms(phone: string, message: string, _retry = 0): Promi
     return
   }
 
-  const token = await getToken()
+  const token = await getToken() // bu cachedUserId ni ham to'ldiradi
   const recipient = phone.replace(/\D/g, '') // +998901234567 → 998901234567
   const nicknameId = cleanEnv(process.env.TEXTUP_NICKNAME_ID)
+  const userId = cleanEnv(process.env.TEXTUP_USER_ID) || cachedUserId
 
   const res = await fetch(SEND_URL, {
     method: 'POST',
@@ -49,7 +54,7 @@ export async function sendSms(phone: string, message: string, _retry = 0): Promi
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
-      userId: cleanEnv(process.env.TEXTUP_USER_ID),
+      userId,
       message,
       recipients: [recipient],
       isOtp: true,
