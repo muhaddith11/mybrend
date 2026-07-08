@@ -132,6 +132,33 @@ app.get('/health', async () => ({
   timestamp: new Date().toISOString(),
 }))
 
+// VAQTINCHA DIAGNOSTIKA (isbot uchun): Vercel datacenter TextUp'ga so'rov yuboradi
+// va TextUp qaytargan HTTP holatini ko'rsatadi. Bu so'rov Vercel IP'sidan ketadi —
+// shuning uchun natija Vercel nima ko'rayotganини aks ettiradi (brauzeringiz UZ'da bo'lsa ham).
+app.get('/_diag/textup', async () => {
+  const started = Date.now()
+  try {
+    const res = await fetch('https://api-auth.textup.uz/v1/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'Muhaddithhrahimov7@gmail.com', password: 'diag-wrong' }),
+    })
+    const body = await res.text()
+    return {
+      vercelSees: res.status,
+      geoBlocked: res.status === 404,
+      textupResponse: body.slice(0, 120),
+      note:
+        res.status === 404
+          ? "Vercel (chet el IP) TextUp tomonidan bloklangan — SMS ishlamaydi"
+          : "Vercel TextUp'ga yetdi",
+      tookMs: Date.now() - started,
+    }
+  } catch (e) {
+    return { fetchError: String(e), tookMs: Date.now() - started }
+  }
+})
+
 // Vercel serverless handler
 export default async function handler(req: any, res: any) {
   await app.ready()
