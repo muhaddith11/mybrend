@@ -33,6 +33,7 @@ export default function HomeScreen() {
   const { colors, dark } = useTheme()
   const styles = useMemo(() => makeStyles(colors), [colors])
   const [activeGender, setActiveGender] = useState<Gender>('MEN')
+  const [activeCat, setActiveCat] = useState<string>('all')
   const [search, setSearch] = useState('')
   const genderLabel: Record<Gender, string> = { MEN: tr.men, WOMEN: tr.women, KIDS: tr.kids }
 
@@ -62,6 +63,23 @@ export default function HomeScreen() {
     queryFn: () => api.products.discounted(),
     enabled: !searchQuery,
   })
+
+  // Kategoriya chiplari — ommabop mahsulotlar ichidagi mavjud kategoriyalardan
+  // yig'iladi (alohida API kerak emas). Har kategoriya faqat bir marta.
+  const categories = useMemo(() => {
+    const map = new Map<string, string>() // slug -> ko'rsatiladigan nom
+    for (const p of featured?.products ?? []) {
+      const c = p.category
+      if (c?.slug && !map.has(c.slug)) map.set(c.slug, c.name)
+    }
+    return Array.from(map, ([slug, name]) => ({ slug, name }))
+  }, [featured])
+
+  // Tanlangan kategoriya bo'yicha filtrlangan ommabop mahsulotlar
+  const popularProducts = useMemo(() => {
+    const list = featured?.products ?? []
+    return activeCat === 'all' ? list : list.filter(p => p.category?.slug === activeCat)
+  }, [featured, activeCat])
 
   // Butun mahsulotlar bo'ylab qidiruv (bitta do'kon nomi bilan cheklanmaydi)
   const { data: searchResults, isLoading: searchLoading } = useQuery({
@@ -195,11 +213,42 @@ export default function HomeScreen() {
         }
         ListFooterComponent={
           <>
-            {/* ── Ommabop mahsulotlar ── */}
-            {!!featured?.products.length && (
+            {/* ── Kategoriyalar (gorizontal chiplar) ── */}
+            {categories.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.catScroll}
+              >
+                <TouchableOpacity
+                  style={[styles.catChip, activeCat === 'all' && styles.catChipActive]}
+                  onPress={() => setActiveCat('all')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.catChipText, activeCat === 'all' && styles.catChipTextActive]}>
+                    {tr.mAllCategory}
+                  </Text>
+                </TouchableOpacity>
+                {categories.map(c => (
+                  <TouchableOpacity
+                    key={c.slug}
+                    style={[styles.catChip, activeCat === c.slug && styles.catChipActive]}
+                    onPress={() => setActiveCat(c.slug)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.catChipText, activeCat === c.slug && styles.catChipTextActive]}>
+                      {c.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+
+            {/* ── Ommabop mahsulotlar (tanlangan kategoriya bo'yicha) ── */}
+            {!!popularProducts.length && (
               <ProductRow
                 title={tr.popularProducts}
-                products={featured.products}
+                products={popularProducts}
                 cur={tr.som}
                 onPressProduct={p => router.push(`/product/${p.id}`)}
               />
@@ -344,6 +393,11 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   tabActive: { borderBottomColor: c.brand },
   tabText: { fontSize: 14, color: c.text2, fontWeight: '500' },
   tabTextActive: { color: c.brand },
+  catScroll: { paddingHorizontal: 16, gap: 8, paddingBottom: 4, marginBottom: 12 },
+  catChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border },
+  catChipActive: { backgroundColor: c.brand, borderColor: c.brand },
+  catChipText: { fontSize: 13, fontWeight: '600', color: c.text2 },
+  catChipTextActive: { color: '#fff' },
   list: { paddingBottom: 24, gap: 10 },
   empty: { textAlign: 'center', color: c.text2, marginTop: 40, fontSize: 14 },
   section: { marginBottom: 16 },
