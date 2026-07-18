@@ -1,8 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
-import {
-  View, Text, ScrollView, TextInput, TouchableOpacity,
-  StyleSheet, Switch, ActivityIndicator, Alert, Image,
-} from 'react-native'
+import { View, ScrollView, TextInput, TouchableOpacity, StyleSheet, Switch, ActivityIndicator, Alert, Image } from 'react-native'
+import { Text } from '../../components/Txt'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -158,7 +156,10 @@ export default function ProductForm() {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Field label="Nomi *" value={name} onChange={setName} placeholder="Mahsulot nomi" c={colors} styles={styles} />
         <Field label="Mahsulot kodi (SKU)" value={sku} onChange={setSku} placeholder="Masalan: ONP-042" c={colors} styles={styles} />
-        <Text style={styles.hint}>🔒 Faqat siz ko'rasiz — mijozga ko'rinmaydi. Buyurtma kelganда kod bilan chiqadi.</Text>
+        <View style={styles.hintRow}>
+          <Ionicons name="lock-closed" size={12} color={colors.text3} />
+          <Text style={styles.hint}>Faqat siz ko'rasiz — mijozga ko'rinmaydi. Buyurtma kelganda kod bilan chiqadi.</Text>
+        </View>
         <View style={styles.row2}>
           <View style={{ flex: 1 }}>
             <Field label="Narx *" value={price} onChange={setPrice} placeholder="0" keyboard="numeric" c={colors} styles={styles} />
@@ -307,7 +308,8 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   chipText: { fontSize: 13, color: c.text2, fontWeight: '500' },
   chipTextActive: { color: c.accent, fontWeight: '700' },
   meta: { fontSize: 12, color: c.text2 },
-  hint: { fontSize: 11, color: c.text3, marginTop: 6 },
+  hintRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 6 },
+  hint: { flex: 1, fontSize: 11, color: c.text3 },
   addRow: { flexDirection: 'row', gap: 8, marginTop: 10, alignItems: 'center' },
   addInput: { flex: 1, borderWidth: 1, borderColor: c.border, borderRadius: 12, padding: 12, fontSize: 14, color: c.text, backgroundColor: c.surface },
   addBtn: { width: 46, height: 46, borderRadius: 12, backgroundColor: c.brand, alignItems: 'center', justifyContent: 'center' },

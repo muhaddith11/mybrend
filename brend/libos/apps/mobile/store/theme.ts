@@ -71,6 +71,50 @@ export function getColors(mode: ThemeMode): ThemeColors {
   return mode === 'dark' ? darkColors : lightColors
 }
 
+// ── Spacing va tipografiya shkalasi (mavzudan mustaqil) ──
+// Inline "sehrli sonlar" o'rniga: styles ichida `space.md`, `font.body` ishlating.
+// 4pt bazaviy grid.
+export const space = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 28,
+} as const
+
+export const radius = {
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 18,
+  pill: 999,
+} as const
+
+export const font = {
+  caption: 11,  // yordamchi matn, badge
+  small: 12,    // do'kon nomi, sub-label
+  body: 14,     // asosiy matn, input
+  subtitle: 15, // seksiya sarlavhasi
+  title: 17,    // yirik sarlavha
+} as const
+
+// UI shrifti — Inter. fontWeight qiymatini mos Inter oilasiga xaritalaydi.
+// (RN'da nomlangan shrift oilasida fontWeight avtomatik ishlamaydi — har vazn
+// alohida oila.) Global patch shu orqali to'g'ri qalinlik ierarxiyasini saqlaydi.
+export function interFamily(weight?: string | number): string {
+  const w = typeof weight === 'number' ? String(weight) : weight
+  if (w === 'bold') return 'Inter_700Bold'
+  switch (w) {
+    case '500': return 'Inter_500Medium'
+    case '600': return 'Inter_600SemiBold'
+    case '700': return 'Inter_700Bold'
+    case '800':
+    case '900': return 'Inter_800ExtraBold'
+    default:    return 'Inter_400Regular' // 100–400, 'normal', undefined
+  }
+}
+
 interface ThemeState {
   dark: boolean
   toggle: () => void

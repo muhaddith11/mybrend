@@ -1,13 +1,16 @@
 import { useMemo, useState, useEffect } from 'react'
-import { View, Text, TextInput, StyleSheet, FlatList } from 'react-native'
+import { View, TextInput, StyleSheet, FlatList } from 'react-native'
+import { Text } from '../../components/Txt'
 import { useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { useQuery } from '@tanstack/react-query'
 import { api, useT } from '@libos/shared'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { StoreCard } from '../../components/StoreCard'
+import { StoreCardSkeletonList } from '../../components/Skeleton'
 import { ErrorState } from '../../components/ErrorState'
 import { useLangStore } from '../../store/lang'
-import { useTheme, type ThemeColors } from '../../store/theme'
+import { useTheme, type ThemeColors, font } from '../../store/theme'
 
 export default function StoresScreen() {
   const router = useRouter()
@@ -34,7 +37,7 @@ export default function StoresScreen() {
       </View>
 
       <View style={styles.searchBar}>
-        <Text style={styles.searchIcon}>🔍</Text>
+        <Ionicons name="search" size={18} color={colors.text3} style={styles.searchIcon} />
         <TextInput
           style={[styles.searchInput, { outlineStyle: 'none' } as any]}
           placeholder={tr.mSearchStoreName}
@@ -53,7 +56,7 @@ export default function StoresScreen() {
         )}
         ListEmptyComponent={
           isLoading ? (
-            <Text style={styles.empty}>{tr.mLoading}</Text>
+            <StoreCardSkeletonList count={7} />
           ) : isError ? (
             <ErrorState onRetry={() => refetch()} compact />
           ) : (
@@ -70,8 +73,8 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   header: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
   headerTitle: { fontSize: 20, fontWeight: '600', color: c.text },
   searchBar: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginBottom: 12, backgroundColor: c.surface2, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
-  searchIcon: { fontSize: 16 },
-  searchInput: { flex: 1, fontSize: 14, color: c.text },
+  searchIcon: {},
+  searchInput: { flex: 1, fontSize: font.body, color: c.text },
   list: { paddingBottom: 24, gap: 10 },
-  empty: { textAlign: 'center', color: c.text2, marginTop: 40, fontSize: 14 },
+  empty: { textAlign: 'center', color: c.text2, marginTop: 40, fontSize: font.body },
 })

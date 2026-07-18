@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
+import { Text } from './Txt'
 import { Ionicons } from '@expo/vector-icons'
 import { getColors, useThemeStore, type ThemeColors } from '../store/theme'
 import { useLangStore } from '../store/lang'

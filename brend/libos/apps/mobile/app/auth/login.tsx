@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react'
-import {
-  View, Text, TextInput, TouchableOpacity,
-  StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
-} from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native'
+import { Text } from '../../components/Txt'
 import { useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { api, useT } from '@libos/shared'
 import { useLangStore } from '../../store/lang'
@@ -12,9 +11,11 @@ import { Logo } from '../../components/Logo'
 
 export default function LoginScreen() {
   const router = useRouter()
-  const tr = useT(useLangStore(s => s.lang))
+  const lang = useLangStore(s => s.lang)
+  const tr = useT(lang)
   const { colors } = useTheme()
   const styles = useMemo(() => makeStyles(colors), [colors])
+  const [name, setName] = useState('')
   const [phone, setPhone] = useState('+998')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -39,7 +40,7 @@ export default function LoginScreen() {
     setError('')
     try {
       await api.auth.sendOtp(phone)
-      router.push({ pathname: '/auth/verify', params: { phone } })
+      router.push({ pathname: '/auth/verify', params: { phone, name: name.trim() } })
     } catch (e: any) {
       setError(e.message ?? tr.mErrorGeneric)
     } finally {
@@ -67,6 +68,20 @@ export default function LoginScreen() {
             {tr.mLoginSub}
           </Text>
 
+          {/* Ism input */}
+          <View style={styles.inputWrap}>
+            <Ionicons name="person-outline" size={20} color={colors.text3} style={{ marginRight: 10 }} />
+            <TextInput
+              style={styles.input}
+              value={name}
+              onChangeText={setName}
+              placeholder={lang === 'ru' ? 'Ваше имя' : lang === 'en' ? 'Your name' : 'Ismingiz'}
+              placeholderTextColor={colors.text3}
+              autoFocus
+              maxLength={100}
+            />
+          </View>
+
           {/* Telefon input */}
           <View style={[styles.inputWrap, error ? styles.inputError : null]}>
             <Text style={styles.flag}>🇺🇿</Text>
@@ -77,7 +92,6 @@ export default function LoginScreen() {
               keyboardType="phone-pad"
               placeholder="+998 90 123 45 67"
               placeholderTextColor={colors.text3}
-              autoFocus
               maxLength={13}
             />
           </View>

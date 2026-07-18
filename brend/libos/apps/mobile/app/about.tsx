@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, ScrollView, TouchableOpacity, StyleSheet } from 'react-native'
+import { Text } from '../components/Txt'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -51,7 +52,7 @@ export default function AboutScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.icon}>🛍️</Text>
+        <Ionicons name="bag-handle-outline" size={44} color={colors.brand} style={styles.icon} />
         <Text style={styles.intro}>{intro}</Text>
 
         {blocks.map(bl => (
@@ -74,7 +75,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 0.5, borderBottomColor: c.border },
   headerTitle: { fontSize: 17, fontWeight: '600', color: c.text },
   content: { padding: 24, paddingBottom: 40 },
-  icon: { fontSize: 40, textAlign: 'center', marginBottom: 16 },
+  icon: { alignSelf: 'center', marginBottom: 16 },
   intro: { fontSize: 15, color: c.text, lineHeight: 23, textAlign: 'center', marginBottom: 24 },
   block: { marginBottom: 20 },
   blockTitle: { fontSize: 16, fontWeight: '700', color: c.text, marginBottom: 6 },

@@ -30,6 +30,7 @@ interface AuthStore {
   login: (token: string, user: User) => Promise<void>
   logout: () => Promise<void>
   loadFromStorage: () => Promise<void>
+  setUser: (user: User) => void
 }
 
 export const useAuthStore = create<AuthStore>((set) => ({
@@ -49,6 +50,9 @@ export const useAuthStore = create<AuthStore>((set) => ({
     setToken(null)
     set({ token: null, user: null, isLoggedIn: false })
   },
+
+  // Profil yangilangach (ism/avatar) — token o'zgarmasdan foydalanuvchini yangilaymiz.
+  setUser: (user) => set({ user }),
 
   loadFromStorage: async () => {
     try {

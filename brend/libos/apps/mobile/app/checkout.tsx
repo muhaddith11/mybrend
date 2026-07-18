@@ -1,8 +1,6 @@
 import { useMemo, useState } from 'react'
-import {
-  View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, TextInput, ActivityIndicator, Alert, Linking,
-} from 'react-native'
+import { View, ScrollView, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, Alert, Linking } from 'react-native'
+import { Text } from '../components/Txt'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -223,15 +221,23 @@ export default function CheckoutScreen() {
                 onSelect={(lat, lng, address) => { setCoords({ lat, lng }); setMapAddress(address) }}
               />
             </View>
-            {mapAddress
-              ? <Text style={styles.mapAddr}>📍 {mapAddress}</Text>
-              : <Text style={styles.mapHint}>
+            {mapAddress ? (
+              <View style={styles.mapAddrRow}>
+                <Ionicons name="location" size={14} color={colors.brand} />
+                <Text style={styles.mapAddr}>{mapAddress}</Text>
+              </View>
+            ) : (
+              <View style={styles.mapAddrRow}>
+                <Ionicons name="map-outline" size={14} color={colors.text3} />
+                <Text style={styles.mapHint}>
                   {lang === 'ru'
-                    ? '🗺️ Отметьте свой дом на карте (необязательно)'
+                    ? 'Отметьте свой дом на карте (необязательно)'
                     : lang === 'en'
-                    ? '🗺️ Mark your home on the map (optional)'
-                    : '🗺️ Xaritadan uyingizni belgilang (ixtiyoriy)'}
-                </Text>}
+                    ? 'Mark your home on the map (optional)'
+                    : 'Xaritadan uyingizni belgilang (ixtiyoriy)'}
+                </Text>
+              </View>
+            )}
 
             {/* Kvartira / Hovli */}
             <View style={styles.addrToggle}>
@@ -273,15 +279,15 @@ export default function CheckoutScreen() {
             qaytarish kifoya: { value: 'CLICK', ... }, { value: 'PAYME', ... }
           */}
           {[
-            { value: 'CASH', icon: '💵', label: tr.mPayCash, desc: tr.mPayCashDesc },
-            { value: 'TRANSFER', icon: '💳', label: tr.mPayCard, desc: tr.mPayCardDesc },
+            { value: 'CASH', icon: 'cash-outline' as const, label: tr.mPayCash, desc: tr.mPayCashDesc },
+            { value: 'TRANSFER', icon: 'card-outline' as const, label: tr.mPayCard, desc: tr.mPayCardDesc },
           ].map(opt => (
             <TouchableOpacity
               key={opt.value}
               style={[styles.optionRow, payment === opt.value && styles.optionActive]}
               onPress={() => setPayment(opt.value as PaymentType)}
             >
-              <Text style={{ fontSize: 20 }}>{opt.icon}</Text>
+              <Ionicons name={opt.icon} size={22} color={payment === opt.value ? colors.brand : colors.text2} />
               <View style={styles.optionText}>
                 <Text style={[styles.optionLabel, payment === opt.value && { color: colors.brand }]}>{opt.label}</Text>
                 <Text style={styles.optionDesc}>{opt.desc}</Text>
@@ -355,8 +361,9 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   radioActive: { borderColor: c.brand },
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: c.brand },
   textArea: { borderWidth: 1, borderColor: c.border, borderRadius: 10, padding: 12, fontSize: 14, color: c.text, backgroundColor: c.surface2, minHeight: 60, textAlignVertical: 'top' },
-  mapAddr: { fontSize: 13, color: c.brand, fontWeight: '500' },
-  mapHint: { fontSize: 12, color: c.text3 },
+  mapAddrRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  mapAddr: { flex: 1, fontSize: 13, color: c.brand, fontWeight: '500' },
+  mapHint: { flex: 1, fontSize: 12, color: c.text3 },
   addrToggle: { flexDirection: 'row', gap: 8 },
   addrToggleBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: c.border, alignItems: 'center', backgroundColor: c.surface2 },
   addrToggleActive: { borderColor: c.brand, backgroundColor: c.brand },

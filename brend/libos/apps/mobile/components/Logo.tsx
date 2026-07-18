@@ -1,4 +1,5 @@
-import { Text, type TextStyle, type StyleProp } from 'react-native'
+import { type TextStyle, type StyleProp } from 'react-native'
+import { Text } from './Txt'
 import { useTheme } from '../store/theme'
 
 // ZYFF brend wordmark'i — bitta joyda. Hamma header/footer/ekranlarda shu ishlatiladi.

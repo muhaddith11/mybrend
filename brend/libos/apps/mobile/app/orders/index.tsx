@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, FlatList, TouchableOpacity, StyleSheet } from 'react-native'
+import { Text } from '../../components/Txt'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'

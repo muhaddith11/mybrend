@@ -1,9 +1,6 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
-import {
-  View, Text, TextInput, TouchableOpacity,
-  StyleSheet, KeyboardAvoidingView, Platform,
-  ActivityIndicator,
-} from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native'
+import { Text } from '../../components/Txt'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -15,12 +12,13 @@ import { useTheme, type ThemeColors } from '../../store/theme'
 const CODE_LENGTH = 6
 
 export default function VerifyScreen() {
-  const { phone } = useLocalSearchParams<{ phone: string }>()
+  const { phone, name } = useLocalSearchParams<{ phone: string; name?: string }>()
   const router = useRouter()
   const tr = useT(useLangStore(s => s.lang))
   const { colors } = useTheme()
   const styles = useMemo(() => makeStyles(colors), [colors])
   const login = useAuthStore(s => s.login)
+  const setUser = useAuthStore(s => s.setUser)
 
   const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(''))
   const [loading, setLoading] = useState(false)
@@ -76,6 +74,17 @@ export default function VerifyScreen() {
     try {
       const { token, user } = await api.auth.verifyOtp(phone, codeStr)
       await login(token, user)
+      // Yangi foydalanuvchi kirishda ism kiritgan bo'lsa — profilga saqlaymiz.
+      // (Mavjud ismni ustiga yozmaymiz; o'zgartirish profil sahifasida.)
+      const trimmed = (name ?? '').trim()
+      if (trimmed && !user.name) {
+        try {
+          const updated = await api.auth.updateProfile({ name: trimmed })
+          setUser(updated)
+        } catch {
+          // ism saqlanmasa ham kirishga xalaqit bermaymiz — keyin profildan tahrirlaydi
+        }
+      }
       // Muvaffaqiyatli — bosh sahifaga
       router.replace('/')
     } catch (e: any) {
@@ -119,7 +128,7 @@ export default function VerifyScreen() {
         <View style={styles.content}>
           {/* Ikon */}
           <View style={styles.iconWrap}>
-            <Text style={styles.icon}>💬</Text>
+            <Ionicons name="chatbubble-ellipses-outline" size={34} color={colors.accent} />
           </View>
 
           <Text style={styles.title}>{tr.mEnterSmsCode}</Text>

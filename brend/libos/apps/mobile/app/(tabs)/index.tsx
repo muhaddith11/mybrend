@@ -1,9 +1,11 @@
 import { useMemo, useState, useEffect } from 'react'
 import {
-  View, Text, ScrollView, TouchableOpacity,
+  View, ScrollView, TouchableOpacity,
   TextInput, StyleSheet, FlatList, Image, Linking,
 } from 'react-native'
+import { Text } from '../../components/Txt'
 import { useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { useQuery } from '@tanstack/react-query'
 import { api, useT } from '@libos/shared'
 import type { Gender, Product } from '@libos/shared'
@@ -15,9 +17,11 @@ import { WishlistHeartButton } from '../../components/WishlistHeartButton'
 import { AddToCartButton } from '../../components/AddToCartButton'
 import { HeroBanner } from '../../components/HeroBanner'
 import { HomeHeader } from '../../components/HomeHeader'
+import { StoreCardSkeletonList } from '../../components/Skeleton'
+import { PressableScale } from '../../components/PressableScale'
 import { LeafletWebMap, type MapStore } from '../../components/LeafletWebMap'
 import { useLangStore } from '../../store/lang'
-import { useTheme, type ThemeColors } from '../../store/theme'
+import { useTheme, type ThemeColors, font } from '../../store/theme'
 import { resolveImg } from '../../lib/links'
 
 const GENDERS: Gender[] = ['MEN', 'WOMEN', 'KIDS']
@@ -97,7 +101,7 @@ export default function HomeScreen() {
 
   const searchBar = (
     <View style={styles.searchBar}>
-      <Text style={styles.searchIcon}>🔍</Text>
+      <Ionicons name="search" size={18} color={colors.text3} style={styles.searchIcon} />
       <TextInput
         style={[styles.searchInput, noOutline]}
         placeholder={tr.mSearchPlaceholder}
@@ -120,9 +124,8 @@ export default function HomeScreen() {
           contentContainerStyle={styles.searchGrid}
           columnWrapperStyle={styles.searchRow}
           renderItem={({ item }) => (
-            <TouchableOpacity
+            <PressableScale
               style={styles.searchCard}
-              activeOpacity={0.9}
               onPress={() => router.push(`/product/${item.id}`)}
             >
               <View style={styles.searchImgWrap}>
@@ -149,7 +152,7 @@ export default function HomeScreen() {
               </View>
               <Text style={styles.searchStoreName}>{item.store?.name}</Text>
               <AddToCartButton product={item as Product} bg={colors.brand} style={styles.cardAddBtn} />
-            </TouchableOpacity>
+            </PressableScale>
           )}
           ListEmptyComponent={
             <Text style={styles.empty}>
@@ -204,7 +207,7 @@ export default function HomeScreen() {
         }
         ListEmptyComponent={
           isLoading ? (
-            <Text style={styles.empty}>{tr.mLoading}</Text>
+            <StoreCardSkeletonList count={6} />
           ) : isError ? (
             <ErrorState onRetry={() => refetch()} compact />
           ) : (
@@ -257,7 +260,7 @@ export default function HomeScreen() {
             {/* ── Haftalik chegirmalar promo ── */}
             <View style={styles.promo}>
               <View style={styles.promoLeft}>
-                <Text style={styles.promoIcon}>🔥</Text>
+                <Ionicons name="flame" size={26} color={colors.accent} style={styles.promoIcon} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.promoTitle}>{tr.weeklyDeals}</Text>
                   <Text style={styles.promoSub}>{tr.weeklyDealsSub}</Text>
@@ -283,9 +286,12 @@ export default function HomeScreen() {
               if (mapStores.length === 0) return null
               return (
                 <View style={styles.mapSection}>
-                  <Text style={styles.mapSectionTitle}>
-                    📍 {lang === 'ru' ? 'Магазины на карте' : lang === 'en' ? 'Stores on the map' : "Xaritada do'konlar"}
-                  </Text>
+                  <View style={styles.mapSectionHead}>
+                    <Ionicons name="location" size={16} color={colors.accent} />
+                    <Text style={styles.mapSectionTitle}>
+                      {lang === 'ru' ? 'Магазины на карте' : lang === 'en' ? 'Stores on the map' : "Xaritada do'konlar"}
+                    </Text>
+                  </View>
                   <LeafletWebMap mode="display" height={220} dark={dark} stores={mapStores} />
                 </View>
               )
@@ -319,14 +325,17 @@ function HomeFooter() {
       </View>
 
       <View style={styles.footerContacts}>
-        <TouchableOpacity onPress={() => Linking.openURL('tel:+998502500550')}>
-          <Text style={styles.footerContact}>📞 +998 50 250 05 50</Text>
+        <TouchableOpacity style={styles.footerContactRow} onPress={() => Linking.openURL('tel:+998502500550')}>
+          <Ionicons name="call-outline" size={15} color="rgba(255,255,255,0.8)" />
+          <Text style={styles.footerContact}>+998 50 250 05 50</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => Linking.openURL('https://instagram.com/zyff.uz')}>
-          <Text style={styles.footerContact}>📷 Instagram: @zyff.uz</Text>
+        <TouchableOpacity style={styles.footerContactRow} onPress={() => Linking.openURL('https://instagram.com/zyff.uz')}>
+          <Ionicons name="logo-instagram" size={15} color="rgba(255,255,255,0.8)" />
+          <Text style={styles.footerContact}>Instagram: @zyff.uz</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => Linking.openURL('https://t.me/zyff_uz')}>
-          <Text style={styles.footerContact}>✈️ Telegram: @zyff_uz</Text>
+        <TouchableOpacity style={styles.footerContactRow} onPress={() => Linking.openURL('https://t.me/zyff_uz')}>
+          <Ionicons name="paper-plane-outline" size={15} color="rgba(255,255,255,0.8)" />
+          <Text style={styles.footerContact}>Telegram: @zyff_uz</Text>
         </TouchableOpacity>
       </View>
 
@@ -350,7 +359,7 @@ function ProductRow({
       <Text style={styles.sectionTitle}>{title}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sectionScroll}>
         {products.map(product => (
-          <TouchableOpacity key={product.id} style={styles.productCard} onPress={() => onPressProduct(product)}>
+          <PressableScale key={product.id} style={styles.productCard} onPress={() => onPressProduct(product)}>
             <View style={styles.productImgWrap}>
               {product.images?.[0] ? (
                 <Image source={{ uri: resolveImg(product.images[0]) }} style={styles.productImg} resizeMode="cover" />
@@ -374,7 +383,7 @@ function ProductRow({
               )}
             </View>
             <AddToCartButton product={product} bg={colors.brand} style={styles.cardAddBtn} />
-          </TouchableOpacity>
+          </PressableScale>
         ))}
       </ScrollView>
     </View>
@@ -386,12 +395,12 @@ function ProductRow({
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.bg },
   searchBar: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 20, marginBottom: 18, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 12, gap: 10 },
-  searchIcon: { fontSize: 16 },
-  searchInput: { flex: 1, fontSize: 14, color: c.text },
+  searchIcon: {},
+  searchInput: { flex: 1, fontSize: font.body, color: c.text },
   tabs: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: c.border, marginBottom: 8 },
   tab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
   tabActive: { borderBottomColor: c.brand },
-  tabText: { fontSize: 14, color: c.text2, fontWeight: '500' },
+  tabText: { fontSize: font.body, color: c.text2, fontWeight: '500' },
   tabTextActive: { color: c.brand },
   catScroll: { paddingHorizontal: 16, gap: 8, paddingBottom: 4, marginBottom: 12 },
   catChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border },
@@ -399,13 +408,14 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   catChipText: { fontSize: 13, fontWeight: '600', color: c.text2 },
   catChipTextActive: { color: '#fff' },
   list: { paddingBottom: 24, gap: 10 },
-  empty: { textAlign: 'center', color: c.text2, marginTop: 40, fontSize: 14 },
+  empty: { textAlign: 'center', color: c.text2, marginTop: 40, fontSize: font.body },
   section: { marginBottom: 16 },
-  sectionTitle: { fontSize: 15, fontWeight: '600', color: c.text, marginBottom: 10, marginHorizontal: 16 },
+  sectionTitle: { fontSize: font.subtitle, fontWeight: '600', color: c.text, marginBottom: 10, marginHorizontal: 16 },
   mapSection: { marginHorizontal: 16, marginBottom: 16 },
-  mapSectionTitle: { fontSize: 15, fontWeight: '600', color: c.text, marginBottom: 10 },
+  mapSectionHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
+  mapSectionTitle: { fontSize: font.subtitle, fontWeight: '600', color: c.text },
   sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 16, marginTop: 4, marginBottom: 10 },
-  sectionHeadTitle: { fontSize: 17, fontWeight: '700', color: c.text },
+  sectionHeadTitle: { fontSize: font.title, fontWeight: '700', color: c.text },
   sectionHeadLink: { fontSize: 13, fontWeight: '500', color: c.brand },
   sectionScroll: { paddingHorizontal: 16, gap: 10 },
   productCard: { width: 150, backgroundColor: c.surface, borderRadius: 18, borderWidth: 1, borderColor: c.border, overflow: 'hidden' },
@@ -415,29 +425,30 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   cardAddBtn: { marginHorizontal: 12, marginBottom: 12, marginTop: 2 },
   discountBadge: { position: 'absolute', top: 8, left: 8, backgroundColor: '#E23B3B', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 3 },
   discountBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
-  productName: { fontSize: 12.5, color: c.text, marginTop: 10, marginHorizontal: 12, lineHeight: 16, height: 32, fontWeight: '600' },
+  productName: { fontSize: 13, color: c.text, marginTop: 10, marginHorizontal: 12, lineHeight: 16, height: 32, fontWeight: '600' },
   productPriceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginHorizontal: 12, marginBottom: 8, marginTop: 2 },
-  productPrice: { fontSize: 13.5, fontWeight: '800', color: c.brand },
-  productOriginalPrice: { fontSize: 11, color: c.text3, textDecorationLine: 'line-through' },
+  productPrice: { fontSize: font.body, fontWeight: '800', color: c.brand },
+  productOriginalPrice: { fontSize: font.caption, color: c.text3, textDecorationLine: 'line-through' },
   searchGrid: { padding: 16, paddingBottom: 32 },
   searchRow: { gap: 12, marginBottom: 12 },
   searchCard: { flex: 1, backgroundColor: c.surface, borderRadius: 18, borderWidth: 1, borderColor: c.border, overflow: 'hidden' },
   searchImgWrap: { width: '100%', aspectRatio: 1, overflow: 'hidden', backgroundColor: c.surface2 },
-  searchName: { fontSize: 12.5, color: c.text, fontWeight: '600', marginTop: 10, marginHorizontal: 12, lineHeight: 16, minHeight: 32 },
+  searchName: { fontSize: 13, color: c.text, fontWeight: '600', marginTop: 10, marginHorizontal: 12, lineHeight: 16, minHeight: 32 },
   searchPriceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginHorizontal: 12, marginTop: 2 },
-  searchPrice: { fontSize: 13.5, fontWeight: '800', color: c.brand },
-  searchStoreName: { fontSize: 11, color: c.text2, marginHorizontal: 12, marginTop: 2, marginBottom: 8 },
+  searchPrice: { fontSize: font.body, fontWeight: '800', color: c.brand },
+  searchStoreName: { fontSize: font.caption, color: c.text2, marginHorizontal: 12, marginTop: 2, marginBottom: 8 },
   promo: { marginHorizontal: 16, marginBottom: 16, backgroundColor: c.brandDark, borderRadius: 14, padding: 16 },
   promoLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  promoIcon: { fontSize: 28 },
-  promoTitle: { color: '#fff', fontSize: 15, fontWeight: '700', marginBottom: 2 },
-  promoSub: { color: 'rgba(255,255,255,0.8)', fontSize: 12, lineHeight: 16 },
-  footer: { backgroundColor: '#1a1a1a', paddingHorizontal: 20, paddingVertical: 28, marginTop: 8 },
+  promoIcon: { width: 30, textAlign: 'center' },
+  promoTitle: { color: '#fff', fontSize: font.subtitle, fontWeight: '700', marginBottom: 2 },
+  promoSub: { color: 'rgba(255,255,255,0.8)', fontSize: font.small, lineHeight: 16 },
+  footer: { backgroundColor: c.brandDark, paddingHorizontal: 20, paddingVertical: 28, marginTop: 8 },
   footerBrand: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
   footerDesc: { color: 'rgba(255,255,255,0.55)', fontSize: 13, lineHeight: 19, marginBottom: 20 },
   footerLinks: { gap: 10, marginBottom: 20 },
   footerLink: { color: 'rgba(255,255,255,0.8)', fontSize: 14 },
   footerContacts: { gap: 10, marginBottom: 20, borderTopWidth: 0.5, borderTopColor: 'rgba(255,255,255,0.15)', paddingTop: 20 },
+  footerContactRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   footerContact: { color: 'rgba(255,255,255,0.8)', fontSize: 13 },
   footerCopy: { color: 'rgba(255,255,255,0.4)', fontSize: 11, borderTopWidth: 0.5, borderTopColor: 'rgba(255,255,255,0.15)', paddingTop: 16 },
 })

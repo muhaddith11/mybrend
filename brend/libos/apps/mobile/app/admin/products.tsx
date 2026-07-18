@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image, Alert, ScrollView } from 'react-native'
+import { View, FlatList, TouchableOpacity, StyleSheet, Image, Alert, ScrollView } from 'react-native'
+import { Text } from '../../components/Txt'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'

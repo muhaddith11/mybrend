@@ -1,8 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
-import {
-  View, Text, ScrollView, TextInput, TouchableOpacity,
-  StyleSheet, Switch, ActivityIndicator, Alert, Image,
-} from 'react-native'
+import { View, ScrollView, TextInput, TouchableOpacity, StyleSheet, Switch, ActivityIndicator, Alert, Image } from 'react-native'
+import { Text } from '../../components/Txt'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -195,11 +193,14 @@ export default function AdminSettings() {
           {F('Karta raqami', 'cardNumber', { keyboard: 'numeric' })}
           {F('Karta egasi', 'cardHolder')}
           {F('Telegram ID (bot xabarlari)', 'telegramChatId', { keyboard: 'numeric' })}
-          <Text style={styles.hint}>
-            🤖 Buyurtma va karta to'lovi tasdig'i xabarlari shu Telegram ID'ga keladi.
-            ID'ni olish: do'kon botini oching → «/start» yuboring → bot sizning ID'ingizni
-            qaytaradi → shu yerga kiriting.
-          </Text>
+          <View style={styles.hintRow}>
+            <Ionicons name="chatbox-ellipses-outline" size={14} color={colors.text3} style={{ marginTop: 1 }} />
+            <Text style={styles.hint}>
+              Buyurtma va karta to'lovi tasdig'i xabarlari shu Telegram ID'ga keladi.
+              ID'ni olish: do'kon botini oching → «/start» yuboring → bot sizning ID'ingizni
+              qaytaradi → shu yerga kiriting.
+            </Text>
+          </View>
 
           <Text style={styles.sectionTitle}>Xizmatlar</Text>
           {T("Do'kon ochiq", 'isOpen')}
@@ -222,7 +223,8 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   headerTitle: { fontSize: 17, fontWeight: '600', color: c.text },
   content: { padding: 16, paddingBottom: 40 },
   label: { fontSize: 13, fontWeight: '600', color: c.text2, marginBottom: 6, marginTop: 8 },
-  hint: { fontSize: 12, color: c.text3, lineHeight: 17, marginTop: 6, marginBottom: 2 },
+  hintRow: { flexDirection: 'row', gap: 6, marginTop: 6, marginBottom: 2 },
+  hint: { flex: 1, fontSize: 12, color: c.text3, lineHeight: 17 },
   input: { borderWidth: 1, borderColor: c.border, borderRadius: 10, padding: 12, fontSize: 15, color: c.text, backgroundColor: c.surface },
   inputMultiline: { minHeight: 70, textAlignVertical: 'top' },
   sectionTitle: { fontSize: 13, fontWeight: '700', color: c.text3, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 20, marginBottom: 4 },

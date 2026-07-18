@@ -1,8 +1,6 @@
 import { useMemo, useState, useRef } from 'react'
-import {
-  View, Text, TextInput, TouchableOpacity,
-  StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
-} from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native'
+import { Text } from '../../components/Txt'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -135,7 +133,7 @@ export default function DeleteAccountScreen() {
         ) : (
           <View style={styles.content}>
             <View style={styles.iconWrap}>
-              <Text style={styles.icon}>💬</Text>
+              <Ionicons name="chatbubble-ellipses-outline" size={34} color={colors.text2} />
             </View>
 
             <Text style={styles.title}>{tr.mEnterSmsCode}</Text>

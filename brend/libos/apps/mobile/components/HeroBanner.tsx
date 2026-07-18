@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import {
-  View, Text, TouchableOpacity, Image, StyleSheet,
-  ScrollView, Dimensions, NativeSyntheticEvent, NativeScrollEvent,
-} from 'react-native'
+import { View, TouchableOpacity, Image, StyleSheet, ScrollView, Dimensions, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
+import { Text } from './Txt'
 import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
 import type { Store } from '@libos/shared'

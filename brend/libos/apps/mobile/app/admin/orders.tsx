@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Modal, Pressable } from 'react-native'
+import { View, FlatList, TouchableOpacity, StyleSheet, Modal, Pressable } from 'react-native'
+import { Text } from '../../components/Txt'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -62,8 +63,9 @@ export default function AdminOrders() {
                 onPress={() => setEditing(item.id)}
               >
                 <Text style={[styles.badgeText, { color: STATUS_COLOR[item.status] ?? '#888' }]}>
-                  {STATUS_LABEL[item.status] ?? item.status} ▾
+                  {STATUS_LABEL[item.status] ?? item.status}
                 </Text>
+                <Ionicons name="chevron-down" size={12} color={STATUS_COLOR[item.status] ?? '#888'} />
               </TouchableOpacity>
             </View>
             <Text style={styles.items} numberOfLines={4}>
@@ -72,7 +74,12 @@ export default function AdminOrders() {
                 return `${i.quantity}× ${i.product.name}${v ? ` (${v})` : ''}${(i.product as any).sku ? ` [${(i.product as any).sku}]` : ''}`
               }).join(', ')}
             </Text>
-            {item.address ? <Text style={styles.addr}>📍 {item.address}</Text> : null}
+            {item.address ? (
+              <View style={styles.addrRow}>
+                <Ionicons name="location-outline" size={13} color={colors.text3} />
+                <Text style={styles.addr}>{item.address}</Text>
+              </View>
+            ) : null}
             <View style={styles.cardBottom}>
               <Text style={styles.price}>{item.totalPrice.toLocaleString()} so'm</Text>
               <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString('uz-UZ')}</Text>
@@ -114,10 +121,11 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   card: { backgroundColor: c.surface, borderRadius: 14, padding: 16, gap: 6, borderWidth: 0.5, borderColor: c.border },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   orderId: { fontSize: 14, fontWeight: '700', color: c.text },
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   badgeText: { fontSize: 12, fontWeight: '600' },
+  addrRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   items: { fontSize: 13, color: c.text2 },
-  addr: { fontSize: 12, color: c.text3 },
+  addr: { flex: 1, fontSize: 12, color: c.text3 },
   cardBottom: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
   price: { fontSize: 15, fontWeight: '700', color: c.brand },
   date: { fontSize: 12, color: c.text3 },

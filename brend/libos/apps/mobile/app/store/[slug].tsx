@@ -1,8 +1,6 @@
 import { useState } from 'react'
-import {
-  View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, FlatList, Image, Dimensions, Linking, Alert,
-} from 'react-native'
+import { View, ScrollView, TouchableOpacity, StyleSheet, FlatList, Image, Dimensions, Linking, Alert } from 'react-native'
+import { Text } from '../../components/Txt'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { SafeAreaView } from 'react-native-safe-area-context'

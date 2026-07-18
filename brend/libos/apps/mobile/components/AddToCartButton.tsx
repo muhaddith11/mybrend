@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { TouchableOpacity, Text, StyleSheet, type StyleProp, type ViewStyle } from 'react-native'
+import { TouchableOpacity, StyleSheet, type StyleProp, type ViewStyle } from 'react-native'
+import { Text } from './Txt'
 import { Ionicons } from '@expo/vector-icons'
 import type { Product } from '@libos/shared'
 import { useCartStore } from '../store/cart'

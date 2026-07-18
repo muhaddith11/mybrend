@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Dimensions } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, Modal, Dimensions } from 'react-native'
+import { Text } from './Txt'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import AsyncStorage from '@react-native-async-storage/async-storage'

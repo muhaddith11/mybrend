@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native'
+import { View, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native'
+import { Text } from '../../components/Txt'
 import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import { api, useT } from '@libos/shared'

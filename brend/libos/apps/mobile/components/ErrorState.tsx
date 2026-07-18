@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, TouchableOpacity, StyleSheet } from 'react-native'
+import { Text } from './Txt'
 import { Ionicons } from '@expo/vector-icons'
 import { useLangStore } from '../store/lang'
 import { useTheme, type ThemeColors } from '../store/theme'

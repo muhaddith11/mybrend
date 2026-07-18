@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, Linking } from 'react-native'
+import { Text } from '../components/Txt'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -33,7 +34,7 @@ export default function OpenStoreScreen() {
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.icon}>🏪</Text>
+        <Ionicons name="storefront-outline" size={48} color={colors.brand} style={styles.icon} />
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.text}>{text}</Text>
         <TouchableOpacity style={styles.btn} onPress={() => Linking.openURL('mailto:info@zyff.uz')}>
@@ -52,7 +53,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 0.5, borderBottomColor: c.border },
   headerTitle: { fontSize: 17, fontWeight: '600', color: c.text },
   content: { padding: 24, alignItems: 'center' },
-  icon: { fontSize: 44, marginBottom: 16 },
+  icon: { marginBottom: 16 },
   title: { fontSize: 18, fontWeight: '700', color: c.text, marginBottom: 10, textAlign: 'center' },
   text: { fontSize: 14, color: c.text2, lineHeight: 22, textAlign: 'center', marginBottom: 24 },
   btn: { backgroundColor: c.brand, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 48, alignItems: 'center', marginBottom: 12 },

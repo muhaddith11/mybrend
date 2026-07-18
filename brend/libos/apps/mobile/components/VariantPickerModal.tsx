@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
-import { View, Text, Modal, Pressable, TouchableOpacity, Image, StyleSheet } from 'react-native'
+import { View, Modal, Pressable, TouchableOpacity, Image, StyleSheet } from 'react-native'
+import { Text } from './Txt'
 import { Ionicons } from '@expo/vector-icons'
 import type { Product } from '@libos/shared'
 import { useT } from '@libos/shared'

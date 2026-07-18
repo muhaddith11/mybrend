@@ -9,7 +9,7 @@ import {
   CormorantGaramond_600SemiBold, CormorantGaramond_500Medium_Italic,
 } from '@expo-google-fonts/cormorant-garamond'
 import { SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk'
-import { Inter_400Regular, Inter_600SemiBold, Inter_800ExtraBold } from '@expo-google-fonts/inter'
+import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold } from '@expo-google-fonts/inter'
 import { useAuthStore } from '../store/auth'
 import { useAdminStore } from '../store/admin'
 import { Onboarding } from '../components/Onboarding'
@@ -18,6 +18,11 @@ import { initSentry } from '../lib/sentry'
 
 // Sentry'ni ilova yuklanishidan oldin ishga tushiramiz (DSN bo'lsa).
 initSentry()
+
+// ── Global UI shrifti: Inter ──
+// Har bir <Text>ga Inter'ni SIDIRG'A biriktiruvchi ishonchli komponent
+// components/Txt.tsx da. (Ilgari bu yerda Text.render monkey-patch bor edi —
+// react-native-web'da ilovani yiqitgani uchun olib tashlandi.)
 
 // Ishlab chiqarish uchun mos standartlar: zaif tarmoqda 2 marta qayta urinadi,
 // ma'lumot 30s davomida "fresh" (ortiqcha so'rov yubormaydi).
@@ -41,7 +46,7 @@ export default function RootLayout() {
     CormorantGaramond_300Light, CormorantGaramond_500Medium,
     CormorantGaramond_600SemiBold, CormorantGaramond_500Medium_Italic,
     SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, SpaceGrotesk_700Bold,
-    Inter_400Regular, Inter_600SemiBold, Inter_800ExtraBold,
+    Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold,
   })
 
   // Web'da TextInput fokusda xunuk qora ramka (outline) chiqadi — barcha
