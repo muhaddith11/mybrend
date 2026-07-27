@@ -120,12 +120,14 @@ export default function ProductForm() {
       Alert.alert('Xatolik', 'Nom va narx majburiy')
       return
     }
-    const variants: ProductInput['variants'] = []
-    if (sizes.length || productColors.length) {
-      const ss = sizes.length ? sizes : [undefined]
-      const cc = productColors.length ? productColors : [undefined]
-      ss.forEach(s => cc.forEach(c => variants!.push({ size: s, color: c, quantity: 0 })))
-    }
+    // MUHIM: zaxira (stock) kuzatuvi hozir UI'ga ulanmagan — variant miqdorini
+    // kiritish maydoni yo'q. Agar bu yerda `quantity: 0` bilan variant qatorlari
+    // yaratsak, backend `decrementStock` ularni "stok tugagan" deb hisoblab
+    // mahsulotni BUTUNLAY sotib bo'lmaydigan qiladi (har checkout "yetarli emas").
+    // Shuning uchun web bilan bir xil — variant qatorlari yaratilmaydi. O'lcham/rang
+    // `sizes`/`colors` massivlari orqali ko'rsatiladi; tanlangan variant OrderItem'da
+    // saqlanadi. (Tahrirlashda backend eski variant qatorlarini o'chiradi — shu tariqa
+    // ilgari mobil'da buzilgan mahsulot ham avtomatik tuzaladi.)
     save.mutate({
       name: name.trim(),
       sku: sku.trim() || undefined,
@@ -139,7 +141,7 @@ export default function ProductForm() {
       inStock,
       featured,
       isNew,
-      variants,
+      variants: [],
     })
   }
 
