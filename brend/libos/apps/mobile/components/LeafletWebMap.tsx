@@ -49,8 +49,6 @@ function buildHtml(opts: {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; background: ${dark ? '#0E0E10' : '#F3F4F6'}; }
     .pin {
@@ -74,6 +72,54 @@ function buildHtml(opts: {
   <script>
     var RN = window.ReactNativeWebView;
     var post = function (obj) { if (RN) RN.postMessage(JSON.stringify(obj)); };
+    // HTML injeksiyasidan himoya (do'kon nomi popup'da ko'rsatiladi).
+    var esc = function (s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    };
+
+    // Leaflet'ni bir nechta CDN'dan ketma-ket yuklaymiz — biri bloklangan/uzilgan
+    // bo'lsa keyingisiga o'tadi. Yagona CDN nosozligida xarita "oq ekran" bo'lmaydi.
+    var CSS_URLS = [
+      'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+      'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css',
+      'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'
+    ];
+    var JS_URLS = [
+      'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+      'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'
+    ];
+    function loadCss(urls, i) {
+      i = i || 0;
+      if (i >= urls.length) return;
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = urls[i];
+      link.onerror = function () { loadCss(urls, i + 1); };
+      document.head.appendChild(link);
+    }
+    function loadJs(urls, i, cb) {
+      if (i >= urls.length) { cb(new Error('leaflet-load-failed')); return; }
+      var s = document.createElement('script');
+      s.src = urls[i];
+      s.onload = function () { cb(); };
+      s.onerror = function () { loadJs(urls, i + 1, cb); };
+      document.head.appendChild(s);
+    }
+    loadCss(CSS_URLS, 0);
+    loadJs(JS_URLS, 0, function (err) {
+      if (err || !window.L) {
+        document.getElementById('map').innerHTML =
+          '<div style="display:flex;height:100%;align-items:center;justify-content:center;padding:16px;text-align:center;font-family:sans-serif;color:#888;font-size:13px;">Xarita yuklanmadi. Manzilni quyida qo\\'lda kiriting.</div>';
+        post({ type: 'maperror' });
+        return;
+      }
+      initMap();
+    });
+
+    function initMap() {
     var map = L.map('map', { zoomControl: true, attributionControl: false }).setView([${center[0]}, ${center[1]}], 14);
     L.tileLayer('${tileUrl}', { maxZoom: 19 }).addTo(map);
     setTimeout(function () { map.invalidateSize(); }, 100);
@@ -90,7 +136,7 @@ function buildHtml(opts: {
         if (typeof s.lat !== 'number' || typeof s.lng !== 'number') return;
         pts.push([s.lat, s.lng]);
         var m = L.marker([s.lat, s.lng], { icon: storeIcon() }).addTo(map);
-        var html = '<b>' + s.name + '</b><br/><div class="dirBtn" onclick="window.dir(' + s.lat + ',' + s.lng + ')">Yo\\'nalish</div>';
+        var html = '<b>' + esc(s.name) + '</b><br/><div class="dirBtn" onclick="window.dir(' + s.lat + ',' + s.lng + ')">Yo\\'nalish</div>';
         m.bindPopup(html);
       });
       if (pts.length > 1) { map.fitBounds(pts, { padding: [40,40] }); }
@@ -133,6 +179,7 @@ function buildHtml(opts: {
           .finally(function () { geocoding = false; });
       });
     }
+    } // initMap tugadi
   </script>
 </body>
 </html>`
