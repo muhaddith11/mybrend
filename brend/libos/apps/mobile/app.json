@@ -22,8 +22,8 @@
         "backgroundColor": "#000000"
       },
       "package": "uz.zyff.app",
-      "permissions": [
-        "android.permission.RECORD_AUDIO",
+      "permissions": [],
+      "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
       ]
     },
