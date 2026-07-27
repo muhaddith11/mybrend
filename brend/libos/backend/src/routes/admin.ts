@@ -30,11 +30,14 @@ const productSchema = z.object({
   inStock: z.boolean().default(true),
   featured: z.boolean().default(false),
   isNew: z.boolean().default(false),
+  // MUHIM: `.optional()` (default [] EMAS). Yuborilmasa (undefined) — mavjud
+  // variantlarga TEGILMAYDI (tahrirda stok raqamlari yo'qolmasin). Faqat aniq
+  // massiv yuborilganda almashtiriladi; `[]` esa barcha variantlarni tozalaydi.
   variants: z.array(z.object({
     size: z.string().optional(),
     color: z.string().optional(),
     quantity: z.number().default(0),
-  })).default([]),
+  })).optional(),
 })
 
 const storeUpdateSchema = z.object({
@@ -199,7 +202,11 @@ export default async function adminRoutes(app: FastifyInstance) {
       resolvedCategoryId = await resolveCategoryId(prisma, categorySlug, store.id)
     }
     const product = await prisma.product.create({
-      data: { ...data, storeId: store.id, categoryId: resolvedCategoryId, variants: { create: variants } },
+      data: {
+        ...data, storeId: store.id, categoryId: resolvedCategoryId,
+        // variants yuborilgan bo'lsagina yaratamiz (aks holda — stok kuzatilmaydi).
+        ...(variants && variants.length ? { variants: { create: variants } } : {}),
+      },
       include: { category: true, variants: true },
     })
     return reply.status(201).send(product)
@@ -218,10 +225,19 @@ export default async function adminRoutes(app: FastifyInstance) {
     if (!resolvedCategoryId && categorySlug) {
       resolvedCategoryId = await resolveCategoryId(prisma, categorySlug, product.storeId)
     }
-    await prisma.productVariant.deleteMany({ where: { productId: id } })
+    // variants YUBORILMAGAN (undefined) bo'lsa — mavjud variantlarga TEGMAYMIZ:
+    // mobil/web tahririda stok raqamlari yo'qolmasin. Faqat aniq yuborilganda
+    // (bo'sh massiv ham) eskilarini o'chirib qayta yaratamiz.
+    if (variants !== undefined) {
+      await prisma.productVariant.deleteMany({ where: { productId: id } })
+    }
     const updated = await prisma.product.update({
       where: { id },
-      data: { ...data, categoryId: resolvedCategoryId, variants: { create: variants } },
+      data: {
+        ...data,
+        categoryId: resolvedCategoryId,
+        ...(variants !== undefined ? { variants: { create: variants } } : {}),
+      },
       include: { category: true, variants: true },
     })
     return reply.send(updated)
