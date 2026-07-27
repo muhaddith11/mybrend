@@ -23,6 +23,7 @@ import paymeRoutes from './routes/payment/payme.js'
 import adminRoutes from './routes/admin.js'
 import uploadRoutes from './routes/upload.js'
 import telegramRoutes from './routes/telegram.js'
+import clientErrorRoutes from './routes/clientError.js'
 
 // (deploy trigger: ensure Vercel rebuilds backend after schema + route changes)
 const prisma = new PrismaClient()
@@ -64,10 +65,15 @@ app.register(rateLimit, {
 
 // CORS — faqat o'z saytlarimiz API'ni chaqira olsin.
 // ALLOWED_ORIGINS: vergul bilan ajratilgan qo'shimcha hostlar (Vercel app URL'lari) — env'dan.
-// STRICT_CORS=true bo'lsa, keng `*.vercel.app` ruxsati o'chadi (launchda yoqiladi).
+// CORS qat'iyligi: aniq STRICT_CORS env qiymati ustuvor; berilmasa —
+// PRODUCTION'da avtomatik qat'iy (keng `*.vercel.app` ruxsati o'chadi), dev'da yumshoq.
+// Preview deploylarga vaqtincha ruxsat kerak bo'lsa: STRICT_CORS=false qo'ying.
 const extraOrigins = (process.env.ALLOWED_ORIGINS ?? '')
   .split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
-const strictCors = process.env.STRICT_CORS === 'true'
+const strictCors =
+  process.env.STRICT_CORS !== undefined
+    ? process.env.STRICT_CORS === 'true'
+    : env.NODE_ENV === 'production'
 app.register(cors, {
   origin(origin, cb) {
     // Origin yo'q (native app, curl, server-to-server) → ruxsat
@@ -123,6 +129,7 @@ app.register(paymeRoutes,    { prefix: '/api/payment' })
 app.register(adminRoutes,    { prefix: '/api/admin' })
 app.register(uploadRoutes,   { prefix: '/api' })
 app.register(telegramRoutes, { prefix: '/api' })
+app.register(clientErrorRoutes, { prefix: '/api' })
 
 // Sog'liq tekshiruvi
 app.get('/health', async () => ({
@@ -131,33 +138,6 @@ app.get('/health', async () => ({
   version: process.env.APP_VERSION ?? process.env.VERCEL_GIT_COMMIT_SHA ?? 'dev',
   timestamp: new Date().toISOString(),
 }))
-
-// VAQTINCHA DIAGNOSTIKA (isbot uchun): Vercel datacenter TextUp'ga so'rov yuboradi
-// va TextUp qaytargan HTTP holatini ko'rsatadi. Bu so'rov Vercel IP'sidan ketadi —
-// shuning uchun natija Vercel nima ko'rayotganини aks ettiradi (brauzeringiz UZ'da bo'lsa ham).
-app.get('/_diag/textup', async () => {
-  const started = Date.now()
-  try {
-    const res = await fetch('https://api-auth.textup.uz/v1/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'Muhaddithhrahimov7@gmail.com', password: 'diag-wrong' }),
-    })
-    const body = await res.text()
-    return {
-      vercelSees: res.status,
-      geoBlocked: res.status === 404,
-      textupResponse: body.slice(0, 120),
-      note:
-        res.status === 404
-          ? "Vercel (chet el IP) TextUp tomonidan bloklangan — SMS ishlamaydi"
-          : "Vercel TextUp'ga yetdi",
-      tookMs: Date.now() - started,
-    }
-  } catch (e) {
-    return { fetchError: String(e), tookMs: Date.now() - started }
-  }
-})
 
 // Vercel serverless handler
 export default async function handler(req: any, res: any) {
