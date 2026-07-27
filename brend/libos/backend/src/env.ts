@@ -6,7 +6,7 @@ const clean = (v: string | undefined) => v?.replace(/^﻿/, '')
 const schema = z.object({
   // Majburiy — bularsiz backend ishlay olmaydi
   DATABASE_URL: z.string().min(1, 'DATABASE_URL kerak — Neon Postgres ulanish satri'),
-  JWT_SECRET: z.string().min(1, 'JWT_SECRET kerak — token imzolash uchun maxfiy kalit'),
+  JWT_SECRET: z.string().min(32, 'JWT_SECRET kamida 32 belgi bo\'lishi kerak — token imzolash uchun kuchli maxfiy kalit'),
   // Ixtiyoriy (defaultli)
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(3001),

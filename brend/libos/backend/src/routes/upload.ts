@@ -84,10 +84,13 @@ export default async function uploadRoutes(app: FastifyInstance) {
 
       const buffer = await file.toBuffer()
       const mime: string = file.mimetype || 'image/jpeg'
-      if (!mime.startsWith('image/')) {
-        return reply.status(400).send({ error: 'Faqat rasm yuklash mumkin' })
+      // Allowlist: faqat aniq raster rasm turlari. `image/svg+xml` kabi turlar
+      // ("image/" bilan boshlansa-da) JS/skript tashishi mumkin — shuning uchun
+      // "image/ bilan boshlanadi" tekshiruvi yetarli emas; aniq ro'yxatga tayanamiz.
+      const ext = EXT_BY_MIME[mime]
+      if (!ext) {
+        return reply.status(400).send({ error: 'Faqat JPG, PNG, WEBP, HEIC yoki GIF rasm yuklash mumkin' })
       }
-      const ext = EXT_BY_MIME[mime] ?? 'jpg'
       const rand = Math.random().toString(36).slice(2, 10)
       const path = `uploads/${Date.now()}-${rand}.${ext}`
 
