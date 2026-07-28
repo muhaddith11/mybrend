@@ -105,6 +105,18 @@ export function createStoresFakePrisma(seed: { stores: SeedStore[] }) {
         const s = stores.find((x) => x.slug === where.slug)
         return s ? { ...s, products: [] } : null
       },
+      // Route slug YOKI id bo'yicha `findFirst({ where: { OR: [{slug},{id}] } })` qiladi.
+      async findFirst({ where }: any) {
+        const conds = where?.OR ?? [where ?? {}]
+        const s = stores.find((x) =>
+          conds.some(
+            (c: any) =>
+              (c.slug !== undefined && x.slug === c.slug) ||
+              (c.id !== undefined && x.id === c.id)
+          )
+        )
+        return s ? { ...s, products: [] } : null
+      },
     },
     favoriteStore: {
       _items: [] as any[],

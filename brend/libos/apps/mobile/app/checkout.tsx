@@ -71,8 +71,10 @@ export default function CheckoutScreen() {
 
   const { data: store } = useQuery({
     queryKey: ['store-detail', storeId],
-    // limit=100 — do'kon ro'yxati 20 tadan oshsa ham (reyting past do'kon) topiladi
-    queryFn: () => api.stores.list({ limit: 100 }).then(r => r.stores.find(s => s.id === storeId)),
+    // Do'konni to'g'ridan-to'g'ri id bo'yicha olamiz (indeksli, O(1)). Ilgari butun
+    // ro'yxatni (limit=100) yuklab find() qilardik — do'konlar 100 tadan oshsa
+    // ishlamay qolardi. Endi do'kon soni cheksiz o'ssa ham to'g'ri ishlaydi.
+    queryFn: () => api.stores.getById(storeId),
     enabled: !!storeId,
   })
 

@@ -186,8 +186,15 @@ model Product {
   cartItems  CartItem[]
   orderItems OrderItem[]
 
-  @@index([storeId])
+  // Masshtab indekslari — katalog 100k+ mahsulotga yetganda ham to'liq jadval
+  // skanini oldini oladi (barcha "hot" so'rovlar filtr+tartiblashni indeksdan oladi):
+  //  · [storeId, createdAt]        → do'kon mahsulotlari (GET /products/store/:id) + FK
+  //  · [inStock, featured, createdAt] → bosh sahifa "ommabop" (GET /products/featured)
+  //  · [inStock, createdAt]        → "chegirmadagi" va so'nggi mahsulotlar
+  @@index([storeId, createdAt])
   @@index([categoryId])
+  @@index([inStock, featured, createdAt])
+  @@index([inStock, createdAt])
 }
 
 model ProductVariant {

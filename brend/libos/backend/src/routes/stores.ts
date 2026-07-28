@@ -44,19 +44,26 @@ export default async function storesRoutes(app: FastifyInstance) {
     return reply.send({ stores, total, page, pages: Math.ceil(total / limit) })
   })
 
-  // Bitta do'kon (slug bo'yicha)
-  app.get('/:slug', async (req, reply) => {
-    const { slug } = req.params as { slug: string }
-    const store = await prisma.store.findUnique({
-      where: { slug },
-      include: {
-        products: {
-          where: { inStock: true },
-          include: { category: true, variants: true },
-          orderBy: { createdAt: 'desc' },
-          take: 200,
-        },
-      },
+  // Bitta do'kon — slug YOKI id bo'yicha. Do'kon sahifasida slug bor, checkout'da
+  // esa faqat storeId. Ikkalasi ham shu endpointga tushadi: id — PK, slug — unique
+  // indeks, shuning uchun `findFirst OR` ham O(1) (jadval skani emas).
+  //   ?lite=1 — mahsulotlarsiz javob. Checkout faqat do'kon nomi va yetkazish
+  //   sozlamalarini oladi; 100k+ katalogda 200 ta mahsulotni behuda yuklamaymiz.
+  app.get('/:idOrSlug', async (req, reply) => {
+    const { idOrSlug } = req.params as { idOrSlug: string }
+    const { lite } = z.object({ lite: z.coerce.boolean().optional() }).parse(req.query)
+    const store = await prisma.store.findFirst({
+      where: { OR: [{ slug: idOrSlug }, { id: idOrSlug }] },
+      include: lite
+        ? undefined
+        : {
+            products: {
+              where: { inStock: true },
+              include: { category: true, variants: true },
+              orderBy: { createdAt: 'desc' },
+              take: 200,
+            },
+          },
     })
     if (!store) return reply.status(404).send({ error: 'Do\'kon topilmadi' })
     return reply.send(store)

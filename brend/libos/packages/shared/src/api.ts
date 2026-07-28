@@ -64,6 +64,9 @@ export const api = {
     },
     getBySlug: (slug: string) => request<Store & { products: Product[] }>(`/stores/${slug}`),
     bySlug: (slug: string) => request<Store & { products: Product[] }>(`/stores/${slug}`),
+    // Do'kon ma'lumoti id bo'yicha — checkout uchun (u faqat storeId biladi).
+    // ?lite=1: mahsulotlarsiz yengil javob (100k+ katalogda tejamkor).
+    getById: (id: string) => request<Store>(`/stores/${id}?lite=1`),
     favorites: () => request<{ stores: Store[] }>('/stores/favorites'),
     toggleFavorite: (id: string) =>
       request<{ favorited: boolean }>(`/stores/${id}/favorite`, { method: 'POST' }),

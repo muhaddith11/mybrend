@@ -51,7 +51,7 @@ describe('GET /api/stores', () => {
   })
 })
 
-describe('GET /api/stores/:slug', () => {
+describe('GET /api/stores/:idOrSlug', () => {
   test('slug bo\'yicha do\'kon qaytadi', async () => {
     const { app } = await buildStoresTestApp(seed)
     const res = await app.inject({ method: 'GET', url: '/api/stores/asma' })
@@ -60,7 +60,25 @@ describe('GET /api/stores/:slug', () => {
     await app.close()
   })
 
-  test('mavjud bo\'lmagan slug → 404', async () => {
+  // Checkout'da faqat storeId bor — id bo'yicha ham topilishi SHART (aks holda
+  // do'konlar 100 tadan oshsa list().find() usuli ishlamay qolardi).
+  test('id bo\'yicha ham do\'kon qaytadi', async () => {
+    const { app } = await buildStoresTestApp(seed)
+    const res = await app.inject({ method: 'GET', url: '/api/stores/s2' })
+    assert.equal(res.statusCode, 200)
+    assert.equal(res.json().name, 'Boosner')
+    await app.close()
+  })
+
+  test('?lite=1 — do\'kon qaytadi (checkout uchun)', async () => {
+    const { app } = await buildStoresTestApp(seed)
+    const res = await app.inject({ method: 'GET', url: '/api/stores/s1?lite=1' })
+    assert.equal(res.statusCode, 200)
+    assert.equal(res.json().name, 'Asma')
+    await app.close()
+  })
+
+  test('mavjud bo\'lmagan id/slug → 404', async () => {
     const { app } = await buildStoresTestApp(seed)
     const res = await app.inject({ method: 'GET', url: '/api/stores/yoq' })
     assert.equal(res.statusCode, 404)
