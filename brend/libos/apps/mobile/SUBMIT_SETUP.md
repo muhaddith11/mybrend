@@ -7,24 +7,31 @@ Quyidagi qadamlardan so'ng `eas submit` ishlaydi.
 
 ## iOS (App Store Connect)
 
-`eas.json` dagi `submit.production.ios` maydonlarini to'ldiring:
+`eas.json` da endi placeholder yo'q — `submit.production.ios` faqat `language: "en-US"`
+saqlaydi. Qolganini (Apple ID, Team ID, ASC app ID) EAS **interaktiv** so'raydi va
+App Store Connect'dagi ilova yozuvini ham o'zi yaratadi (Bundle ID: `uz.zyff.app`).
 
-| Maydon | Qayerdan olinadi |
-|--------|------------------|
-| `appleId` | Apple Developer akkaunt email (masalan `you@example.com`) |
-| `ascAppId` | App Store Connect → Ilova → App Information → **Apple ID** (raqam, masalan `6501234567`) |
-| `appleTeamId` | [developer.apple.com/account](https://developer.apple.com/account) → Membership → **Team ID** (10 belgi) |
+Shuning uchun quyidagi buyruqlarni **o'zingiz terminalda** ishga tushiring —
+Apple ID paroli va 2FA kodi so'raladi:
 
-> Ilova hali App Store Connect'da yaratilmagan bo'lsa, avval u yerda ilova yozuvini yarating
-> (Bundle ID: `uz.zyff.app`).
-
-Muqobil (tavsiya etiladi) — **App Store Connect API Key** orqali (parolsiz, avtomatlashtirishga qulay):
-`appleId`/`ascAppId` o'rniga EAS credentials'ga API key qo'shing yoki `eas submit` interaktiv rejimida so'raganda kiriting.
-
-Yuborish:
 ```bash
-eas submit --platform ios --profile production
+npx eas-cli build --platform ios --profile production
 ```
+
+Birinchi ishga tushirishda EAS so'raydi:
+- Apple ID email + parol + 2FA kod (faqat siz kiritasiz)
+- "Generate a new Apple Distribution Certificate?" → **Yes**
+- "Generate a new Apple Provisioning Profile?" → **Yes**
+
+Build tugagach (~20-40 daqiqa) TestFlight'ga yuborish:
+
+```bash
+npx eas-cli submit --platform ios --profile production --latest
+```
+
+> Muqobil (parolsiz, CI uchun qulay): App Store Connect → Users and Access →
+> Integrations → **App Store Connect API** → kalit yarating (App Manager roli),
+> `.p8` faylni `credentials/` ichiga qo'ying (gitignore qilingan).
 
 ---
 
