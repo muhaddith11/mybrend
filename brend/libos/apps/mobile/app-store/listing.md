@@ -103,7 +103,7 @@ SMS ololmaydi, shuning uchun **demo hisob berish SHART** (Guideline 2.1).
 
 | Maydon | Qiymat |
 |--------|--------|
-| Demo phone | `+998 XX XXX XX XX` ← test uchun ajratilgan raqam yozing |
+| Demo phone | `+998 90 123 45 67` ← istalgan +998 raqam yozing |
 | Demo code | `007700` |
 
 **Notes** (reviewer uchun izoh — inglizcha):
@@ -111,13 +111,14 @@ SMS ololmaydi, shuning uchun **demo hisob berish SHART** (Guideline 2.1).
 ```
 Sign-in uses phone number + SMS one-time code.
 
-SMS is only delivered to Uzbek (+998) numbers, so please use the demo
-credentials below instead of requesting a real code:
+SMS is only delivered to Uzbek (+998) numbers, so instead of requesting a
+real code, use the universal test code 007700, which works with any phone
+number entered:
 
-  Phone: +998 XX XXX XX XX
+  Phone: +998 90 123 45 67  (or any +998 number)
   Verification code: 007700
 
-Steps: open the app -> Profile tab -> enter the phone number above ->
+Steps: open the app -> Profile tab -> enter any +998 phone number ->
 tap "Get code" -> enter 007700 -> you are signed in.
 
 Payments: the app sells physical clothing from local stores in Kokand,
