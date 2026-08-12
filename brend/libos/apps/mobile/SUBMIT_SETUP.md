@@ -29,9 +29,24 @@ Build tugagach (~20-40 daqiqa) TestFlight'ga yuborish:
 npx eas-cli submit --platform ios --profile production --latest
 ```
 
-> Muqobil (parolsiz, CI uchun qulay): App Store Connect → Users and Access →
-> Integrations → **App Store Connect API** → kalit yarating (App Manager roli),
-> `.p8` faylni `credentials/` ichiga qo'ying (gitignore qilingan).
+### App Store Connect API kaliti (parolsiz avtomatlashtirish)
+
+Kalit yaratilgan: `credentials/AuthKey_22GXNUDC8B.p8` (gitignore'da, repo **ochiq**
+bo'lgani uchun kalit ID'lari ham `eas.json`ga yozilmaydi).
+
+`eas submit` kalitni `eas.json`dan yoki EAS serveridan kutadi. Repo ochiq bo'lgani
+uchun to'g'ri yechim — kalitni **bir marta EAS serveriga yuklash**:
+
+```bash
+npx eas-cli credentials --platform ios
+```
+→ `production` → **App Store Connect: Manage your API Key** → **Set up your project
+with an existing API Key** → `.p8` yo'lini, Key ID va Issuer ID ni kiriting.
+
+Shundan keyin `eas submit` hech qanday qo'shimcha sozlamasiz ishlaydi.
+
+> Vaqtinchalik muqobil: `eas.json` → `submit.production.ios` ga `ascApiKeyPath`,
+> `ascApiKeyId`, `ascApiKeyIssuerId` qo'shish — lekin **commit qilmang**.
 
 ---
 

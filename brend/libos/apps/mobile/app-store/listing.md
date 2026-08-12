@@ -135,12 +135,15 @@ Account deletion: Profile -> "Hisobni butunlay o'chirish" (Delete account).
 
 `supportsTablet: false` bo'lgani uchun **faqat iPhone** kerak, iPad shart emas.
 
-| O'lcham | Piksel | Nechta |
-|---------|--------|--------|
-| 6.9" (iPhone 17 Pro Max) | 1320 × 2868 | 3–10 (majburiy) |
+App Store Connect (2026-08 holati) **6.5" Display** slotini so'raydi:
 
-> Apple bitta 6.9" to'plamni qolgan iPhone o'lchamlariga avtomatik moslashtiradi —
-> boshqa o'lcham yuklash shart emas.
+| O'lcham | Qabul qilinadigan piksel | Nechta |
+|---------|--------------------------|--------|
+| iPhone 6.5" | `1242 × 2688` yoki `1284 × 2778` (yoki gorizontal teskarisi) | 3–10 |
+
+> Apple shu to'plamni qolgan iPhone o'lchamlariga avtomatik moslashtiradi.
+> Birinchi 3 tasi o'rnatish oynasida ko'rinadi — eng yaxshilarini oldinga qo'ying.
+> iPad va Apple Watch tablari bo'sh qolsa bo'ladi (`supportsTablet: false`).
 
 **Windows'da iOS simulyator yo'q** — eng oson yo'l: birinchi build TestFlight'ga
 chiqqach, uni shaxsiy iPhone'ingizga o'rnatib, qo'lda screenshot oling

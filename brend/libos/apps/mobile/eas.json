@@ -30,6 +30,8 @@
   "submit": {
     "production": {
       "ios": {
+        "ascAppId": "6800536645",
+        "appleTeamId": "CRLRPGPWL2",
         "language": "en-US"
       },
       "android": {
