@@ -131,6 +131,36 @@ Account deletion: Profile -> "Hisobni butunlay o'chirish" (Delete account).
 
 ---
 
+## TestFlight → Test Information (beta test uchun alohida forma)
+
+Bu App Store listing'dan **alohida** forma: App Store Connect → TestFlight →
+Test Information. Tashqi testerlar va beta review uchun kerak
+(ichki testerlar uchun shart emas).
+
+**Beta App Description** (kamida 10 belgi):
+
+```
+ZYFF is a marketplace app for clothing stores in Kokand, Uzbekistan.
+Browse stores and products, add items to the cart, and place an order
+for delivery or pickup.
+
+Sign in with any +998 phone number and use the verification code 007700.
+
+What to test: browsing stores, product details with size and color
+selection, cart and checkout, order history, dark mode, and account
+deletion in Profile.
+```
+
+**Sign-In Information** — ilova parol ishlatmaydi (telefon + SMS kod), shuning
+uchun Apple'ning ikki maydoni shunday moslashtiriladi:
+
+| Apple maydoni | Yoziladigan qiymat |
+|---------------|--------------------|
+| User Name | `+998901234567` (soxta raqam — shaxsiy raqamingizni YOZMANG) |
+| Password | `007700` |
+
+---
+
 ## Screenshotlar (majburiy)
 
 `supportsTablet: false` bo'lgani uchun **faqat iPhone** kerak, iPad shart emas.
