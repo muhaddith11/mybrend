@@ -131,6 +131,61 @@ Account deletion: Profile -> "Hisobni butunlay o'chirish" (Delete account).
 
 ---
 
+## App Privacy (majburiy — usiz submit tugmasi ochilmaydi)
+
+App Store Connect → **App Privacy** (chap menyuda, Distribution'dan alohida sahifa).
+
+**"Do you or your third-party partners collect data from this app?"** → **Yes**
+
+Yig'iladigan ma'lumotlar (kod audit qilindi, 2026-08-12):
+
+| Kategoriya | Ma'lumot turi | Maqsad | Shaxsga bog'liqmi | Tracking |
+|-----------|---------------|--------|-------------------|----------|
+| Contact Info | **Name** | App Functionality | Ha (Linked) | Yo'q |
+| Contact Info | **Phone Number** | App Functionality | Ha (Linked) | Yo'q |
+| Contact Info | **Physical Address** | App Functionality | Ha (Linked) | Yo'q |
+| Purchases | **Purchase History** | App Functionality | Ha (Linked) | Yo'q |
+| Identifiers | **User ID** | App Functionality | Ha (Linked) | Yo'q |
+
+Har bir turda so'raladigan uchta savolga javob bir xil:
+- **Purpose** → faqat `App Functionality` (Analytics/Advertising/Personalization → **Yo'q**)
+- **Linked to the user's identity?** → **Yes** (hisobga bog'langan)
+- **Used for tracking purposes?** → **No**
+
+**YIG'ILMAYDI** (belgilamang):
+- ❌ Location — ilova qurilma GPS'iga murojaat qilmaydi (`expo-location` o'rnatilmagan);
+  manzil foydalanuvchi tomonidan qo'lda kiritiladi va u Physical Address sifatida
+  yuqorida e'lon qilingan
+- ❌ Health, Financial Info (karta ma'lumoti ilovada so'ralmaydi)
+- ❌ Usage Data, Diagnostics — mobil ilovada analytics/crash SDK **yo'q**
+  (Sentry faqat web va backend'da)
+- ❌ Contacts, Photos (galereya faqat do'kon egasi mahsulot rasmini yuklashi uchun
+  ochiladi — rasm serverga mahsulot rasmi sifatida ketadi, shaxsiy ma'lumot
+  sifatida yig'ilmaydi), Search History, Sensitive Info
+
+**Tracking**: "Data Used to Track You" → **None**. ATT (App Tracking Transparency)
+so'rovi kerak emas.
+
+---
+
+## Submit tartibi — qaysi sahifada nima
+
+Submit tugmasi faqat **hamma yashil** bo'lganda ishlaydi:
+
+| # | Sahifa | Nima to'ldiriladi | Manba |
+|---|--------|-------------------|-------|
+| 1 | **App Information** | Name `ZYFF`, Subtitle, Category (Shopping), Content Rights, Age Rating (4+) | yuqorida |
+| 2 | **Pricing and Availability** | Free, mamlakat tanlovi | yuqorida |
+| 3 | **App Privacy** | jadval yuqorida | ↑ |
+| 4 | **Distribution → iOS App 1.0** | Screenshotlar, Promotional text, Description, Keywords, Support/Marketing URL, Copyright | yuqorida |
+| 5 | **Distribution → App Review Information** | demo raqam + `007700` + Notes | ↑ |
+| 6 | — | **Add for Review** | — |
+
+> ⚠️ Screenshotsiz va App Privacy'siz submit **bloklanadi** — eng ko'p vaqt
+> shu ikkisiga ketadi.
+
+---
+
 ## TestFlight → Test Information (beta test uchun alohida forma)
 
 Bu App Store listing'dan **alohida** forma: App Store Connect → TestFlight →
