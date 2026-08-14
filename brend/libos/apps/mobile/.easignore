@@ -1,0 +1,35 @@
+# EAS Build arxiviga TUSHMAYDIGAN fayllar.
+#
+# DIQQAT: bu fayl mavjud bo'lsa EAS .gitignore'ni O'QIMAYDI — faqat shuni.
+# Shuning uchun maxfiy fayllar bu yerda ham qayta ro'yxatlangan.
+
+# --- Maxfiy (mobile/.gitignore'dan) ---
+credentials/
+*.p8
+google-play-service-account.json
+
+# --- Maxfiy (libos/.gitignore'dan) ---
+.env
+.env.local
+.env.production
+*.local
+
+# --- Qurilish chiqindilari ---
+node_modules
+.expo
+.turbo
+dist
+build/
+*.tsbuildinfo
+*.log
+expo-env.d.ts
+
+# --- Store materiallari: build'ga kerak emas, ~13 MB ---
+# (repoda saqlanadi, faqat EAS'ga yuklanmaydi)
+app-store/
+play-store/
+SUBMIT_SETUP.md
+
+# --- Boshqa ---
+.DS_Store
+Thumbs.db
