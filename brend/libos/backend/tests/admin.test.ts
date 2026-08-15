@@ -87,3 +87,52 @@ describe('adminAuth — himoyalangan endpointlar', () => {
     await app.close()
   })
 })
+
+// Buyurtma bekor qilinganda stok qaytishi SHART. Telegram orqali rad etishda bu
+// bor edi, admin panelda esa yo'q — zaxira abadiy yo'qolib, mahsulot sotib
+// bo'lmas holga kelardi.
+describe('PATCH /api/admin/orders/:id/status — bekor qilishda stok', () => {
+  const stockSeed = {
+    ...seed,
+    orders: [{ id: 'ord1', storeId: 's1', status: 'PENDING' }],
+    orderItems: [{ orderId: 'ord1', productId: 'p1', quantity: 2, size: 'M', color: null }],
+    variants: [{ id: 'v1', productId: 'p1', size: 'M', color: null, quantity: 3 }],
+  }
+
+  async function authed() {
+    const { app, fake } = await buildAdminTestApp(stockSeed)
+    const token = (await login(app, 'owner@zyff.uz', 'parol123')).json().token
+    return { app, fake, token }
+  }
+
+  const patch = (app: any, token: string, status: string) =>
+    app.inject({
+      method: 'PATCH',
+      url: '/api/admin/orders/ord1/status',
+      headers: { ...json, authorization: `Bearer ${token}` },
+      payload: { status },
+    })
+
+  test('CANCELLED → variant zaxirasi qaytadi', async () => {
+    const { app, fake, token } = await authed()
+    const res = await patch(app, token, 'CANCELLED')
+    assert.equal(res.statusCode, 200)
+    assert.equal(fake.variants[0].quantity, 5) // 3 + 2
+    await app.close()
+  })
+
+  test('takror CANCELLED → stok ikki marta qaytmaydi', async () => {
+    const { app, fake, token } = await authed()
+    await patch(app, token, 'CANCELLED')
+    await patch(app, token, 'CANCELLED')
+    assert.equal(fake.variants[0].quantity, 5) // 7 emas
+    await app.close()
+  })
+
+  test('boshqa statusda stok tegilmaydi', async () => {
+    const { app, fake, token } = await authed()
+    await patch(app, token, 'CONFIRMED')
+    assert.equal(fake.variants[0].quantity, 3)
+    await app.close()
+  })
+})

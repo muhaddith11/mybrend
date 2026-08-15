@@ -8,8 +8,19 @@ import adminRoutes from '../../src/routes/admin.js'
 
 type SeedOwner = { id: string; email: string; name?: string; password: string } // password — ochiq matn, helper hash qiladi
 type SeedStore = { id: string; slug: string; ownerId: string; name?: string }
+type SeedOrder = { id: string; storeId: string; status: string }
+type SeedOrderItem = { orderId: string; productId: string; quantity: number; size?: string | null; color?: string | null }
+type SeedVariant = { id: string; productId: string; size?: string | null; color?: string | null; quantity: number }
 
-export function createAdminFakePrisma(seed: { owners?: SeedOwner[]; stores?: SeedStore[] }) {
+type AdminSeed = {
+  owners?: SeedOwner[]
+  stores?: SeedStore[]
+  orders?: SeedOrder[]
+  orderItems?: SeedOrderItem[]
+  variants?: SeedVariant[]
+}
+
+export function createAdminFakePrisma(seed: AdminSeed) {
   const owners = (seed.owners ?? []).map((o) => ({
     id: o.id,
     email: o.email,
@@ -17,6 +28,9 @@ export function createAdminFakePrisma(seed: { owners?: SeedOwner[]; stores?: See
     password: bcrypt.hashSync(o.password, 10), // haqiqiy hash — bcrypt.compare ishlashi uchun
   }))
   const stores = (seed.stores ?? []).map((s) => ({ name: 'Store', ...s }))
+  const orders = (seed.orders ?? []).map((o) => ({ ...o }))
+  const orderItems = (seed.orderItems ?? []).map((i) => ({ size: null, color: null, ...i }))
+  const variants = (seed.variants ?? []).map((v) => ({ size: null, color: null, ...v }))
 
   // In-memory login throttle (DB-asosli helper o'rniga test uchun)
   const throttle = new Map<string, { count: number; windowStart: number }>()
@@ -59,12 +73,50 @@ export function createAdminFakePrisma(seed: { owners?: SeedOwner[]; stores?: See
         return { ...s }
       },
     },
+    // Buyurtma statusini o'zgartirish (bekor qilishda stok qaytishi) testlari uchun.
+    order: {
+      async findFirst({ where }: any) {
+        const o = orders.find((x) => x.id === where.id)
+        if (!o) return null
+        // `where.store.ownerId` — egasi boshqa do'konning buyurtmasiga tegmasin
+        const ownerId = where.store?.ownerId
+        if (ownerId && !stores.some((s) => s.id === o.storeId && s.ownerId === ownerId)) return null
+        return { ...o }
+      },
+      async update({ where, data }: any) {
+        const o = orders.find((x) => x.id === where.id)
+        if (o) Object.assign(o, data)
+        return { ...o }
+      },
+    },
+    orderItem: {
+      async findMany({ where }: any) {
+        return orderItems.filter((i) => i.orderId === where.orderId).map((i) => ({ ...i }))
+      },
+    },
+    productVariant: {
+      async updateMany({ where, data }: any) {
+        const hit = variants.filter(
+          (v) =>
+            v.productId === where.productId &&
+            (v.size ?? null) === (where.size ?? null) &&
+            (v.color ?? null) === (where.color ?? null)
+        )
+        for (const v of hit) v.quantity += data.quantity.increment
+        return { count: hit.length }
+      },
+      async findFirst({ where }: any) {
+        return variants.find((v) => v.productId === where.productId) ?? null
+      },
+    },
   }
 
-  return { prisma, owners, stores }
+  prisma.$transaction = async (fn: any) => fn(prisma)
+
+  return { prisma, owners, stores, orders, orderItems, variants }
 }
 
-export async function buildAdminTestApp(seed: { owners?: SeedOwner[]; stores?: SeedStore[] }) {
+export async function buildAdminTestApp(seed: AdminSeed) {
   const app = Fastify()
   const fake = createAdminFakePrisma(seed)
   app.register(jwt, { secret: 'test-secret' })

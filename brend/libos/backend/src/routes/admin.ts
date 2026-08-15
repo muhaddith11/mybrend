@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { checkLoginThrottle, bumpLoginThrottle, resetLoginThrottle } from '../lib/loginThrottle.js'
+import { restoreStock } from '../lib/stock.js'
 
 // Mavjud bo'lmagan email uchun ham bcrypt.compare chaqiramiz — javob vaqti bir xil
 // qolib, user-enumeration (timing attack) imkonsiz bo'lsin.
@@ -279,7 +280,18 @@ export default async function adminRoutes(app: FastifyInstance) {
     const { status } = z.object({ status: z.enum(['CONFIRMED','PREPARING','DELIVERING','DELIVERED','CANCELLED']) }).parse(req.body)
     const order = await prisma.order.findFirst({ where: { id, store: { ownerId } } })
     if (!order) return reply.status(404).send({ error: 'Topilmadi' })
-    const updated = await prisma.order.update({ where: { id }, data: { status } })
+
+    // Bekor qilinganda stok qaytarilishi SHART — aks holda buyurtma yaratilganda
+    // kamaytirilgan zaxira abadiy yo'qoladi va mahsulot sotib bo'lmas holga keladi.
+    // (Telegram orqali rad etishda bu allaqachon qilinardi, admin panelda emas.)
+    // Shart `order.status !== 'CANCELLED'` — takror bosishda ikki marta qaytmasin.
+    const mustRestore = status === 'CANCELLED' && order.status !== 'CANCELLED'
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const u = await tx.order.update({ where: { id }, data: { status } })
+      if (mustRestore) await restoreStock(tx, id)
+      return u
+    })
     return reply.send(updated)
   })
 

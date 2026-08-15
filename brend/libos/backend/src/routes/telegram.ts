@@ -9,6 +9,7 @@ import {
   tgEditMessageText,
   setBotWebhook,
   sendOrderNotification,
+  PLATFORM_CHAT_ID,
   esc,
 } from '../plugins/telegram.js'
 
@@ -245,6 +246,23 @@ async function handleReceiptPhoto(prisma: PrismaClient, chatId: number, fileId: 
     return
   }
 
+  // Chekni kimdir KO'RISHI shart. Do'kon o'z Telegram ID'sini sozlamagan bo'lsa
+  // platforma chat'iga tushadi; u ham yo'q bo'lsa — mijozga "kuting" deb yolg'on
+  // aytmaymiz, chunki hech kim tasdiqlay olmaydi (pul esa allaqachon o'tkazilgan).
+  const target = payment.order.store.telegramChatId || PLATFORM_CHAT_ID
+  if (!target) {
+    await tgSendMessage(
+      chatId,
+      [
+        '⚠️ Chek qabul qilindi, lekin do\'kon Telegram xabarnomasini sozlamagan.',
+        `Iltimos, do'kon bilan bevosita bog'laning: <b>${esc(payment.order.store.phone)}</b>`,
+        `Buyurtma raqami: <code>${esc(payment.order.id.slice(-8))}</code>`,
+      ].join('\n'),
+    )
+    await prisma.payment.update({ where: { id: payment.id }, data: { receiptFileId: fileId } })
+    return
+  }
+
   await prisma.payment.update({ where: { id: payment.id }, data: { receiptFileId: fileId } })
   await tgSendMessage(chatId, '✅ Chek qabul qilindi! Do\'kon to\'lovni tasdiqlashini kuting.')
 
@@ -253,9 +271,6 @@ async function handleReceiptPhoto(prisma: PrismaClient, chatId: number, fileId: 
   // mijoz telefoni) esa faqat ega to'lovni TASDIQLAGANIDAN keyin yuboriladi
   // (pay_ok callback → sendOrderNotification).
   const order = payment.order
-  const ownerChat = order.store.telegramChatId
-  if (!ownerChat) return
-
   const itemLines = order.items
     .map((i) => {
       const v = [i.size, i.color].filter(Boolean).join('/')
@@ -263,8 +278,14 @@ async function handleReceiptPhoto(prisma: PrismaClient, chatId: number, fileId: 
     })
     .join('\n')
 
+  // Do'kon o'zi sozlamagan bo'lsa chek platforma chat'iga tushadi — buni ega
+  // (platforma admini) darrov tushunishi uchun sarlavhada aytamiz.
+  const isFallback = !order.store.telegramChatId
   const caption = [
     `🧾 <b>Yangi to'lov cheki</b> — ${esc(order.store.name)}`,
+    ...(isFallback
+      ? [`⚠️ <i>Bu do'kon Telegram ID sozlamagan — chek platforma chat'iga yuborildi.</i>`]
+      : []),
     ``,
     itemLines,
     `💰 <b>To'lanishi kerak:</b> ${order.totalPrice.toLocaleString()} so'm`,
@@ -280,7 +301,7 @@ async function handleReceiptPhoto(prisma: PrismaClient, chatId: number, fileId: 
     ]],
   }
 
-  await tgSendPhoto(ownerChat, fileId, caption, keyboard)
+  await tgSendPhoto(target, fileId, caption, keyboard)
 }
 
 // ─── Ega tugmani bosdi (tasdiq / rad) ────────────────────────────────────────
@@ -315,7 +336,12 @@ async function handleCallback(
   }
 
   // Xavfsizlik: faqat shu do'kon egasining chat'i tasdiqlay/rad eta oladi.
-  if (String(cb.from.id) !== (payment.order.store.telegramChatId ?? '')) {
+  // Do'kon Telegram ID sozlamagan bo'lsa chek platforma chat'iga tushadi — u
+  // holda faqat o'sha chat tasdiqlay oladi (aks holda chek osilib qolardi).
+  // Ikkalasi ham bo'sh bo'lsa hech kim tasdiqlay olmaydi (fail-closed).
+  const ownerChatId = payment.order.store.telegramChatId
+  const allowed = ownerChatId ? [ownerChatId] : (PLATFORM_CHAT_ID ? [PLATFORM_CHAT_ID] : [])
+  if (!allowed.includes(String(cb.from.id))) {
     await tgAnswerCallback(cb.id, 'Ruxsat yo\'q')
     return
   }

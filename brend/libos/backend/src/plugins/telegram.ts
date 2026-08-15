@@ -1,6 +1,13 @@
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 const DEFAULT_CHAT_ID = process.env.TELEGRAM_CHAT_ID
 
+/**
+ * Platforma zaxira chat'i. Do'kon o'z `telegramChatId`sini sozlamagan bo'lsa,
+ * xabarlar shu yerga tushadi — mijozning to'lov cheki hech kimga ko'rinmay
+ * yo'qolib ketmasin.
+ */
+export const PLATFORM_CHAT_ID = DEFAULT_CHAT_ID
+
 // ─── Telegram Bot API past darajali yordamchilari ────────────────────────────
 // Interaktiv to'lov-boti (TRANSFER) shu funksiyalardan foydalanadi. Hammasi
 // BOT_TOKEN yo'q bo'lsa jimgina no-op qiladi (mahalliy/test muhitida xato bermaydi).
