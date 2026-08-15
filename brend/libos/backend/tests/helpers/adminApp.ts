@@ -75,6 +75,11 @@ export function createAdminFakePrisma(seed: AdminSeed) {
         if (include?._count) return { ...s, _count: { products: 0, orders: 0 } }
         return { ...s }
       },
+      async update({ where, data }: any) {
+        const s = stores.find((x) => x.id === where.id)
+        if (s) Object.assign(s, data)
+        return { ...s }
+      },
     },
     // Buyurtma statusini o'zgartirish (bekor qilishda stok qaytishi) testlari uchun.
     order: {
@@ -107,6 +112,12 @@ export function createAdminFakePrisma(seed: AdminSeed) {
         const ownerId = where.store?.ownerId
         if (ownerId && !stores.some((s) => s.id === p.storeId && s.ownerId === ownerId)) return null
         return { ...p }
+      },
+      async findMany({ where }: any) {
+        const ids: string[] = where?.id?.in ?? []
+        return products
+          .filter((p) => ids.includes(p.id) && (!where.storeId || p.storeId === where.storeId))
+          .map((p) => ({ ...p }))
       },
       async delete({ where }: any) {
         const idx = products.findIndex((x) => x.id === where.id)

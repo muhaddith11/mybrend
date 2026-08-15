@@ -176,3 +176,34 @@ describe('DELETE /api/admin/products/:id', () => {
     await app.close()
   })
 })
+
+// Lookbook boshqa do'kon mahsulotiga havola qilmasin: aks holda mijoz obrazdagi
+// mahsulotni savatga qo'shsa, buyurtma boshqa do'konga ketib qolardi.
+describe('PATCH /api/admin/store — lookbook productIds', () => {
+  const base = {
+    ...seed,
+    stores: [
+      { id: 's1', slug: 'asma', ownerId: 'o1', name: 'Asma' },
+      { id: 's2', slug: 'boosner', ownerId: 'o2', name: 'Boosner' },
+    ],
+    products: [
+      { id: 'mine', storeId: 's1', name: 'O\'z mahsulotim' },
+      { id: 'theirs', storeId: 's2', name: 'Boshqa do\'kon' },
+    ],
+  }
+
+  test('begona mahsulot ID\'lari saqlanmaydi, o\'ziniki qoladi', async () => {
+    const { app, fake } = await buildAdminTestApp(base)
+    const token = (await login(app, 'owner@zyff.uz', 'parol123')).json().token
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/admin/store',
+      headers: { ...json, authorization: `Bearer ${token}` },
+      payload: { lookbookLooks: [{ image: 'a.jpg', productIds: ['mine', 'theirs'] }] },
+    })
+    assert.equal(res.statusCode, 200)
+    const saved = fake.stores.find((s: any) => s.id === 's1') as any
+    assert.deepEqual(saved.lookbookLooks[0].productIds, ['mine'])
+    await app.close()
+  })
+})

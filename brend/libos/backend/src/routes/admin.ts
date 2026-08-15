@@ -176,6 +176,25 @@ export default async function adminRoutes(app: FastifyInstance) {
     const data = storeUpdateSchema.parse(req.body)
     const store = await prisma.store.findFirst({ where: { ownerId } })
     if (!store) return reply.status(404).send({ error: 'Do\'kon topilmadi' })
+
+    // Lookbook faqat SHU do'konning mahsulotlariga havola qila oladi. Aks holda
+    // boshqa do'kon mahsuloti obrazga tushib, mijoz undan savatga qo'shganda
+    // buyurtma boshqa do'konga ketib qolardi (savat do'kon bo'yicha bo'linadi).
+    if (data.lookbookLooks) {
+      const referenced = [...new Set(data.lookbookLooks.flatMap(l => l.productIds))]
+      if (referenced.length) {
+        const own = await prisma.product.findMany({
+          where: { id: { in: referenced }, storeId: store.id },
+          select: { id: true },
+        })
+        const ownIds = new Set(own.map(p => p.id))
+        data.lookbookLooks = data.lookbookLooks.map(l => ({
+          ...l,
+          productIds: l.productIds.filter(id => ownIds.has(id)),
+        }))
+      }
+    }
+
     const updated = await prisma.store.update({ where: { id: store.id }, data })
     return reply.send(updated)
   })

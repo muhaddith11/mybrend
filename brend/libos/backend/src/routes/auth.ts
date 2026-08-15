@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify'
+import { randomInt } from 'node:crypto'
 import { z } from 'zod'
 import { PrismaClient } from '@prisma/client'
 import { sendSms } from '../plugins/sms.js'
@@ -49,7 +50,10 @@ export default async function authRoutes(app: FastifyInstance) {
       }
     }
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString()
+    // OTP kriptografik generatordan olinadi. `Math.random()` (xorshift128+)
+    // taxmin qilinadigan: hujumchi o'z raqamiga bir necha kod so'rab PRNG holatini
+    // tiklab, boshqa foydalanuvchining kodini oldindan hisoblashi mumkin edi.
+    const code = String(randomInt(100000, 1000000))
     const expiry = new Date(Date.now() + 10 * 60 * 1000) // 10 daqiqa
 
     // OTP'ni DB'ga saqlaymiz (serverless'da in-memory ishlamaydi). Urinishlar 0 ga tushadi.

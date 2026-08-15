@@ -29,6 +29,20 @@ interface Props {
   stores?: MapStore[]
 }
 
+/**
+ * `<script>` ichiga xavfsiz joylash uchun JSON. `JSON.stringify` `<` belgisini
+ * qochirmaydi — matnda `</script>` uchrasa skript teg erta yopilib, qolgani HTML
+ * sifatida bajarilardi (WebView'da RN ko'prigi bor, ya'ni oddiy XSS emas).
+ * U+2028/2029 esa JS'da satr uzilishi hisoblanadi va sintaksisni buzadi.
+ */
+function safeJson(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029')
+}
+
 function buildHtml(opts: {
   mode: 'picker' | 'display'
   dark: boolean
@@ -41,8 +55,8 @@ function buildHtml(opts: {
     ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
     : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
   const center = initial ? [initial.lat, initial.lng] : QOQON_CENTER
-  const storesJson = JSON.stringify(stores)
-  const initialJson = JSON.stringify(initial)
+  const storesJson = safeJson(stores)
+  const initialJson = safeJson(initial)
 
   return `<!DOCTYPE html>
 <html>
@@ -124,7 +138,7 @@ function buildHtml(opts: {
     L.tileLayer('${tileUrl}', { maxZoom: 19 }).addTo(map);
     setTimeout(function () { map.invalidateSize(); }, 100);
 
-    var mode = ${JSON.stringify(mode)};
+    var mode = ${safeJson(mode)};
     var storeIcon = function () {
       return L.divIcon({ className: '', html: '<div class="pin"><span>🏪</span></div>', iconSize: [34,34], iconAnchor: [17,34], popupAnchor: [0,-36] });
     };
