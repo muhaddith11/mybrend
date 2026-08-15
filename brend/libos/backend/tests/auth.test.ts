@@ -50,7 +50,22 @@ describe('POST /api/auth/send-otp', () => {
 })
 
 describe('POST /api/auth/verify-otp', () => {
-  test('007700 backdoor — har doim kirgizadi (pre-launch test kodi)', async () => {
+  // `007700` ilgari HAR QANDAY raqam bilan ishlardi — kodni topgan odam istalgan
+  // akkauntga kirardi. Endi u faqat review demo raqami uchun amal qiladi.
+  test('demo kodi — FAQAT demo raqam bilan kirgizadi', async () => {
+    const { app } = await buildTestApp()
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/verify-otp',
+      headers: json,
+      payload: { phone: '+998123456789', code: '007700' },
+    })
+    assert.equal(res.statusCode, 200)
+    assert.ok(res.json().token)
+    await app.close()
+  })
+
+  test('demo kodi boshqa raqam bilan ISHLAMAYDI', async () => {
     const { app } = await buildTestApp()
     const res = await app.inject({
       method: 'POST',
@@ -58,8 +73,20 @@ describe('POST /api/auth/verify-otp', () => {
       headers: json,
       payload: { phone: '+998900000000', code: '007700' },
     })
+    assert.notEqual(res.statusCode, 200)
+    assert.equal(res.json().token, undefined)
+    await app.close()
+  })
+
+  test('demo raqam probel/chiziq bilan yozilsa ham tanaladi', async () => {
+    const { app } = await buildTestApp()
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/verify-otp',
+      headers: json,
+      payload: { phone: '+998 12 345 67 89', code: '007700' },
+    })
     assert.equal(res.statusCode, 200)
-    assert.ok(res.json().token)
     await app.close()
   })
 
