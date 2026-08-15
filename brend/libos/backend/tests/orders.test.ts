@@ -323,3 +323,64 @@ describe("POST /api/orders (auth) — online to'lov, paymentMethod, yetkazish na
     await app.close()
   })
 })
+
+// Do'kon karta/QR rekvizitini sozlamagan bo'lsa, bot orqali to'lov oqimi
+// telegram.ts'da to'xtaydi. Buyurtma umuman yaratilmasligi kerak — aks holda
+// to'lanmaydigan buyurtma qoladi va stok bekorga kamayadi.
+describe('TRANSFER — rekvizitsiz do\'kon', () => {
+  test('guest: karta/QR yo\'q → 400, buyurtma yaratilmaydi', async () => {
+    const { app, fake } = await buildOrdersTestApp(seed) // s1'da cardNumber/paymentQr yo'q
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/orders/guest',
+      headers: json,
+      payload: {
+        storeSlug: 'asma',
+        customerName: 'Ali',
+        phone: '+998901234567',
+        paymentMethod: 'transfer',
+        items: [{ productId: 'p1', quantity: 1 }],
+      },
+    })
+    assert.equal(res.statusCode, 400)
+    assert.equal(fake.createdOrders.length, 0)
+    await app.close()
+  })
+
+  test('guest: karta bor → 201', async () => {
+    const withCard = { ...seed, stores: [{ ...seed.stores[0], cardNumber: '8600123456789012' }] }
+    const { app } = await buildOrdersTestApp(withCard)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/orders/guest',
+      headers: json,
+      payload: {
+        storeSlug: 'asma',
+        customerName: 'Ali',
+        phone: '+998901234567',
+        paymentMethod: 'transfer',
+        items: [{ productId: 'p1', quantity: 1 }],
+      },
+    })
+    assert.equal(res.statusCode, 201)
+    await app.close()
+  })
+
+  test('auth: karta/QR yo\'q → 400, buyurtma yaratilmaydi', async () => {
+    const { app, fake } = await buildOrdersTestApp(seed)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/orders',
+      headers: json,
+      payload: {
+        storeId: 's1',
+        deliveryType: 'PICKUP',
+        paymentProvider: 'TRANSFER',
+        items: [{ productId: 'p1', quantity: 1 }],
+      },
+    })
+    assert.equal(res.statusCode, 400)
+    assert.equal(fake.createdOrders.length, 0)
+    await app.close()
+  })
+})
