@@ -34,12 +34,10 @@ QANDAY ISHLAYDI
 
 TO'LOV USULLARI
 
-• Naqd pul (kuryerga qo'lda)
-• Click
-• Payme
+• Naqd pul (kuryerga qo'lda yoki do'kondan olib ketishda)
+• Karta orqali o'tkazma (buyurtmadan so'ng sotuvchi karta raqami/QR yuboradi)
 
-Xavfsizlik: karta ma'lumotlari ilovada saqlanmaydi — to'lovlar Click va Payme
-tizimlarining o'z xavfsiz sahifalari orqali amalga oshiriladi.
+Xavfsizlik: karta ma'lumotlari ilovada saqlanmaydi va ilova ichida so'ralmaydi.
 
 QO'LLAB-QUVVATLASH
 

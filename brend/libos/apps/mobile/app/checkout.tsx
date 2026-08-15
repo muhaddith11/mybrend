@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { View, ScrollView, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, Alert, Linking } from 'react-native'
 import { Text } from '../components/Txt'
 import { useLocalSearchParams, useRouter } from 'expo-router'
@@ -77,6 +77,12 @@ export default function CheckoutScreen() {
     queryFn: () => api.stores.getById(storeId),
     enabled: !!storeId,
   })
+
+  // Do'kon ma'lumoti kech kelsa va bot to'lovi sozlanmagan bo'lsa — tanlovni
+  // naqdga qaytaramiz (yashirilgan variant tanlangan holda qolib ketmasin).
+  useEffect(() => {
+    if (store?.hasTransfer === false) setPayment(p => (p === 'TRANSFER' ? 'CASH' : p))
+  }, [store?.hasTransfer])
 
   if (!isLoggedIn) {
     return (
@@ -281,9 +287,12 @@ export default function CheckoutScreen() {
             qaytarish kifoya: { value: 'CLICK', ... }, { value: 'PAYME', ... }
           */}
           {[
-            { value: 'CASH', icon: 'cash-outline' as const, label: tr.mPayCash, desc: tr.mPayCashDesc },
-            { value: 'TRANSFER', icon: 'card-outline' as const, label: tr.mPayCard, desc: tr.mPayCardDesc },
-          ].map(opt => (
+            { value: 'CASH', icon: 'cash-outline' as const, label: tr.mPayCash, desc: tr.mPayCashDesc, show: true },
+            // Do'kon karta/QR rekvizitini sozlamagan bo'lsa yashiramiz — aks holda
+            // mijoz botga o'tib "rekvizit yo'q" degan tupikka boradi. Backend ham
+            // shu holatni rad etadi (orders.ts), bu — UI tomonidagi himoya.
+            { value: 'TRANSFER', icon: 'card-outline' as const, label: tr.mPayCard, desc: tr.mPayCardDesc, show: store?.hasTransfer !== false },
+          ].filter(opt => opt.show).map(opt => (
             <TouchableOpacity
               key={opt.value}
               style={[styles.optionRow, payment === opt.value && styles.optionActive]}

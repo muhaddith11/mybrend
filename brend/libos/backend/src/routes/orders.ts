@@ -102,6 +102,15 @@ export default async function ordersRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: "Bu do'kon olib ketishni qo'llab-quvvatlamaydi" })
     }
 
+    // Do'kon karta/QR rekvizitini sozlamagan bo'lsa, bot orqali to'lov oqimi
+    // yakunlanmaydi (telegram.ts shu tekshiruvda to'xtaydi). Buyurtmani shu yerda
+    // rad etamiz — aks holda to'lanmaydigan buyurtma yaratilib, stok kamayib ketadi.
+    if (body.paymentMethod === 'transfer' && !store.cardNumber && !store.paymentQr) {
+      return reply.status(400).send({
+        error: "Bu do'kon hozircha karta orqali to'lovni qabul qilmaydi. Naqd to'lovni tanlang.",
+      })
+    }
+
     const productIds = body.items.map(i => i.productId)
     // Faqat shu do'konning mahsulotlari — boshqa do'kon yoki mavjud bo'lmagan ID jimgina 0 narx bermasin
     const products = await prisma.product.findMany({ where: { id: { in: productIds }, storeId: store.id } })
@@ -204,6 +213,20 @@ export default async function ordersRoutes(app: FastifyInstance) {
   app.post('/', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { userId } = req.user as { userId: string }
     const body = createOrderSchema.parse(req.body)
+
+    // Guest oqimidagi bilan bir xil himoya: rekvizitsiz do'konga TRANSFER buyurtma
+    // yaratilmasin (to'lanmaydigan buyurtma + bekorga kamaygan stok).
+    if (body.paymentProvider === 'TRANSFER') {
+      const st = await prisma.store.findUnique({
+        where: { id: body.storeId },
+        select: { cardNumber: true, paymentQr: true },
+      })
+      if (st && !st.cardNumber && !st.paymentQr) {
+        return reply.status(400).send({
+          error: "Bu do'kon hozircha karta orqali to'lovni qabul qilmaydi. Naqd to'lovni tanlang.",
+        })
+      }
+    }
 
     const productIds = body.items.map(i => i.productId)
     // Mahsulotlar shu do'konga tegishli va hammasi mavjud bo'lishi shart

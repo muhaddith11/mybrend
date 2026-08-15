@@ -7,24 +7,46 @@ Quyidagi qadamlardan so'ng `eas submit` ishlaydi.
 
 ## iOS (App Store Connect)
 
-`eas.json` dagi `submit.production.ios` maydonlarini to'ldiring:
+`eas.json` da endi placeholder yo'q — `submit.production.ios` faqat `language: "en-US"`
+saqlaydi. Qolganini (Apple ID, Team ID, ASC app ID) EAS **interaktiv** so'raydi va
+App Store Connect'dagi ilova yozuvini ham o'zi yaratadi (Bundle ID: `uz.zyff.app`).
 
-| Maydon | Qayerdan olinadi |
-|--------|------------------|
-| `appleId` | Apple Developer akkaunt email (masalan `you@example.com`) |
-| `ascAppId` | App Store Connect → Ilova → App Information → **Apple ID** (raqam, masalan `6501234567`) |
-| `appleTeamId` | [developer.apple.com/account](https://developer.apple.com/account) → Membership → **Team ID** (10 belgi) |
+Shuning uchun quyidagi buyruqlarni **o'zingiz terminalda** ishga tushiring —
+Apple ID paroli va 2FA kodi so'raladi:
 
-> Ilova hali App Store Connect'da yaratilmagan bo'lsa, avval u yerda ilova yozuvini yarating
-> (Bundle ID: `uz.zyff.app`).
-
-Muqobil (tavsiya etiladi) — **App Store Connect API Key** orqali (parolsiz, avtomatlashtirishga qulay):
-`appleId`/`ascAppId` o'rniga EAS credentials'ga API key qo'shing yoki `eas submit` interaktiv rejimida so'raganda kiriting.
-
-Yuborish:
 ```bash
-eas submit --platform ios --profile production
+npx eas-cli build --platform ios --profile production
 ```
+
+Birinchi ishga tushirishda EAS so'raydi:
+- Apple ID email + parol + 2FA kod (faqat siz kiritasiz)
+- "Generate a new Apple Distribution Certificate?" → **Yes**
+- "Generate a new Apple Provisioning Profile?" → **Yes**
+
+Build tugagach (~20-40 daqiqa) TestFlight'ga yuborish:
+
+```bash
+npx eas-cli submit --platform ios --profile production --latest
+```
+
+### App Store Connect API kaliti (parolsiz avtomatlashtirish)
+
+Kalit yaratilgan: `credentials/AuthKey_22GXNUDC8B.p8` (gitignore'da, repo **ochiq**
+bo'lgani uchun kalit ID'lari ham `eas.json`ga yozilmaydi).
+
+`eas submit` kalitni `eas.json`dan yoki EAS serveridan kutadi. Repo ochiq bo'lgani
+uchun to'g'ri yechim — kalitni **bir marta EAS serveriga yuklash**:
+
+```bash
+npx eas-cli credentials --platform ios
+```
+→ `production` → **App Store Connect: Manage your API Key** → **Set up your project
+with an existing API Key** → `.p8` yo'lini, Key ID va Issuer ID ni kiriting.
+
+Shundan keyin `eas submit` hech qanday qo'shimcha sozlamasiz ishlaydi.
+
+> Vaqtinchalik muqobil: `eas.json` → `submit.production.ios` ga `ascApiKeyPath`,
+> `ascApiKeyId`, `ascApiKeyIssuerId` qo'shish — lekin **commit qilmang**.
 
 ---
 

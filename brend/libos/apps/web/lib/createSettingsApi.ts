@@ -33,7 +33,9 @@ export const defaultSettings: StoreSettings = {
 export function createSettingsApi(slug: string) {
   async function fetchSettings(): Promise<StoreSettings> {
     try {
-      const res = await fetch(`${API}/stores/${slug}`)
+      // Autentifikatsiyalangan endpoint: karta raqami, karta egasi, QR va Telegram
+      // chat ID faqat shu yerdan keladi. Ochiq `/stores/:slug` ularni bermaydi.
+      const res = await adminFetch(slug, '/admin/store')
       if (!res.ok) return defaultSettings
       const store = await res.json()
       return {

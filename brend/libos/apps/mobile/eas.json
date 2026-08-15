@@ -21,6 +21,9 @@
     },
     "production": {
       "autoIncrement": true,
+      "ios": {
+        "image": "macos-sequoia-15.6-xcode-26.0"
+      },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://libos-api.vercel.app/api"
       },
@@ -30,9 +33,9 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "REPLACE_WITH_APPLE_ID_EMAIL",
-        "ascAppId": "REPLACE_WITH_APP_STORE_CONNECT_APP_ID",
-        "appleTeamId": "REPLACE_WITH_APPLE_TEAM_ID"
+        "ascAppId": "6800536645",
+        "appleTeamId": "CRLRPGPWL2",
+        "language": "en-US"
       },
       "android": {
         "serviceAccountKeyPath": "./credentials/google-play-service-account.json",

@@ -1,7 +1,10 @@
 import { useEffect } from 'react'
 import { Platform } from 'react-native'
 import { Stack } from 'expo-router'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient } from '@tanstack/react-query'
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useFonts } from 'expo-font'
 import {
@@ -25,15 +28,27 @@ initSentry()
 // react-native-web'da ilovani yiqitgani uchun olib tashlandi.)
 
 // Ishlab chiqarish uchun mos standartlar: zaif tarmoqda 2 marta qayta urinadi,
-// ma'lumot 30s davomida "fresh" (ortiqcha so'rov yubormaydi).
+// ma'lumot 60s davomida "fresh" (ortiqcha so'rov yubormaydi).
+// gcTime = 24 soat: persist qilingan so'rovlar xotiradan tozalanib ketmasin
+// (aks holda diskdan tiklangan ma'lumot darhol GC bo'lardi).
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 2,
-      staleTime: 30_000,
+      staleTime: 60_000,
+      gcTime: 1000 * 60 * 60 * 24,
       refetchOnWindowFocus: false,
     },
   },
+})
+
+// React Query cache'ini qurilma diskiga (AsyncStorage) saqlaymiz. Natijada ilova
+// sovuqdan ochilganda oxirgi ko'rilgan do'kon/mahsulotlar DARHOL ko'rinadi (skeleton
+// kutilmaydi), so'ng fonda jimgina yangilanadi ("stale-while-revalidate").
+const persister = createAsyncStoragePersister({
+  storage: AsyncStorage,
+  key: 'ZYFF_RQ_CACHE',
+  throttleTime: 1000, // diskka yozishni sekundiga 1 martaga cheklaymiz
 })
 
 export default function RootLayout() {
@@ -66,7 +81,22 @@ export default function RootLayout() {
   }, [])
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{
+        persister,
+        maxAge: 1000 * 60 * 60 * 24, // saqlangan cache 24 soatdan keyin eskiradi
+        buster: 'v1', // ma'lumot shakli o'zgarsa oshiring — eski cache bekor bo'ladi
+        dehydrateOptions: {
+          // FAQAT ochiq katalogni diskka yozamiz. Buyurtma/profil/sevimli kabi
+          // shaxsiy ma'lumotlar (token bilan olingan) diskda qolmaydi.
+          shouldDehydrateQuery: (q) => {
+            const k = q.queryKey?.[0]
+            return (k === 'stores' || k === 'products') && q.state.status === 'success'
+          },
+        },
+      }}
+    >
       <SafeAreaProvider>
         <ErrorBoundary>
         <Stack screenOptions={{ headerShown: false }}>
@@ -88,6 +118,6 @@ export default function RootLayout() {
         <Onboarding />
         </ErrorBoundary>
       </SafeAreaProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   )
 }
