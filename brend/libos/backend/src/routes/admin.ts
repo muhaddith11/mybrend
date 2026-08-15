@@ -231,17 +231,23 @@ export default async function adminRoutes(app: FastifyInstance) {
     // variants YUBORILMAGAN (undefined) bo'lsa — mavjud variantlarga TEGMAYMIZ:
     // mobil/web tahririda stok raqamlari yo'qolmasin. Faqat aniq yuborilganda
     // (bo'sh massiv ham) eskilarini o'chirib qayta yaratamiz.
-    if (variants !== undefined) {
-      await prisma.productVariant.deleteMany({ where: { productId: id } })
-    }
-    const updated = await prisma.product.update({
-      where: { id },
-      data: {
-        ...data,
-        categoryId: resolvedCategoryId,
-        ...(variants !== undefined ? { variants: { create: variants } } : {}),
-      },
-      include: { category: true, variants: true },
+    //
+    // O'chirish va qayta yaratish BITTA tranzaksiyada: ilgari alohida edi va
+    // update xato bersa (yoki ulanish uzilsa) variantlar butunlay yo'qolib,
+    // mahsulotning stok raqamlari tiklanmas holda o'chib ketardi.
+    const updated = await prisma.$transaction(async (tx) => {
+      if (variants !== undefined) {
+        await tx.productVariant.deleteMany({ where: { productId: id } })
+      }
+      return tx.product.update({
+        where: { id },
+        data: {
+          ...data,
+          categoryId: resolvedCategoryId,
+          ...(variants !== undefined ? { variants: { create: variants } } : {}),
+        },
+        include: { category: true, variants: true },
+      })
     })
     return reply.send(updated)
   })
@@ -252,6 +258,19 @@ export default async function adminRoutes(app: FastifyInstance) {
     const { id } = req.params as { id: string }
     const product = await prisma.product.findFirst({ where: { id, store: { ownerId } } })
     if (!product) return reply.status(404).send({ error: 'Topilmadi' })
+
+    // OrderItem.product bog'lanishi RESTRICT — sotilgan mahsulotni o'chirish FK
+    // xatosi bilan 500 berardi va egaga tushunarsiz "server xatosi" ko'rinardi.
+    // Buyurtma tarixini buzmaslik uchun o'chirishga yo'l qo'ymaymiz, lekin nima
+    // qilish kerakligini aniq aytamiz.
+    const usedInOrders = await prisma.orderItem.count({ where: { productId: id } })
+    if (usedInOrders > 0) {
+      return reply.status(400).send({
+        error: "Bu mahsulot buyurtmalarda ishlatilgan, o'chirib bo'lmaydi. " +
+          "Uni ko'rinmas qilish uchun \"Sotuvda bor\" belgisini olib tashlang.",
+      })
+    }
+
     await prisma.product.delete({ where: { id } })
     return reply.send({ success: true })
   })

@@ -29,6 +29,9 @@ function buildApp() {
     },
   }
 
+  // Variantlarni o'chirish + qayta yaratish bitta tranzaksiyada bajariladi.
+  prisma.$transaction = async (fn: any) => fn(prisma)
+
   const app = Fastify()
   app.register(jwt, { secret: 'test-secret' })
   app.decorate('prisma', prisma)

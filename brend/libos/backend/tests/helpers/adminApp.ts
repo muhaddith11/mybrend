@@ -11,6 +11,7 @@ type SeedStore = { id: string; slug: string; ownerId: string; name?: string }
 type SeedOrder = { id: string; storeId: string; status: string }
 type SeedOrderItem = { orderId: string; productId: string; quantity: number; size?: string | null; color?: string | null }
 type SeedVariant = { id: string; productId: string; size?: string | null; color?: string | null; quantity: number }
+type SeedProduct = { id: string; storeId: string; name?: string }
 
 type AdminSeed = {
   owners?: SeedOwner[]
@@ -18,6 +19,7 @@ type AdminSeed = {
   orders?: SeedOrder[]
   orderItems?: SeedOrderItem[]
   variants?: SeedVariant[]
+  products?: SeedProduct[]
 }
 
 export function createAdminFakePrisma(seed: AdminSeed) {
@@ -31,6 +33,7 @@ export function createAdminFakePrisma(seed: AdminSeed) {
   const orders = (seed.orders ?? []).map((o) => ({ ...o }))
   const orderItems = (seed.orderItems ?? []).map((i) => ({ size: null, color: null, ...i }))
   const variants = (seed.variants ?? []).map((v) => ({ size: null, color: null, ...v }))
+  const products = (seed.products ?? []).map((p) => ({ name: 'Mahsulot', ...p }))
 
   // In-memory login throttle (DB-asosli helper o'rniga test uchun)
   const throttle = new Map<string, { count: number; windowStart: number }>()
@@ -93,6 +96,23 @@ export function createAdminFakePrisma(seed: AdminSeed) {
       async findMany({ where }: any) {
         return orderItems.filter((i) => i.orderId === where.orderId).map((i) => ({ ...i }))
       },
+      async count({ where }: any) {
+        return orderItems.filter((i) => i.productId === where.productId).length
+      },
+    },
+    product: {
+      async findFirst({ where }: any) {
+        const p = products.find((x) => x.id === where.id)
+        if (!p) return null
+        const ownerId = where.store?.ownerId
+        if (ownerId && !stores.some((s) => s.id === p.storeId && s.ownerId === ownerId)) return null
+        return { ...p }
+      },
+      async delete({ where }: any) {
+        const idx = products.findIndex((x) => x.id === where.id)
+        const [removed] = idx >= 0 ? products.splice(idx, 1) : [null]
+        return removed
+      },
     },
     productVariant: {
       async updateMany({ where, data }: any) {
@@ -113,7 +133,7 @@ export function createAdminFakePrisma(seed: AdminSeed) {
 
   prisma.$transaction = async (fn: any) => fn(prisma)
 
-  return { prisma, owners, stores, orders, orderItems, variants }
+  return { prisma, owners, stores, orders, orderItems, variants, products }
 }
 
 export async function buildAdminTestApp(seed: AdminSeed) {

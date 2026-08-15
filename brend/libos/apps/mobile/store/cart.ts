@@ -12,6 +12,9 @@ export interface CartItem {
   size?: string
   color?: string
   quantity: number
+  // Server bilan sinxronda aniqlanadi: mahsulot tugagan, o'chirilgan yoki do'koni
+  // yashirilgan. Savatda ko'rinadi, lekin buyurtmaga qo'shilmaydi.
+  unavailable?: boolean
 }
 
 interface CartStore {
@@ -21,8 +24,10 @@ interface CartStore {
   updateQty: (productId: string, qty: number, size?: string, color?: string) => void
   clearStore: (storeId: string) => void
   clearAll: () => void
-  // Serverdagi joriy narxlarni savatga qo'llaydi (lib/useCartPrices.ts chaqiradi).
-  syncPrices: (prices: Record<string, number>) => void
+  // Serverdagi joriy narx va mavjudlikni savatga qo'llaydi
+  // (lib/useCartPrices.ts chaqiradi). `fresh`da bo'lmagan mahsulot — o'chirilgan
+  // yoki do'koni yashirilgan, u ham mavjud emas deb belgilanadi.
+  syncCatalog: (fresh: Record<string, { price: number; inStock: boolean }>) => void
   totalCount: () => number
   totalPrice: () => number
   // Bir do'kondagi mahsulotlar (checkout uchun)
@@ -85,17 +90,20 @@ export const useCartStore = create<CartStore>()(
 
       clearAll: () => set({ items: [] }),
 
-      // Faqat haqiqatan o'zgargan narx yoziladi — aks holda har sinxronda yangi
+      // Faqat haqiqatan o'zgargan qiymat yoziladi — aks holda har sinxronda yangi
       // massiv yaratilib, foydalanuvchi savatni ochib turganда keraksiz render
       // (va useEffect halqasi) yuz beradi.
-      syncPrices: (prices) => {
+      syncCatalog: (fresh) => {
         set(state => {
           let changed = false
           const items = state.items.map(i => {
-            const fresh = prices[i.productId]
-            if (fresh === undefined || fresh === i.price) return i
+            const f = fresh[i.productId]
+            // Serverdan umuman qaytmadi — o'chirilgan yoki do'koni yashirilgan.
+            const unavailable = !f || !f.inStock
+            const price = f ? f.price : i.price
+            if (price === i.price && unavailable === !!i.unavailable) return i
             changed = true
-            return { ...i, price: fresh }
+            return { ...i, price, unavailable }
           })
           return changed ? { items } : state
         })

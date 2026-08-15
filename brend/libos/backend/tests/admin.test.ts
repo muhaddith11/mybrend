@@ -136,3 +136,43 @@ describe('PATCH /api/admin/orders/:id/status — bekor qilishda stok', () => {
     await app.close()
   })
 })
+
+// OrderItem.product bog'lanishi RESTRICT — sotilgan mahsulotni o'chirish FK xatosi
+// bilan 500 berardi. Endi tushunarli 400 qaytadi, buyurtma tarixi buzilmaydi.
+describe('DELETE /api/admin/products/:id', () => {
+  const base = {
+    ...seed,
+    products: [
+      { id: 'p1', storeId: 's1', name: 'Sotilgan' },
+      { id: 'p2', storeId: 's1', name: 'Sotilmagan' },
+    ],
+    orders: [{ id: 'ord1', storeId: 's1', status: 'DELIVERED' }],
+    orderItems: [{ orderId: 'ord1', productId: 'p1', quantity: 1, size: null, color: null }],
+  }
+
+  async function authed() {
+    const { app, fake } = await buildAdminTestApp(base)
+    const token = (await login(app, 'owner@zyff.uz', 'parol123')).json().token
+    return { app, fake, token }
+  }
+
+  const del = (app: any, token: string, id: string) =>
+    app.inject({ method: 'DELETE', url: `/api/admin/products/${id}`, headers: { authorization: `Bearer ${token}` } })
+
+  test('buyurtmada ishlatilgan mahsulot → 400 (500 emas), o\'chirilmaydi', async () => {
+    const { app, fake, token } = await authed()
+    const res = await del(app, token, 'p1')
+    assert.equal(res.statusCode, 400)
+    assert.match(res.json().error, /buyurtmalarda ishlatilgan/)
+    assert.equal(fake.products.length, 2)
+    await app.close()
+  })
+
+  test('buyurtmasiz mahsulot → o\'chiriladi', async () => {
+    const { app, fake, token } = await authed()
+    const res = await del(app, token, 'p2')
+    assert.equal(res.statusCode, 200)
+    assert.equal(fake.products.length, 1)
+    await app.close()
+  })
+})

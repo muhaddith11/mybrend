@@ -13,7 +13,7 @@ import { useCartStore } from '../store/cart'
 
 export function useCartPrices() {
   const items = useCartStore(s => s.items)
-  const syncPrices = useCartStore(s => s.syncPrices)
+  const syncCatalog = useCartStore(s => s.syncCatalog)
 
   // Barqaror kalit: id'lar tartiblanadi, aks holda savatdagi tartib o'zgarishi
   // bir xil to'plam uchun yangi so'rovga sabab bo'ladi.
@@ -28,9 +28,11 @@ export function useCartPrices() {
   })
 
   useEffect(() => {
-    if (!data?.products?.length) return
-    const prices: Record<string, number> = {}
-    for (const p of data.products) prices[p.id] = p.price
-    syncPrices(prices)
-  }, [data, syncPrices])
+    // `data` kelgan bo'lsa — bo'sh ro'yxat ham ma'noli javob: savatdagi hamma
+    // mahsulot o'chirilgan/yashirilgan degani. Shuning uchun uzunlikka qaramaymiz.
+    if (!data?.products) return
+    const fresh: Record<string, { price: number; inStock: boolean }> = {}
+    for (const p of data.products) fresh[p.id] = { price: p.price, inStock: p.inStock }
+    syncCatalog(fresh)
+  }, [data, syncCatalog])
 }

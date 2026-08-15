@@ -88,6 +88,9 @@ export default function CartScreen() {
                       </Text>
                     )}
                     <Text style={styles.itemPrice}>{item.price.toLocaleString()} {tr.som}</Text>
+                    {item.unavailable && (
+                      <Text style={styles.itemSoldOut}>{tr.mSoldOut}</Text>
+                    )}
                   </View>
                   <View style={styles.itemRight}>
                     <TouchableOpacity
@@ -165,6 +168,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   itemName: { fontSize: 13, color: c.text, lineHeight: 18, marginBottom: 3 },
   itemVariant: { fontSize: 11, color: c.text2, marginBottom: 4 },
   itemPrice: { fontSize: 13, fontWeight: '600', color: c.brand },
+  itemSoldOut: { fontSize: 11, fontWeight: '600', color: c.danger },
   itemRight: { alignItems: 'flex-end', justifyContent: 'space-between' },
   qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   qtyBtn: { width: 26, height: 26, borderRadius: 6, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' },

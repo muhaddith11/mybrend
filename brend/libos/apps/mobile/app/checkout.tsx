@@ -70,7 +70,12 @@ export default function CheckoutScreen() {
   // saqlangani uchun eskirgan bo'lishi mumkin).
   useCartPrices()
 
-  const items = itemsByStore()[storeId] ?? []
+  // Mavjud bo'lmagan (tugagan/o'chirilgan) mahsulotlar buyurtmaga ham, summaga
+  // ham kirmaydi — aks holda backend butun buyurtmani rad etardi va mijoz nima
+  // bo'lganini tushunmasdi.
+  const allItems = itemsByStore()[storeId] ?? []
+  const items = allItems.filter(i => !i.unavailable)
+  const droppedCount = allItems.length - items.length
   const itemsTotal = items.reduce((s, i) => s + i.price * i.quantity, 0)
   // Backend DELIVERY buyurtmaga yetkazish narxini qo'shadi (orders.ts). Uni shu
   // yerda ham ko'rsatamiz — aks holda mijoz bir summani ko'rib boshqasini to'laydi.
@@ -346,6 +351,9 @@ export default function CheckoutScreen() {
 
       {/* Footer — jami va tugma */}
       <View style={styles.footer}>
+        {droppedCount > 0 && (
+          <Text style={styles.warnText}>{tr.mUnavailableSkipped}</Text>
+        )}
         {/* Yetkazib berishda summa ikki qatorga bo'linadi — mijoz nima uchun
             to'layotganini ko'rsin (veb checkout bilan bir xil). */}
         {deliveryFee > 0 && (
@@ -417,6 +425,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   addrRow: { flexDirection: 'row', gap: 8 },
   addrHalf: { flex: 1 },
   footer: { backgroundColor: c.surface, padding: 16, gap: 12, borderTopWidth: 0.5, borderTopColor: c.border },
+  warnText: { fontSize: 12, color: c.text2, marginBottom: 8 },
   subRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   subLabel: { fontSize: 13, color: c.text2 },
   subValue: { fontSize: 13, color: c.text2 },
