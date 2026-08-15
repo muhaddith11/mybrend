@@ -58,7 +58,9 @@ export default function CartScreen() {
         renderItem={({ item: storeId }) => {
           const storeItems = byStore[storeId]
           const storeName = storeItems[0].storeName
-          const storeTotal = storeItems.reduce((s, i) => s + i.price * i.quantity, 0)
+          // Tugagan/o'chirilgan mahsulot summaga kirmaydi — checkout ham ularni
+          // chiqarib tashlaydi, ikki ekranda boshqa-boshqa raqam turmasin.
+          const storeTotal = storeItems.reduce((s, i) => s + (i.unavailable ? 0 : i.price * i.quantity), 0)
 
           return (
             <View style={styles.storeGroup}>

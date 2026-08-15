@@ -111,7 +111,10 @@ export const useCartStore = create<CartStore>()(
 
       totalCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
 
-      totalPrice: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
+      // Mavjud bo'lmagan mahsulot summaga qo'shilmaydi (checkout ham uni
+      // buyurtmaga kiritmaydi) — mijoz ikki xil raqam ko'rmasin.
+      totalPrice: () =>
+        get().items.reduce((sum, i) => sum + (i.unavailable ? 0 : i.price * i.quantity), 0),
 
       itemsByStore: () => {
         const result: Record<string, CartItem[]> = {}

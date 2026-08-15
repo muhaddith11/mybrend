@@ -36,7 +36,10 @@ interface Props {
  * U+2028/2029 esa JS'da satr uzilishi hisoblanadi va sintaksisni buzadi.
  */
 function safeJson(value: unknown): string {
-  return JSON.stringify(value)
+  // `JSON.stringify(undefined)` satr emas, `undefined` qaytaradi — pastdagi
+  // `.replace()` yiqilardi. `null`ga aylantiramiz: shablonda `var initial = null`
+  // bo'lib chiqadi va truthy tekshiruvlari avvalgidek ishlaydi.
+  return JSON.stringify(value ?? null)
     .replace(/</g, '\\u003c')
     .replace(/>/g, '\\u003e')
     .replace(/\u2028/g, '\\u2028')
