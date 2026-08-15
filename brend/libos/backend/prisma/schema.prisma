@@ -72,6 +72,11 @@ model Store {
   logo        String?
   banner      String?
   isOpen      Boolean  @default(true)
+  // Yashirilgan do'kon ilovada/saytda umuman ko'rinmaydi (ro'yxat, qidiruv,
+  // mahsulotlar, do'kon sahifasi — hammasidan chiqib ketadi). `isOpen=false`dan
+  // farqi: u faqat "Yopiq" belgisini qo'yadi, do'kon ro'yxatda qolaveradi.
+  // Ma'lumot saqlanadi — admin paneldan qaytarib yoqish mumkin.
+  isHidden    Boolean  @default(false)
   rating      Float    @default(0)
   reviewCount Int      @default(0)
   createdAt   DateTime @default(now())

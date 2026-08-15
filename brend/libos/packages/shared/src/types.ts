@@ -82,6 +82,11 @@ export interface Order {
   createdAt: string
   store?: Store
   items?: OrderItem[]
+  paymentMethod?: string
+  storeId?: string
+  // Bot orqali (TRANSFER) to'lov hali tugallanmagan bo'lsa — Telegram havolasi.
+  // Checkout Telegram'ni ocholmaganda mijoz to'lovni shu havoladan boshlaydi.
+  botUrl?: string
 }
 
 export interface OrderItem {

@@ -47,6 +47,8 @@ const storeUpdateSchema = z.object({
   logo: z.string().max(1000).optional(),
   banner: z.string().max(1000).optional(),
   isOpen: z.boolean().optional(),
+  // Do'konni ilovadan butunlay yashirish/qaytarish (ma'lumot saqlanadi).
+  isHidden: z.boolean().optional(),
   hasDelivery: z.boolean().optional(),
   hasPickup: z.boolean().optional(),
   hasCashOnDoor: z.boolean().optional(),

@@ -1,5 +1,5 @@
 import { useMemo, useEffect } from 'react'
-import { View, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Linking } from 'react-native'
 import { Text } from '../../components/Txt'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
@@ -93,6 +93,19 @@ export default function OrderScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
+
+        {/* Bot orqali to'lov hali tugallanmagan — checkout Telegram'ni ochib
+            bermagan bo'lishi mumkin (o'rnatilmagan/bekor qilingan). Mijoz to'lovni
+            shu yerdan davom ettiradi, aks holda buyurtma to'lovsiz osilib qoladi. */}
+        {!!order.botUrl && (
+          <TouchableOpacity
+            style={styles.payBtn}
+            onPress={() => Linking.openURL(order.botUrl!).catch(() => {})}
+          >
+            <Ionicons name="paper-plane-outline" size={18} color="#fff" />
+            <Text style={styles.payBtnText}>{tr.mPayViaBot}</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Status tracker */}
         {!isCancelled ? (
@@ -194,6 +207,11 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: c.surface, borderBottomWidth: 0.5, borderBottomColor: c.border },
   headerTitle: { fontSize: 16, fontWeight: '600', color: c.text },
   scroll: { padding: 16, gap: 12, paddingBottom: 32 },
+  payBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: c.brand, borderRadius: 14, paddingVertical: 14,
+  },
+  payBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
   section: { backgroundColor: c.surface, borderRadius: 14, padding: 16, gap: 8, borderWidth: 0.5, borderColor: c.border },
   sectionLabel: { fontSize: 12, fontWeight: '600', color: c.text3, textTransform: 'uppercase', letterSpacing: 0.5 },
   value: { fontSize: 15, color: c.text, fontWeight: '500' },

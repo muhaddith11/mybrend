@@ -9,6 +9,7 @@ import { useCartStore } from '../../store/cart'
 import { useLangStore } from '../../store/lang'
 import { useTheme, type ThemeColors } from '../../store/theme'
 import { resolveImg } from '../../lib/links'
+import { useCartPrices } from '../../lib/useCartPrices'
 
 export default function CartScreen() {
   const router = useRouter()
@@ -16,6 +17,11 @@ export default function CartScreen() {
   const { colors } = useTheme()
   const styles = useMemo(() => makeStyles(colors), [colors])
   const { items, updateQty, removeItem, totalPrice, itemsByStore } = useCartStore()
+
+  // Savat qurilmada saqlanadi — narxlar eskirgan bo'lishi mumkin. Ekran ochilganda
+  // serverdagi joriy narxga moslaymiz (hook shartsiz chaqiriladi: pastdagi bo'sh
+  // savat return'idan oldin bo'lishi shart).
+  useCartPrices()
 
   if (items.length === 0) {
     return (

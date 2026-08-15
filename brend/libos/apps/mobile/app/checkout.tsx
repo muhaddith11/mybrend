@@ -5,7 +5,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useQuery } from '@tanstack/react-query'
-import { api, useT } from '@libos/shared'
+import { api, useT, DELIVERY_FEE } from '@libos/shared'
+import { useCartPrices } from '../lib/useCartPrices'
 import { useCartStore } from '../store/cart'
 import { useAuthStore } from '../store/auth'
 import { useLangStore } from '../store/lang'
@@ -65,8 +66,16 @@ export default function CheckoutScreen() {
   const needsAddress = delivery === 'DELIVERY' || delivery === 'CASH_ON_DOOR'
   const [loading, setLoading] = useState(false)
 
+  // Savatdagi narxlar serverdagi joriy narxga moslanadi (savat qurilmada
+  // saqlangani uchun eskirgan bo'lishi mumkin).
+  useCartPrices()
+
   const items = itemsByStore()[storeId] ?? []
-  const total = items.reduce((s, i) => s + i.price * i.quantity, 0)
+  const itemsTotal = items.reduce((s, i) => s + i.price * i.quantity, 0)
+  // Backend DELIVERY buyurtmaga yetkazish narxini qo'shadi (orders.ts). Uni shu
+  // yerda ham ko'rsatamiz — aks holda mijoz bir summani ko'rib boshqasini to'laydi.
+  const deliveryFee = delivery === 'DELIVERY' ? DELIVERY_FEE : 0
+  const total = itemsTotal + deliveryFee
   const storeName = items[0]?.storeName ?? ''
 
   const { data: store } = useQuery({
@@ -135,9 +144,19 @@ export default function CheckoutScreen() {
 
       // Click/Payme → paymentUrl, TRANSFER (bot orqali) → botUrl. Ikkalasi ham
       // tashqi sahifaga/botga yo'naltiradi (veb bilan bir xil mantiq).
+      //
+      // MUHIM: bu nuqtada buyurtma serverda ALLAQACHON yaratilgan. Telegram
+      // o'rnatilmagan bo'lsa openURL exception tashlaydi — uni tashqi catch'ga
+      // o'tkazib yuborsak, mijoz "buyurtma amalga oshmadi" degan yolg'on xabarni
+      // ko'rib qayta buyurtma beradi. Shuning uchun alohida ushlaymiz va baribir
+      // kuzatuv sahifasiga o'tamiz (havola u yerda ham bor).
       const redirectUrl = order.paymentUrl ?? order.botUrl
       if (redirectUrl) {
-        await Linking.openURL(redirectUrl)
+        try {
+          await Linking.openURL(redirectUrl)
+        } catch {
+          Alert.alert(tr.mOrderCreatedTitle, tr.mPayLinkFailed)
+        }
       }
       router.replace({ pathname: '/orders/[id]', params: { id: order.id } })
     } catch (e: any) {
@@ -327,6 +346,20 @@ export default function CheckoutScreen() {
 
       {/* Footer — jami va tugma */}
       <View style={styles.footer}>
+        {/* Yetkazib berishda summa ikki qatorga bo'linadi — mijoz nima uchun
+            to'layotganini ko'rsin (veb checkout bilan bir xil). */}
+        {deliveryFee > 0 && (
+          <>
+            <View style={styles.subRow}>
+              <Text style={styles.subLabel}>{tr.coProducts}:</Text>
+              <Text style={styles.subValue}>{itemsTotal.toLocaleString()} {tr.som}</Text>
+            </View>
+            <View style={styles.subRow}>
+              <Text style={styles.subLabel}>{tr.coDeliverySec}:</Text>
+              <Text style={styles.subValue}>{deliveryFee.toLocaleString()} {tr.som}</Text>
+            </View>
+          </>
+        )}
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>{tr.coTotal}:</Text>
           <Text style={styles.totalPrice}>{total.toLocaleString()} {tr.som}</Text>
@@ -384,6 +417,9 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   addrRow: { flexDirection: 'row', gap: 8 },
   addrHalf: { flex: 1 },
   footer: { backgroundColor: c.surface, padding: 16, gap: 12, borderTopWidth: 0.5, borderTopColor: c.border },
+  subRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  subLabel: { fontSize: 13, color: c.text2 },
+  subValue: { fontSize: 13, color: c.text2 },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   totalLabel: { fontSize: 15, color: c.text2 },
   totalPrice: { fontSize: 20, fontWeight: '700', color: c.text },

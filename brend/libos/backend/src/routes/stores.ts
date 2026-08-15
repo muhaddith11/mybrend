@@ -36,7 +36,8 @@ export default async function storesRoutes(app: FastifyInstance) {
     const { gender, city, search, page, limit } = genderQuery.parse(req.query)
     const skip = (page - 1) * limit
 
-    const where: any = {}
+    // Yashirilgan do'konlar ochiq ro'yxatda umuman ko'rinmaydi.
+    const where: any = { isHidden: false }
     if (gender) where.genders = { has: gender as Gender }
     if (city) where.city = { equals: city, mode: 'insensitive' }
     if (search) where.name = { contains: search, mode: 'insensitive' }
@@ -74,7 +75,8 @@ export default async function storesRoutes(app: FastifyInstance) {
     // ochiq (autentifikatsiyasiz) endpoint egasining `cardNumber`, `cardHolder`,
     // `paymentQr` va `telegramChatId` maydonlarini oshkor qiladi. Bu maydonlar faqat
     // autentifikatsiyalangan `GET /admin/store` orqali beriladi.
-    const where = { OR: [{ slug: idOrSlug }, { id: idOrSlug }] }
+    // Yashirilgan do'kon to'g'ridan-to'g'ri havola bilan ham ochilmaydi (404).
+    const where = { isHidden: false, OR: [{ slug: idOrSlug }, { id: idOrSlug }] }
     // `cardNumber`/`paymentQr` javobga chiqmaydi — pastda `hasTransfer` bayrog'iga
     // aylantirilib, o'zlari olib tashlanadi.
     const publicSelect = {
@@ -108,7 +110,7 @@ export default async function storesRoutes(app: FastifyInstance) {
   app.get('/favorites', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { userId } = req.user as { userId: string }
     const favorites = await prisma.favoriteStore.findMany({
-      where: { userId },
+      where: { userId, store: { isHidden: false } },
       include: {
         store: {
           select: {

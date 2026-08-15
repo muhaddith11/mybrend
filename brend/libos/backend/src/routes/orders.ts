@@ -94,7 +94,9 @@ export default async function ordersRoutes(app: FastifyInstance) {
     const body = guestOrderSchema.parse(req.body)
 
     const store = await prisma.store.findUnique({ where: { slug: body.storeSlug } })
-    if (!store) return reply.status(404).send({ error: 'Do\'kon topilmadi' })
+    // Yashirilgan do'kon buyurtma qabul qilmaydi — u ilovada ko'rinmaydi, lekin
+    // eski havola yoki savatda qolgan mahsulot orqali kelish mumkin.
+    if (!store || store.isHidden) return reply.status(404).send({ error: 'Do\'kon topilmadi' })
 
     // Do'kon olib ketishni qo'llab-quvvatlamasa, PICKUP buyurtmani rad etamiz
     // (UI ham yashiradi, lekin backend ham himoyalanadi).
@@ -214,18 +216,18 @@ export default async function ordersRoutes(app: FastifyInstance) {
     const { userId } = req.user as { userId: string }
     const body = createOrderSchema.parse(req.body)
 
+    const st = await prisma.store.findUnique({
+      where: { id: body.storeId },
+      select: { isHidden: true, cardNumber: true, paymentQr: true },
+    })
+    if (!st || st.isHidden) return reply.status(404).send({ error: 'Do\'kon topilmadi' })
+
     // Guest oqimidagi bilan bir xil himoya: rekvizitsiz do'konga TRANSFER buyurtma
     // yaratilmasin (to'lanmaydigan buyurtma + bekorga kamaygan stok).
-    if (body.paymentProvider === 'TRANSFER') {
-      const st = await prisma.store.findUnique({
-        where: { id: body.storeId },
-        select: { cardNumber: true, paymentQr: true },
+    if (body.paymentProvider === 'TRANSFER' && !st.cardNumber && !st.paymentQr) {
+      return reply.status(400).send({
+        error: "Bu do'kon hozircha karta orqali to'lovni qabul qilmaydi. Naqd to'lovni tanlang.",
       })
-      if (st && !st.cardNumber && !st.paymentQr) {
-        return reply.status(400).send({
-          error: "Bu do'kon hozircha karta orqali to'lovni qabul qilmaydi. Naqd to'lovni tanlang.",
-        })
-      }
     }
 
     const productIds = body.items.map(i => i.productId)
@@ -346,10 +348,21 @@ export default async function ordersRoutes(app: FastifyInstance) {
       include: {
         items: { include: { product: true } },
         store: storeInclude,
+        payment: { select: { status: true } },
       },
     })
     if (!order) return reply.status(404).send({ error: 'Buyurtma topilmadi' })
-    return reply.send(order)
+
+    // Bot orqali to'lov hali tugallanmagan bo'lsa — havolani qaytaramiz. Checkout
+    // Telegram'ni ocholmasa (o'rnatilmagan bo'lsa) mijoz to'lovni shu sahifadan
+    // qayta boshlay olishi kerak, aks holda buyurtma to'lovsiz osilib qoladi.
+    const needsBotPayment =
+      order.paymentMethod === 'transfer' &&
+      order.status !== 'CANCELLED' &&
+      order.payment?.status !== 'PAID'
+    const botUrl = needsBotPayment ? await buildBotPaymentUrl(order.id) : undefined
+
+    return reply.send({ ...order, botUrl })
   })
 
   // Mehmon buyurtma kuzatuvi — AUTH'SIZ, lekin buyurtma ID (cuid) maxfiy kalit

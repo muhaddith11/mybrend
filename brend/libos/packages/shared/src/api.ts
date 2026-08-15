@@ -84,6 +84,12 @@ export const api = {
       return request<Product[]>(`/products/store/${storeId}${q}`)
     },
     getById: (id: string) => request<Product & { store?: Store }>(`/products/${id}`),
+    // Savat narxlarini yangilash uchun — bir so'rovda bir nechta mahsulotning
+    // joriy narxi va mavjudligi (maksimum 100 ta id).
+    byIds: (ids: string[]) =>
+      request<{ products: { id: string; price: number; inStock: boolean }[] }>(
+        `/products/by-ids?ids=${encodeURIComponent(ids.join(','))}`
+      ),
     byId: (id: string) => request<Product & { store?: Store }>(`/products/${id}`),
   },
 

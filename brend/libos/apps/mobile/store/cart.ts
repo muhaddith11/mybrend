@@ -21,6 +21,8 @@ interface CartStore {
   updateQty: (productId: string, qty: number, size?: string, color?: string) => void
   clearStore: (storeId: string) => void
   clearAll: () => void
+  // Serverdagi joriy narxlarni savatga qo'llaydi (lib/useCartPrices.ts chaqiradi).
+  syncPrices: (prices: Record<string, number>) => void
   totalCount: () => number
   totalPrice: () => number
   // Bir do'kondagi mahsulotlar (checkout uchun)
@@ -82,6 +84,22 @@ export const useCartStore = create<CartStore>()(
       },
 
       clearAll: () => set({ items: [] }),
+
+      // Faqat haqiqatan o'zgargan narx yoziladi — aks holda har sinxronda yangi
+      // massiv yaratilib, foydalanuvchi savatni ochib turganда keraksiz render
+      // (va useEffect halqasi) yuz beradi.
+      syncPrices: (prices) => {
+        set(state => {
+          let changed = false
+          const items = state.items.map(i => {
+            const fresh = prices[i.productId]
+            if (fresh === undefined || fresh === i.price) return i
+            changed = true
+            return { ...i, price: fresh }
+          })
+          return changed ? { items } : state
+        })
+      },
 
       totalCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
 

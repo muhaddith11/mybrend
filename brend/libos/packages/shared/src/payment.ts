@@ -2,6 +2,14 @@ import { api } from './api'
 
 export type PaymentProvider = 'CLICK' | 'PAYME' | 'CASH'
 
+/**
+ * Yetkazib berish narxi (so'm). Backend buni buyurtma summasiga qo'shadi
+ * (`orders.ts` — DELIVERY_FEE env, shu qiymat default). Mijoz interfeysi ham
+ * shuni ko'rsatishi SHART, aks holda ko'rsatilgan va to'lanadigan summa farq
+ * qiladi. Backend env'da o'zgartirilsa, shu konstanta ham yangilansin.
+ */
+export const DELIVERY_FEE = 15000
+
 export interface PaymentResult {
   success: boolean
   url?: string        // Click/Payme to'lov URL
