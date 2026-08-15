@@ -10,6 +10,24 @@ const genderQuery = z.object({
   limit: z.coerce.number().default(20),
 })
 
+// Mijozga HECH QACHON chiqmasligi kerak bo'lgan do'kon maydonlari. Bular faqat
+// autentifikatsiyalangan `GET /admin/store` orqali egasining o'ziga beriladi.
+const SECRET_STORE_FIELDS = ['cardNumber', 'cardHolder', 'paymentQr', 'telegramChatId'] as const
+
+/**
+ * Do'kon yozuvini ochiq (public) ko'rinishga o'tkazadi: maxfiy maydonlarni olib
+ * tashlaydi va ularning o'rniga `hasTransfer` bayrog'ini qo'yadi.
+ *
+ * Prisma `select`i bilan ikki qavatli himoya: `select` kelajakda tasodifan
+ * kengaysa ham (yoki `include`ga qaytsa) maxfiy maydon javobga tushmaydi.
+ */
+function toPublicStore<T extends Record<string, unknown>>(store: T) {
+  const out: Record<string, unknown> = { ...store }
+  const hasTransfer = Boolean(out.cardNumber || out.paymentQr)
+  for (const key of SECRET_STORE_FIELDS) delete out[key]
+  return { ...out, hasTransfer }
+}
+
 export default async function storesRoutes(app: FastifyInstance) {
   const prisma: PrismaClient = app.prisma
 
@@ -52,21 +70,38 @@ export default async function storesRoutes(app: FastifyInstance) {
   app.get('/:idOrSlug', async (req, reply) => {
     const { idOrSlug } = req.params as { idOrSlug: string }
     const { lite } = z.object({ lite: z.coerce.boolean().optional() }).parse(req.query)
-    const store = await prisma.store.findFirst({
-      where: { OR: [{ slug: idOrSlug }, { id: idOrSlug }] },
-      include: lite
-        ? undefined
-        : {
-            products: {
-              where: { inStock: true },
-              include: { category: true, variants: true },
-              orderBy: { createdAt: 'desc' },
-              take: 200,
-            },
-          },
-    })
+    // MUHIM: `include` emas, aniq `select`. Aks holda butun Store qatori qaytadi va
+    // ochiq (autentifikatsiyasiz) endpoint egasining `cardNumber`, `cardHolder`,
+    // `paymentQr` va `telegramChatId` maydonlarini oshkor qiladi. Bu maydonlar faqat
+    // autentifikatsiyalangan `GET /admin/store` orqali beriladi.
+    const where = { OR: [{ slug: idOrSlug }, { id: idOrSlug }] }
+    // `cardNumber`/`paymentQr` javobga chiqmaydi — pastda `hasTransfer` bayrog'iga
+    // aylantirilib, o'zlari olib tashlanadi.
+    const publicSelect = {
+      id: true, name: true, slug: true, description: true,
+      city: true, address: true, phone: true, logo: true, banner: true,
+      isOpen: true, rating: true, reviewCount: true, createdAt: true, updatedAt: true,
+      themeColor: true, themeBg: true, lat: true, lng: true,
+      instagram: true, telegram: true, workingHours: true, deliveryText: true,
+      lookbook: true, lookbookLooks: true, genders: true,
+      hasDelivery: true, hasPickup: true, hasCashOnDoor: true, deliveryTime: true,
+      cardNumber: true, paymentQr: true,
+    } as const
+    const productsSelect = {
+      products: {
+        where: { inStock: true },
+        include: { category: true, variants: true },
+        orderBy: { createdAt: 'desc' },
+        take: 200,
+      },
+    } as const
+
+    const store = lite
+      ? await prisma.store.findFirst({ where, select: publicSelect })
+      : await prisma.store.findFirst({ where, select: { ...publicSelect, ...productsSelect } })
     if (!store) return reply.status(404).send({ error: 'Do\'kon topilmadi' })
-    return reply.send(store)
+
+    return reply.send(toPublicStore(store))
   })
 
   // Foydalanuvchining sevimli do'konlari

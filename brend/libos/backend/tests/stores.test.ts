@@ -78,6 +78,37 @@ describe('GET /api/stores/:idOrSlug', () => {
     await app.close()
   })
 
+  // Regressiya: bu endpoint autentifikatsiyasiz. Ilgari `include` ishlatilgani uchun
+  // butun Store qatori, jumladan egasining karta raqami ham ochiq qaytardi.
+  test('to\'lov rekvizitlari va telegramChatId javobda BO\'LMASLIGI shart', async () => {
+    const { app } = await buildStoresTestApp({
+      stores: [{
+        id: 's9', slug: 'karta', name: 'Karta', city: 'Qoqon', genders: ['MEN'], rating: 5,
+        cardNumber: '5614682119660704', cardHolder: 'Behzodbek Z', paymentQr: null,
+        telegramChatId: '8434244298',
+      }],
+    })
+    const res = await app.inject({ method: 'GET', url: '/api/stores/karta' })
+    assert.equal(res.statusCode, 200)
+    const body = res.json()
+    assert.equal(body.cardNumber, undefined)
+    assert.equal(body.cardHolder, undefined)
+    assert.equal(body.paymentQr, undefined)
+    assert.equal(body.telegramChatId, undefined)
+    // Rekvizit o'rniga faqat bayroq beriladi
+    assert.equal(body.hasTransfer, true)
+    await app.close()
+  })
+
+  test('rekvizitsiz do\'konda hasTransfer=false', async () => {
+    const { app } = await buildStoresTestApp({
+      stores: [{ id: 's8', slug: 'yoq-karta', name: 'Yoq', city: 'Qoqon', genders: ['MEN'], rating: 1 }],
+    })
+    const res = await app.inject({ method: 'GET', url: '/api/stores/yoq-karta' })
+    assert.equal(res.json().hasTransfer, false)
+    await app.close()
+  })
+
   test('mavjud bo\'lmagan id/slug → 404', async () => {
     const { app } = await buildStoresTestApp(seed)
     const res = await app.inject({ method: 'GET', url: '/api/stores/yoq' })

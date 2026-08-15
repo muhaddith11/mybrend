@@ -18,6 +18,10 @@ export interface Store {
   hasDelivery?: boolean
   hasPickup?: boolean
   hasCashOnDoor?: boolean
+  // Do'kon bot orqali (karta/QR) to'lovni qabul qila oladimi. Backend rekvizit
+  // bor-yo'qligidan hisoblaydi — karta raqamining o'zi mijozga hech qachon
+  // yuborilmaydi. Checkout shu bayroqqa qarab "Karta" tanlovini ko'rsatadi.
+  hasTransfer?: boolean
   deliveryTime?: number
   themeColor?: string
   themeBg?: string
