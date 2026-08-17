@@ -26,7 +26,10 @@ const STORE = {
   address: "Qo'qon shahri, O'zbekiston", // TODO: aniq ko'cha/uy raqami
   phone: '+998919776777',
   telegram: 'Aura_Medforma',
-  workingHours: 'Har kuni: 9:00 - 20:00', // TODO: aniq ish vaqti
+  workingHours: 'Har kuni: 10:00 - 22:00',
+  // 40°31'10.7"N 70°56'49.9"E — footer'dagi manzil bosilganda xaritada yo'nalish ochiladi
+  lat: 40.5196389,
+  lng: 70.9471944,
   themeColor: '#D4AF6A', // oltin — storeDesigns.ts dagi accent bilan bir xil
   themeBg: '#06302A', // to'q zumrad — do'kon avatari foni
   genders: ['MEN', 'WOMEN'] as const,
@@ -78,7 +81,9 @@ async function main() {
 
   // ─── Do'kon ─────────────────────────────────────────────────────
   // update'da faqat brendga oid maydonlarni yangilaymiz — egasi admin panelda
-  // o'zgartirgan manzil/telefon/logo qayta ishga tushirilganda o'chib ketmasin.
+  // o'zgartirgan manzil/telefon/ish vaqti/logo qayta ishga tushirilganda o'chib
+  // ketmasin. Koordinatalar bundan mustasno: ularni admin panelda tahrirlab
+  // bo'lmaydi, demak shu skript yagona manba.
   const store = await prisma.store.upsert({
     where: { slug: STORE.slug },
     update: {
@@ -87,6 +92,8 @@ async function main() {
       themeColor: STORE.themeColor,
       themeBg: STORE.themeBg,
       genders: [...STORE.genders],
+      lat: STORE.lat,
+      lng: STORE.lng,
     },
     create: {
       ...STORE,
