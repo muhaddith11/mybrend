@@ -8,6 +8,7 @@ import { useT } from '@libos/shared'
 import { useLangStore } from '../store/lang'
 import { useTheme } from '../store/theme'
 import { resolveImg } from '../lib/links'
+import { getStoreDesign } from '../lib/storeDesigns'
 
 const { width } = Dimensions.get('window')
 const BANNER_W = width - 32
@@ -90,7 +91,11 @@ export function HeroBanner({ stores }: { stores: Store[] }) {
               </TouchableOpacity>
             )
           }
-          const bg = slide.store.banner ? '#000' : GRADIENTS[i % GRADIENTS.length]
+          // Bazadagi banner ustun; bo'lmasa maxsus dizaynli do'konning bundled banneri.
+          const banner = slide.store.banner
+            ? { uri: resolveImg(slide.store.banner) }
+            : getStoreDesign(slide.store.slug)?.assets?.banner
+          const bg = banner ? '#000' : GRADIENTS[i % GRADIENTS.length]
           return (
             <TouchableOpacity
               key={slide.store.id}
@@ -98,8 +103,8 @@ export function HeroBanner({ stores }: { stores: Store[] }) {
               style={[styles.slide, { backgroundColor: bg }]}
               onPress={() => router.push(`/store/${slide.store.slug}`)}
             >
-              {slide.store.banner ? (
-                <Image source={{ uri: resolveImg(slide.store.banner) }} style={styles.bannerImg} resizeMode="cover" />
+              {banner ? (
+                <Image source={banner} style={styles.bannerImg} resizeMode="cover" />
               ) : (
                 <Text style={styles.storeInitial}>{slide.store.name.charAt(0)}</Text>
               )}

@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { View, ScrollView, TouchableOpacity, StyleSheet, Image, Dimensions, useWindowDimensions, Linking, Alert, Modal, Pressable } from 'react-native'
+import type { ImageSourcePropType } from 'react-native'
 import { Text } from '../Txt'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -24,6 +25,9 @@ const CARD_W = (width - 32 - 12) / 2
 
 type StoreDetail = Store & { products: Product[] }
 
+// Lookbook elementi — rasmi bazadan (URL) yoki dizayndan (bundled) kelishi mumkin.
+type LookItem = { source: ImageSourcePropType; productIds: string[] }
+
 export function BespokeStore({ store, design }: { store: StoreDetail; design: StoreDesign }) {
   const router = useRouter()
   const tr = useT(useLangStore(s => s.lang))
@@ -32,7 +36,7 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
   const qc = useQueryClient()
   const styles = useMemo(() => makeStyles(design), [design])
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [openLook, setOpenLook] = useState<LookbookLook | null>(null)
+  const [openLook, setOpenLook] = useState<LookItem | null>(null)
   const scrollRef = useRef<ScrollView>(null)
   const gridY = useRef(0)
   const lookbookY = useRef(0)
@@ -88,10 +92,17 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
   // Yangi lookbook (rasm + mahsulotlar). Bo'lmasa — eski rasm-only lookbook'ga tushamiz.
   const lookbookLooks = (store as any).lookbookLooks as LookbookLook[] | undefined
   const oldLookbook = (store as any).lookbook as string[] | undefined
-  const looks: LookbookLook[] = Array.isArray(lookbookLooks) && lookbookLooks.length > 0
+  const dbLooks: LookbookLook[] = Array.isArray(lookbookLooks) && lookbookLooks.length > 0
     ? lookbookLooks
     : Array.isArray(oldLookbook) ? oldLookbook.map(uri => ({ image: uri, productIds: [] })) : []
+  // Bazada birorta look bo'lmasa — dizaynga biriktirilgan bundled rasmlar (galereya).
+  const looks: LookItem[] = dbLooks.length > 0
+    ? dbLooks.map(l => ({ source: { uri: resolveImg(l.image) }, productIds: l.productIds }))
+    : (design.assets?.looks ?? []).map(source => ({ source, productIds: [] }))
   const hasLookbook = looks.length > 0
+
+  // Bazadagi banner ustun; bo'lmasa dizayndagi bundled hero rasmi.
+  const heroBanner = store.banner ? { uri: resolveImg(store.banner) } : design.assets?.banner
   const L = {
     contact: lang === 'ru' ? 'КОНТАКТЫ' : lang === 'en' ? 'CONTACT' : 'ALOQA',
     hours: lang === 'ru' ? 'Часы работы' : lang === 'en' ? 'Working hours' : 'Ish vaqti',
@@ -123,8 +134,8 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
       <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         {/* ── HERO ── */}
         <View style={[styles.hero, { height: HERO_H }]}>
-          {store.banner ? (
-            <Image source={{ uri: resolveImg(store.banner) }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+          {heroBanner ? (
+            <Image source={heroBanner} style={StyleSheet.absoluteFill} resizeMode="cover" />
           ) : (
             <View style={[StyleSheet.absoluteFill, { backgroundColor: design.bg }]} />
           )}
@@ -219,7 +230,7 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
                   activeOpacity={0.9}
                   onPress={() => look.productIds.length > 0 ? setOpenLook(look) : undefined}
                 >
-                  <Image source={{ uri: resolveImg(look.image) }} style={styles.imgFill} resizeMode="cover" />
+                  <Image source={look.source} style={styles.imgFill} resizeMode="cover" />
                   {look.productIds.length > 0 && (
                     <View style={styles.lookBadge}>
                       <Ionicons name="pricetags" size={11} color="#fff" />
@@ -318,7 +329,7 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
               </TouchableOpacity>
             </View>
             {openLook && (
-              <Image source={{ uri: resolveImg(openLook.image) }} style={styles.lookModalImg} resizeMode="cover" />
+              <Image source={openLook.source} style={styles.lookModalImg} resizeMode="cover" />
             )}
             <Text style={styles.lookModalSub}>
               {lang === 'ru' ? 'Товары из этого образа' : lang === 'en' ? 'Products in this look' : 'Bu obrazdagi mahsulotlar'}

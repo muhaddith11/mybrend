@@ -8,16 +8,21 @@ import { useT } from '@libos/shared'
 import { useLangStore } from '../store/lang'
 import { useTheme, type ThemeColors, space, radius, font } from '../store/theme'
 import { resolveImg } from '../lib/links'
+import { getStoreDesign } from '../lib/storeDesigns'
 
 export function StoreCard({ store, onPress }: { store: Store; onPress: () => void }) {
   const tr = useT(useLangStore(s => s.lang))
   const { colors } = useTheme()
   const styles = useMemo(() => makeStyles(colors), [colors])
+  // Bazadagi logo ustun; bo'lmasa maxsus dizaynli do'konning bundled logotipi.
+  const logo = store.logo
+    ? { uri: resolveImg(store.logo) }
+    : getStoreDesign(store.slug)?.assets?.logo
   return (
     <PressableScale style={styles.storeCard} onPress={onPress}>
       <View style={[styles.storeAvatar, { backgroundColor: store.themeBg }]}>
-        {store.logo ? (
-          <Image source={{ uri: resolveImg(store.logo) }} style={styles.storeLogoImg} resizeMode="cover" />
+        {logo ? (
+          <Image source={logo} style={styles.storeLogoImg} resizeMode="cover" />
         ) : (
           <Ionicons name="storefront" size={24} color={colors.brand} />
         )}

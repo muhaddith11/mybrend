@@ -1,6 +1,18 @@
 // Har do'kon uchun alohida vizual identifikatsiya — web'dagi asma/boosner/onepro
 // mini-saytlariga mos (ranglar oklch'dan hex'ga o'girildi, shriftlar Google Fonts).
+// `aura` faqat ilovada mavjud (web'da mini-sayti yo'q) — logotipidan olingan.
 // BespokeStore shu konfiguratsiya bilan har do'konga o'z dizaynini beradi.
+
+import type { ImageSourcePropType } from 'react-native'
+
+// Ilova ichiga joylashtirilgan (bundled) brend rasmlari. Bazadagi qiymat (admin
+// panelda yuklangan logo/banner) doim ustun — bular faqat u bo'sh bo'lganda
+// ishlatiladi, ya'ni do'kon birinchi kunidanoq to'liq brendlangan ko'rinadi.
+export interface StoreAssets {
+  logo?: ImageSourcePropType
+  banner?: ImageSourcePropType
+  looks?: ImageSourcePropType[] // lookbook — bazada look bo'lmasa ko'rsatiladi
+}
 
 export interface StoreDesign {
   slug: string
@@ -31,6 +43,7 @@ export interface StoreDesign {
   }
   location: string
   established: string
+  assets?: StoreAssets
 }
 
 // Shrift oilalari (_layout.tsx da useFonts orqali yuklanadi)
@@ -140,7 +153,48 @@ const onepro: StoreDesign = {
   established: 'Tashkil: 2024',
 }
 
-export const STORE_DESIGNS: Record<string, StoreDesign> = { asma, boosner, onepro }
+// Aura Med Forma — tibbiyot xodimlari uchun kiyim. Logotipdagi to'q zumrad
+// marmar + oltin serif yozuvdan olingan palitra. Sarlavha serif (logotipga mos),
+// matn Inter — asma'dan (butunlay serif) farqlanib tursin.
+const aura: StoreDesign = {
+  slug: 'aura',
+  mode: 'dark',
+  bg: '#06302A',      // to'q zumrad
+  surface: '#0B4038',
+  border: '#175A4D',
+  text: '#F0F4F2',
+  textMuted: '#9CBDB3',
+  accent: '#D4AF6A',  // oltin
+  accentText: '#06302A',
+  radius: 6,
+  fonts: {
+    heading: FONTS.cormorantSemiBold,
+    body: FONTS.interRegular,
+    bodyBold: FONTS.interSemiBold,
+  },
+  hero: {
+    kicker: 'Tibbiyot xodimlari uchun',
+    title1: 'Aura',
+    title2: 'Med Forma',
+    sub: "Siz loyiq bo'lgan sifat — premium med xalat va formalar, tapichka va aksessuarlar.",
+    uppercase: true,
+    letterSpacing: 3,
+    italic2: false,
+    ctaCollection: "Kolleksiyani ko'rish",
+    ctaLookbook: 'Lookbook',
+  },
+  location: "Qo'qon, O'zbekiston",
+  established: 'Tashkil: 2025',
+  assets: {
+    logo: require('../assets/aura-logo.webp'),
+    // Hero/banner uchun brend yozuvi YO'Q rasm tanlangan — sarlavha ("AURA
+    // MED FORMA") va do'kon nomi uning ustiga chiqadi, takrorlanmasin.
+    banner: require('../assets/aura-banner.webp'),
+    looks: [require('../assets/aura-look-1.webp')],
+  },
+}
+
+export const STORE_DESIGNS: Record<string, StoreDesign> = { asma, boosner, onepro, aura }
 
 export function getStoreDesign(slug?: string): StoreDesign | null {
   if (!slug) return null

@@ -84,7 +84,7 @@ export default function StoreScreen() {
     )
   }
 
-  // Bu do'kon uchun maxsus dizayn bo'lsa (asma/boosner/onepro) — o'z mini-sayti
+  // Bu do'kon uchun maxsus dizayn bo'lsa (asma/boosner/onepro/aura) — o'z mini-sayti
   const design = getStoreDesign(slug)
   if (design) return <BespokeStore store={store} design={design} />
 
