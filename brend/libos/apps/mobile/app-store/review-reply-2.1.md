@@ -105,12 +105,12 @@ No setup is required. The app opens directly into the store catalogue and can
 be browsed without an account. An account is only needed to place an order.
 
 Customer demo account:
-- Sign in with any Uzbek phone number in the format +998XXXXXXXXX
-  (for example +998901234567).
+- Sign in with the demo phone number: +998123456789
 - Tap "Get code".
 - Enter the verification code: 007700
-  This universal test code is accepted for any phone number so that the review
-  team does not need to receive a real SMS.
+  Real SMS is only delivered to Uzbek numbers, so this demo account accepts a
+  fixed code. Please use exactly this number; the code is not accepted for
+  any other number.
 
 Store-owner (admin) account:
 The app also contains a private panel used by partner store owners to manage
@@ -163,8 +163,12 @@ Thank you for your time.
 | `<DEVICES>` | Sinovdan o'tkazilgan iPhone modeli + iOS versiyasi |
 | `<ADMIN EMAIL>` / `<ADMIN PASSWORD>` | Do'kon egasi demo akkaunti (masalan Asma) |
 
-## Eslatma
+## Eslatma — demo kodi cheklandi
 
-`007700` universal kodi hozir **har qanday** telefon raqami bilan ishlaydi.
-Bu review uchun qulay, lekin ilova chiqqach xavfsizlik teshigi bo'ladi —
-uni faqat bitta demo raqamga cheklash kerak. Qarang: `backend/src/routes/auth.ts`.
+`007700` ilgari **har qanday** raqam bilan ishlardi (istalgan akkauntga kirish
+mumkin edi). Endi u faqat `+998123456789` uchun amal qiladi —
+`backend/src/routes/auth.ts`, `DEMO_OTP_PHONE` env bilan o'zgartiriladi.
+
+Shu sababli App Store Connect va Play Console'dagi **Notes/Demo account**
+maydonlarida raqam aniq ko'rsatilishi SHART. "Any +998 number" deb qolsa,
+keyingi review'da reviewer kira olmaydi va Guideline 2.1 bilan rad bo'ladi.

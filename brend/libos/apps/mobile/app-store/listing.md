@@ -103,22 +103,26 @@ SMS ololmaydi, shuning uchun **demo hisob berish SHART** (Guideline 2.1).
 
 | Maydon | Qiymat |
 |--------|--------|
-| Demo phone | `+998 90 123 45 67` ← istalgan +998 raqam yozing |
+| Demo phone | `+998123456789` ← AYNAN shu raqam (boshqasi ishlamaydi) |
 | Demo code | `007700` |
+
+> ⚠️ `007700` ilgari istalgan raqam bilan ishlardi. Endi u **faqat yuqoridagi
+> demo raqam** uchun amal qiladi (`backend/src/routes/auth.ts`, `DEMO_OTP_PHONE`).
+> Reviewer boshqa raqam tersa kira olmaydi — Notes'da raqamni aniq yozish shart.
 
 **Notes** (reviewer uchun izoh — inglizcha):
 
 ```
 Sign-in uses phone number + SMS one-time code.
 
-SMS is only delivered to Uzbek (+998) numbers, so instead of requesting a
-real code, use the universal test code 007700, which works with any phone
-number entered:
+SMS is only delivered to Uzbek (+998) numbers, so we have prepared a demo
+account that accepts a fixed verification code. Please use exactly this
+number - the code is not accepted for any other number:
 
-  Phone: +998 90 123 45 67  (or any +998 number)
+  Phone: +998123456789
   Verification code: 007700
 
-Steps: open the app -> Profile tab -> enter any +998 phone number ->
+Steps: open the app -> Profile tab -> enter +998123456789 ->
 tap "Get code" -> enter 007700 -> you are signed in.
 
 Payments: the app sells physical clothing from local stores in Kokand,
@@ -199,7 +203,7 @@ ZYFF is a marketplace app for clothing stores in Kokand, Uzbekistan.
 Browse stores and products, add items to the cart, and place an order
 for delivery or pickup.
 
-Sign in with any +998 phone number and use the verification code 007700.
+Sign in with the demo number +998123456789 and verification code 007700.
 
 What to test: browsing stores, product details with size and color
 selection, cart and checkout, order history, dark mode, and account
@@ -211,7 +215,7 @@ uchun Apple'ning ikki maydoni shunday moslashtiriladi:
 
 | Apple maydoni | Yoziladigan qiymat |
 |---------------|--------------------|
-| User Name | `+998901234567` (soxta raqam — shaxsiy raqamingizni YOZMANG) |
+| User Name | `+998123456789` (demo raqam — shaxsiy raqamingizni YOZMANG) |
 | Password | `007700` |
 
 ---

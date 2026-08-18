@@ -27,6 +27,34 @@ const PUBLIC_USER_SELECT = {
 const sendOtpRateLimit = { config: { rateLimit: { max: 5, timeWindow: '1 minute' } } }
 const verifyOtpRateLimit = { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } }
 
+// ─── App Review demo akkaunti ────────────────────────────────────────────────
+// `007700` ilgari HAR QANDAY raqam bilan ishlardi — ya'ni kodni bilgan odam
+// istalgan foydalanuvchining akkauntiga kira olardi (va uni o'chira olardi).
+// Endi u faqat bitta demo raqam uchun amal qiladi. Bu raqam Apple/Google review
+// jamoasiga beriladi; `12` operator prefiksi O'zbekistonda mavjud emas, shuning
+// uchun raqam hech qachon real foydalanuvchiga tegishli bo'lolmaydi.
+//
+// `DEMO_OTP_PHONE=""` qo'yilsa demo kirish butunlay o'chadi.
+const DEMO_OTP_CODE = '007700'
+const DEMO_OTP_PHONE = (process.env.DEMO_OTP_PHONE ?? '+998123456789').trim()
+
+/** Raqamni `phoneSchema` bilan bir xil normallashtiradi (bo'sh joy/chiziq olib tashlanadi). */
+function normalizePhone(p: string): string {
+  const s = p.replace(/[\s\-()]/g, '')
+  return s.startsWith('+') ? s : `+${s}`
+}
+
+/** Shu raqam review demo raqamimi. */
+function isDemoPhone(phone: string): boolean {
+  if (!DEMO_OTP_PHONE) return false
+  return normalizePhone(phone) === normalizePhone(DEMO_OTP_PHONE)
+}
+
+/** Shu raqam uchun demo kodi qabul qilinadimi. */
+function isDemoLogin(phone: string, code: string): boolean {
+  return isDemoPhone(phone) && code === DEMO_OTP_CODE
+}
+
 // Mijoz tokeni 30 kun amal qiladi. Muddatsiz token o'g'irlansa abadiy yaroqli
 // bo'lib qolardi — endi avtomatik eskiradi va qayta login talab qilinadi.
 const USER_TOKEN_TTL = '30d'
@@ -40,9 +68,15 @@ export default async function authRoutes(app: FastifyInstance) {
   app.post('/send-otp', sendOtpRateLimit, async (req, reply) => {
     const { phone, purpose } = sendOtpSchema.parse(req.body)
 
+    // Demo raqamga cooldown QO'LLANMAYDI. Apple/Google reviewer'i SMS ololmaydi,
+    // shuning uchun "Get code" ni bir necha marta bosadi — 60 soniyalik cooldown
+    // uni o'zbekcha 429 xatosi bilan login ekranida qamab qo'yardi va ilova kod
+    // ekraniga umuman o'tmasdi. (2026-08-18 da Apple aynan shu sababdan rad etdi.)
+    const demo = isDemoPhone(phone)
+
     // Rate-limit: oxirgi kod yaqinda yuborilgan bo'lsa — kutish
     const existing = await prisma.user.findUnique({ where: { phone } })
-    if (existing?.lastOtpSentAt) {
+    if (!demo && existing?.lastOtpSentAt) {
       const elapsed = Date.now() - existing.lastOtpSentAt.getTime()
       if (elapsed < OTP_COOLDOWN_MS) {
         const wait = Math.ceil((OTP_COOLDOWN_MS - elapsed) / 1000)
@@ -67,12 +101,16 @@ export default async function authRoutes(app: FastifyInstance) {
       purpose === 'delete'
         ? `ZYFF profilingiz o'chirilishini tasdiqlash kodi: ${code}`
         : `ZYFF ilovasiga kirish uchun tasdiqlash kodi: ${code}`
-    // SMS provayder yiqilsa ham login oqimi to'xtamasin — kod DB'da saqlangan,
-    // test kodi (007700) baribir ishlaydi. Xato serverda loglanadi.
-    try {
-      await sendSms(phone, smsText)
-    } catch (e) {
-      req.log.error({ err: e }, 'SMS yuborilmadi (provayder)')
+    // Demo raqamga SMS yuborilmaydi — u real raqam emas, provayder xarajati va
+    // xatosi bekorga bo'ladi. Reviewer baribir `007700` bilan kiradi.
+    if (!demo) {
+      // SMS provayder yiqilsa ham login oqimi to'xtamasin — kod DB'da saqlangan.
+      // Xato serverda loglanadi.
+      try {
+        await sendSms(phone, smsText)
+      } catch (e) {
+        req.log.error({ err: e }, 'SMS yuborilmadi (provayder)')
+      }
     }
     return reply.send({ success: true, message: 'Kod yuborildi' })
   })
@@ -80,8 +118,8 @@ export default async function authRoutes(app: FastifyInstance) {
   app.post('/verify-otp', verifyOtpRateLimit, async (req, reply) => {
     const { phone, code } = verifyOtpSchema.parse(req.body)
 
-    // 007700 — universal test kodi (har doim ishlaydi)
-    if (code === '007700') {
+    // Demo kirish — FAQAT review demo raqami uchun (yuqoridagi izohga qarang).
+    if (isDemoLogin(phone, code)) {
       let user = await prisma.user.findUnique({ where: { phone }, select: PUBLIC_USER_SELECT })
       if (!user) user = await prisma.user.create({ data: { phone }, select: PUBLIC_USER_SELECT })
       const token = app.jwt.sign({ userId: user.id, phone: user.phone }, { expiresIn: USER_TOKEN_TTL })
@@ -144,8 +182,9 @@ export default async function authRoutes(app: FastifyInstance) {
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) return reply.status(404).send({ error: 'Foydalanuvchi topilmadi' })
 
-    // 007700 — universal test kodi (verify-otp bilan bir xil, pre-launch uchun)
-    if (code !== '007700') {
+    // Demo kirish — faqat review demo raqamining O'ZI uchun. Ilgari `007700`
+    // har qanday akkauntni o'chirishga imkon berardi.
+    if (!isDemoLogin(user.phone, code)) {
       if (!user.otp || !user.otpExpiry) {
         return reply.status(400).send({ error: "Avval kod so'rang" })
       }
