@@ -44,10 +44,15 @@ function normalizePhone(p: string): string {
   return s.startsWith('+') ? s : `+${s}`
 }
 
+/** Shu raqam review demo raqamimi. */
+function isDemoPhone(phone: string): boolean {
+  if (!DEMO_OTP_PHONE) return false
+  return normalizePhone(phone) === normalizePhone(DEMO_OTP_PHONE)
+}
+
 /** Shu raqam uchun demo kodi qabul qilinadimi. */
 function isDemoLogin(phone: string, code: string): boolean {
-  if (!DEMO_OTP_PHONE) return false
-  return code === DEMO_OTP_CODE && normalizePhone(phone) === normalizePhone(DEMO_OTP_PHONE)
+  return isDemoPhone(phone) && code === DEMO_OTP_CODE
 }
 
 // Mijoz tokeni 30 kun amal qiladi. Muddatsiz token o'g'irlansa abadiy yaroqli
@@ -63,9 +68,15 @@ export default async function authRoutes(app: FastifyInstance) {
   app.post('/send-otp', sendOtpRateLimit, async (req, reply) => {
     const { phone, purpose } = sendOtpSchema.parse(req.body)
 
+    // Demo raqamga cooldown QO'LLANMAYDI. Apple/Google reviewer'i SMS ololmaydi,
+    // shuning uchun "Get code" ni bir necha marta bosadi — 60 soniyalik cooldown
+    // uni o'zbekcha 429 xatosi bilan login ekranida qamab qo'yardi va ilova kod
+    // ekraniga umuman o'tmasdi. (2026-08-18 da Apple aynan shu sababdan rad etdi.)
+    const demo = isDemoPhone(phone)
+
     // Rate-limit: oxirgi kod yaqinda yuborilgan bo'lsa — kutish
     const existing = await prisma.user.findUnique({ where: { phone } })
-    if (existing?.lastOtpSentAt) {
+    if (!demo && existing?.lastOtpSentAt) {
       const elapsed = Date.now() - existing.lastOtpSentAt.getTime()
       if (elapsed < OTP_COOLDOWN_MS) {
         const wait = Math.ceil((OTP_COOLDOWN_MS - elapsed) / 1000)
@@ -90,12 +101,16 @@ export default async function authRoutes(app: FastifyInstance) {
       purpose === 'delete'
         ? `ZYFF profilingiz o'chirilishini tasdiqlash kodi: ${code}`
         : `ZYFF ilovasiga kirish uchun tasdiqlash kodi: ${code}`
-    // SMS provayder yiqilsa ham login oqimi to'xtamasin — kod DB'da saqlangan,
-    // test kodi (007700) baribir ishlaydi. Xato serverda loglanadi.
-    try {
-      await sendSms(phone, smsText)
-    } catch (e) {
-      req.log.error({ err: e }, 'SMS yuborilmadi (provayder)')
+    // Demo raqamga SMS yuborilmaydi — u real raqam emas, provayder xarajati va
+    // xatosi bekorga bo'ladi. Reviewer baribir `007700` bilan kiradi.
+    if (!demo) {
+      // SMS provayder yiqilsa ham login oqimi to'xtamasin — kod DB'da saqlangan.
+      // Xato serverda loglanadi.
+      try {
+        await sendSms(phone, smsText)
+      } catch (e) {
+        req.log.error({ err: e }, 'SMS yuborilmadi (provayder)')
+      }
     }
     return reply.send({ success: true, message: 'Kod yuborildi' })
   })

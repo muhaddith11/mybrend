@@ -181,3 +181,28 @@ describe('POST /api/auth/verify-otp', () => {
     await app.close()
   })
 })
+
+// Apple 2026-08-18 da aynan shu sababdan rad etdi: reviewer "Get code" ni ikki
+// marta bosib 60 soniyalik cooldown'ga urildi, o'zbekcha 429 xatosini o'qiy
+// olmadi va kod ekraniga umuman o'tolmadi.
+describe('send-otp — demo raqamga cooldown qo\'llanmaydi', () => {
+  test('demo raqam: ketma-ket 3 ta so\'rov ham 200', async () => {
+    const { app } = await buildTestApp()
+    const payload = { phone: '+998123456789' }
+    for (let i = 0; i < 3; i++) {
+      const r = await app.inject({ method: 'POST', url: '/api/auth/send-otp', headers: json, payload })
+      assert.equal(r.statusCode, 200)
+    }
+    await app.close()
+  })
+
+  test('oddiy raqamda cooldown SAQLANADI (spam himoyasi buzilmadi)', async () => {
+    const { app } = await buildTestApp()
+    const payload = { phone: '+998901112244' }
+    const first = await app.inject({ method: 'POST', url: '/api/auth/send-otp', headers: json, payload })
+    assert.equal(first.statusCode, 200)
+    const second = await app.inject({ method: 'POST', url: '/api/auth/send-otp', headers: json, payload })
+    assert.equal(second.statusCode, 429)
+    await app.close()
+  })
+})
