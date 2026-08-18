@@ -4,7 +4,7 @@ import { Text } from '../../components/Txt'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { api, useT } from '@libos/shared'
+import { api, useT, translateApiError } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
 import { useLangStore } from '../../store/lang'
 import { useTheme, type ThemeColors } from '../../store/theme'
@@ -88,7 +88,7 @@ export default function VerifyScreen() {
       // Muvaffaqiyatli — bosh sahifaga
       router.replace('/')
     } catch (e: any) {
-      setError(e.message ?? tr.mWrongCode)
+      setError(translateApiError(e, tr, tr.mWrongCode))
       // Kodni tozalash
       setCode(Array(CODE_LENGTH).fill(''))
       inputs.current[0]?.focus()
@@ -106,7 +106,7 @@ export default function VerifyScreen() {
       setCode(Array(CODE_LENGTH).fill(''))
       inputs.current[0]?.focus()
     } catch (e: any) {
-      setError(e.message ?? tr.mErrorGeneric)
+      setError(translateApiError(e, tr))
     } finally {
       setResending(false)
     }

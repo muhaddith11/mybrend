@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useQuery } from '@tanstack/react-query'
-import { api, useT, DELIVERY_FEE } from '@libos/shared'
+import { api, useT, DELIVERY_FEE, translateApiError } from '@libos/shared'
 import { useCartPrices } from '../lib/useCartPrices'
 import { useCartStore } from '../store/cart'
 import { useAuthStore } from '../store/auth'
@@ -165,7 +165,7 @@ export default function CheckoutScreen() {
       }
       router.replace({ pathname: '/orders/[id]', params: { id: order.id } })
     } catch (e: any) {
-      Alert.alert(tr.mErrorTitle, e.message ?? tr.mOrderFailed)
+      Alert.alert(tr.mErrorTitle, translateApiError(e, tr, tr.mOrderFailed))
     } finally {
       setLoading(false)
     }

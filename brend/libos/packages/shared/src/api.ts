@@ -27,8 +27,17 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const err = await res.json().catch(() => ({ error: 'Xatolik' }))
     // Xato'ga HTTP status'ni biriktiramiz — chaqiruvchi 401 (auth) ni tarmoq/server
     // xatosidan ajrata olsin (masalan sessiyani faqat 401'da tugatish uchun).
-    const error = new Error(err.error ?? 'So\'rov amalga oshmadi') as Error & { status?: number }
+    // `code` — backend'ning barqaror xato kodi (lib/apiError.ts). Mijoz uni
+    // `translateApiError()` bilan o'z tiliga o'giradi; `message` esa o'zbekcha
+    // zaxira matn bo'lib qoladi (kod tanilmasa ishlatiladi).
+    const error = new Error(err.error ?? 'So\'rov amalga oshmadi') as Error & {
+      status?: number
+      code?: string
+      params?: Record<string, string | number>
+    }
     error.status = res.status
+    error.code = err.code
+    error.params = err.params
     throw error
   }
   return res.json()

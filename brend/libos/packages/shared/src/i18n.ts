@@ -225,6 +225,23 @@ export const t = {
     mBadgeRecommended: "🏆 Tavsiya etilgan doʻkon",
     mBadgePremium: "⭐ Premium doʻkon",
     mVisitNow: "Hozir tashrif buyuring →",
+    // ── Backend xato kodlari (lib/apiError.ts) ──
+    errOTP_COOLDOWN: 'Iltimos, {seconds} soniyadan keyin qayta urining',
+    errOTP_NOT_REQUESTED: "Avval kod so'rang",
+    errOTP_EXPIRED: 'Kod muddati tugagan',
+    errOTP_TOO_MANY: "Juda ko'p urinish. Yangi kod so'rang.",
+    errOTP_WRONG: "Noto'g'ri kod",
+    errUSER_NOT_FOUND: 'Foydalanuvchi topilmadi',
+    errSTORE_NOT_FOUND: "Do'kon topilmadi",
+    errPRODUCT_NOT_FOUND: 'Mahsulot topilmadi',
+    errORDER_NOT_FOUND: 'Buyurtma topilmadi',
+    errPICKUP_UNSUPPORTED: "Bu do'kon olib ketishni qo'llab-quvvatlamaydi",
+    errTRANSFER_UNAVAILABLE: "Bu do'kon hozircha karta orqali to'lovni qabul qilmaydi. Naqd to'lovni tanlang.",
+    errINVALID_CART_ITEMS: "Buyurtmada noto'g'ri yoki boshqa do'kon mahsuloti bor",
+    errOUT_OF_STOCK: "Kechirasiz, tanlangan mahsulotlardan ba'zilari hozir yetarli emas",
+    errFORBIDDEN: "Ruxsat yo'q",
+    errINVALID_INPUT: "Yaroqsiz ma'lumot yuborildi",
+    errSERVER_ERROR: 'Server xatosi',
   },
   ru: {
     deliveryAcross: 'Доставка по всему Узбекистану',
@@ -438,6 +455,23 @@ export const t = {
     mBadgeRecommended: "🏆 Рекомендуемый магазин",
     mBadgePremium: "⭐ Премиум магазин",
     mVisitNow: "Посетить сейчас →",
+    // ── Backend xato kodlari (lib/apiError.ts) ──
+    errOTP_COOLDOWN: 'Повторите попытку через {seconds} сек.',
+    errOTP_NOT_REQUESTED: 'Сначала запросите код',
+    errOTP_EXPIRED: 'Срок действия кода истёк',
+    errOTP_TOO_MANY: 'Слишком много попыток. Запросите новый код.',
+    errOTP_WRONG: 'Неверный код',
+    errUSER_NOT_FOUND: 'Пользователь не найден',
+    errSTORE_NOT_FOUND: 'Магазин не найден',
+    errPRODUCT_NOT_FOUND: 'Товар не найден',
+    errORDER_NOT_FOUND: 'Заказ не найден',
+    errPICKUP_UNSUPPORTED: 'Этот магазин не поддерживает самовывоз',
+    errTRANSFER_UNAVAILABLE: 'Этот магазин пока не принимает оплату картой. Выберите наличные.',
+    errINVALID_CART_ITEMS: 'В заказе есть неверный товар или товар другого магазина',
+    errOUT_OF_STOCK: 'К сожалению, некоторых товаров сейчас не хватает',
+    errFORBIDDEN: 'Нет доступа',
+    errINVALID_INPUT: 'Отправлены неверные данные',
+    errSERVER_ERROR: 'Ошибка сервера',
   },
   en: {
     deliveryAcross: 'Delivery across Uzbekistan',
@@ -651,6 +685,23 @@ export const t = {
     mBadgeRecommended: "🏆 Recommended store",
     mBadgePremium: "⭐ Premium store",
     mVisitNow: "Visit now →",
+    // ── Backend xato kodlari (lib/apiError.ts) ──
+    errOTP_COOLDOWN: 'Please try again in {seconds} seconds',
+    errOTP_NOT_REQUESTED: 'Request a code first',
+    errOTP_EXPIRED: 'The code has expired',
+    errOTP_TOO_MANY: 'Too many attempts. Please request a new code.',
+    errOTP_WRONG: 'Incorrect code',
+    errUSER_NOT_FOUND: 'User not found',
+    errSTORE_NOT_FOUND: 'Store not found',
+    errPRODUCT_NOT_FOUND: 'Product not found',
+    errORDER_NOT_FOUND: 'Order not found',
+    errPICKUP_UNSUPPORTED: 'This store does not offer pickup',
+    errTRANSFER_UNAVAILABLE: 'This store does not accept card payment yet. Please choose cash.',
+    errINVALID_CART_ITEMS: 'The order contains an invalid item or an item from another store',
+    errOUT_OF_STOCK: 'Sorry, some of the selected items are out of stock',
+    errFORBIDDEN: 'Access denied',
+    errINVALID_INPUT: 'Invalid data was submitted',
+    errSERVER_ERROR: 'Server error',
   },
 } satisfies Record<string, Record<string, string>>
 
@@ -658,4 +709,24 @@ export type TKeys = keyof typeof t.uz
 
 export function useT(lang: Lang) {
   return t[lang] as Record<TKeys, string>
+}
+
+/**
+ * Backend xatosini foydalanuvchi tiliga o'giradi.
+ *
+ * Backend `{ error, code, params }` qaytaradi: `error` — o'zbekcha matn,
+ * `code` — barqaror kalit (`lib/apiError.ts`). Ilova kodni o'z lug'atidan
+ * topib tarjima qiladi; topilmasa o'zbekcha matn ko'rsatiladi (zaxira).
+ *
+ * Shusiz interfeys ingliz/rus tilida bo'lsa ham server xatosi o'zbekcha
+ * chiqardi — Apple reviewer'i 2026-08-18 da aynan shundan chalkashdi.
+ */
+export function translateApiError(err: unknown, tr: Record<string, string>, fallback?: string): string {
+  const e = err as { code?: string; params?: Record<string, string | number>; message?: string } | null
+  let text = e?.code ? tr[`err${e.code}`] : undefined
+  if (!text) text = e?.message || fallback || tr.mErrorGeneric
+  if (e?.params) {
+    for (const [k, v] of Object.entries(e.params)) text = text.replace(`{${k}}`, String(v))
+  }
+  return text
 }

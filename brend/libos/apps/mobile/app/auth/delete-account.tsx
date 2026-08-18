@@ -4,7 +4,7 @@ import { Text } from '../../components/Txt'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { api, useT } from '@libos/shared'
+import { api, useT, translateApiError } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
 import { useLangStore } from '../../store/lang'
 import { useTheme, type ThemeColors } from '../../store/theme'
@@ -33,7 +33,7 @@ export default function DeleteAccountScreen() {
       await api.auth.sendOtp(user.phone, 'delete')
       setStep('code')
     } catch (e: any) {
-      setError(e.message ?? tr.mErrorGeneric)
+      setError(translateApiError(e, tr))
     } finally {
       setLoading(false)
     }
@@ -76,7 +76,7 @@ export default function DeleteAccountScreen() {
       Alert.alert(tr.mDeleteDone, tr.mDeleteDoneMsg)
       router.replace('/')
     } catch (e: any) {
-      setError(e.message ?? tr.mWrongCode)
+      setError(translateApiError(e, tr, tr.mWrongCode))
       setCode(Array(CODE_LENGTH).fill(''))
       inputs.current[0]?.focus()
     } finally {

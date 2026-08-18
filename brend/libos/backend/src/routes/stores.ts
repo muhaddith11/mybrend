@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import { fail, ErrorCodes } from '../lib/apiError.js'
 import { PrismaClient, Gender } from '@prisma/client'
 
 const genderQuery = z.object({
@@ -101,7 +102,7 @@ export default async function storesRoutes(app: FastifyInstance) {
     const store = lite
       ? await prisma.store.findFirst({ where, select: publicSelect })
       : await prisma.store.findFirst({ where, select: { ...publicSelect, ...productsSelect } })
-    if (!store) return reply.status(404).send({ error: 'Do\'kon topilmadi' })
+    if (!store) return fail(reply, 404, ErrorCodes.STORE_NOT_FOUND, 'Do\'kon topilmadi')
 
     return reply.send(toPublicStore(store))
   })

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import { fail, ErrorCodes } from '../lib/apiError.js'
 import { PrismaClient, DeliveryType } from '@prisma/client'
 import { sendOrderNotification } from '../plugins/telegram'
 import { decrementStock, restoreStock, InsufficientStockError } from '../lib/stock.js'
@@ -96,21 +97,20 @@ export default async function ordersRoutes(app: FastifyInstance) {
     const store = await prisma.store.findUnique({ where: { slug: body.storeSlug } })
     // Yashirilgan do'kon buyurtma qabul qilmaydi — u ilovada ko'rinmaydi, lekin
     // eski havola yoki savatda qolgan mahsulot orqali kelish mumkin.
-    if (!store || store.isHidden) return reply.status(404).send({ error: 'Do\'kon topilmadi' })
+    if (!store || store.isHidden) return fail(reply, 404, ErrorCodes.STORE_NOT_FOUND, 'Do\'kon topilmadi')
 
     // Do'kon olib ketishni qo'llab-quvvatlamasa, PICKUP buyurtmani rad etamiz
     // (UI ham yashiradi, lekin backend ham himoyalanadi).
     if (body.deliveryType === 'PICKUP' && !store.hasPickup) {
-      return reply.status(400).send({ error: "Bu do'kon olib ketishni qo'llab-quvvatlamaydi" })
+      return fail(reply, 400, ErrorCodes.PICKUP_UNSUPPORTED, "Bu do'kon olib ketishni qo'llab-quvvatlamaydi")
     }
 
     // Do'kon karta/QR rekvizitini sozlamagan bo'lsa, bot orqali to'lov oqimi
     // yakunlanmaydi (telegram.ts shu tekshiruvda to'xtaydi). Buyurtmani shu yerda
     // rad etamiz — aks holda to'lanmaydigan buyurtma yaratilib, stok kamayib ketadi.
     if (body.paymentMethod === 'transfer' && !store.cardNumber && !store.paymentQr) {
-      return reply.status(400).send({
-        error: "Bu do'kon hozircha karta orqali to'lovni qabul qilmaydi. Naqd to'lovni tanlang.",
-      })
+      return fail(reply, 400, ErrorCodes.TRANSFER_UNAVAILABLE,
+        "Bu do'kon hozircha karta orqali to'lovni qabul qilmaydi. Naqd to'lovni tanlang.")
     }
 
     const productIds = body.items.map(i => i.productId)
@@ -119,7 +119,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
     const foundIds = new Set(products.map(p => p.id))
     const invalid = productIds.filter(id => !foundIds.has(id))
     if (invalid.length) {
-      return reply.status(400).send({ error: "Buyurtmada noto'g'ri yoki boshqa do'kon mahsuloti bor" })
+      return fail(reply, 400, ErrorCodes.INVALID_CART_ITEMS, "Buyurtmada noto'g'ri yoki boshqa do'kon mahsuloti bor")
     }
 
     // Telefon bo'yicha user topamiz yoki yaratamiz
@@ -185,7 +185,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
       })
     } catch (e) {
       if (e instanceof InsufficientStockError) {
-        return reply.status(400).send({ error: "Kechirasiz, tanlangan mahsulotlardan ba'zilari hozir yetarli emas" })
+        return fail(reply, 400, ErrorCodes.OUT_OF_STOCK, "Kechirasiz, tanlangan mahsulotlardan ba'zilari hozir yetarli emas")
       }
       throw e
     }
@@ -220,14 +220,13 @@ export default async function ordersRoutes(app: FastifyInstance) {
       where: { id: body.storeId },
       select: { isHidden: true, cardNumber: true, paymentQr: true },
     })
-    if (!st || st.isHidden) return reply.status(404).send({ error: 'Do\'kon topilmadi' })
+    if (!st || st.isHidden) return fail(reply, 404, ErrorCodes.STORE_NOT_FOUND, 'Do\'kon topilmadi')
 
     // Guest oqimidagi bilan bir xil himoya: rekvizitsiz do'konga TRANSFER buyurtma
     // yaratilmasin (to'lanmaydigan buyurtma + bekorga kamaygan stok).
     if (body.paymentProvider === 'TRANSFER' && !st.cardNumber && !st.paymentQr) {
-      return reply.status(400).send({
-        error: "Bu do'kon hozircha karta orqali to'lovni qabul qilmaydi. Naqd to'lovni tanlang.",
-      })
+      return fail(reply, 400, ErrorCodes.TRANSFER_UNAVAILABLE,
+        "Bu do'kon hozircha karta orqali to'lovni qabul qilmaydi. Naqd to'lovni tanlang.")
     }
 
     const productIds = body.items.map(i => i.productId)
@@ -236,7 +235,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
     const foundIds = new Set(products.map(p => p.id))
     const invalid = productIds.filter(id => !foundIds.has(id))
     if (invalid.length) {
-      return reply.status(400).send({ error: "Buyurtmada noto'g'ri yoki boshqa do'kon mahsuloti bor" })
+      return fail(reply, 400, ErrorCodes.INVALID_CART_ITEMS, "Buyurtmada noto'g'ri yoki boshqa do'kon mahsuloti bor")
     }
 
     const itemsTotal = body.items.reduce((sum, item) => {
@@ -296,7 +295,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
       })
     } catch (e) {
       if (e instanceof InsufficientStockError) {
-        return reply.status(400).send({ error: "Kechirasiz, tanlangan mahsulotlardan ba'zilari hozir yetarli emas" })
+        return fail(reply, 400, ErrorCodes.OUT_OF_STOCK, "Kechirasiz, tanlangan mahsulotlardan ba'zilari hozir yetarli emas")
       }
       throw e
     }
@@ -351,7 +350,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
         payment: { select: { status: true } },
       },
     })
-    if (!order) return reply.status(404).send({ error: 'Buyurtma topilmadi' })
+    if (!order) return fail(reply, 404, ErrorCodes.ORDER_NOT_FOUND, 'Buyurtma topilmadi')
 
     // Bot orqali to'lov hali tugallanmagan bo'lsa — havolani qaytaramiz. Checkout
     // Telegram'ni ocholmasa (o'rnatilmagan bo'lsa) mijoz to'lovni shu sahifadan
@@ -392,7 +391,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
         store: { select: { name: true, slug: true, logo: true, themeColor: true } },
       },
     })
-    if (!order) return reply.status(404).send({ error: 'Buyurtma topilmadi' })
+    if (!order) return fail(reply, 404, ErrorCodes.ORDER_NOT_FOUND, 'Buyurtma topilmadi')
     return reply.send(order)
   })
 
@@ -409,7 +408,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
     const secret = process.env.CRON_SECRET
     const auth = req.headers.authorization ?? ''
     if (!secret || auth !== `Bearer ${secret}`) {
-      return reply.status(401).send({ error: 'Ruxsat yo\'q' })
+      return fail(reply, 401, ErrorCodes.FORBIDDEN, 'Ruxsat yo\'q')
     }
 
     const cutoff = new Date(Date.now() - STALE_AFTER_MS)

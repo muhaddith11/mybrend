@@ -384,3 +384,32 @@ describe('TRANSFER — rekvizitsiz do\'kon', () => {
     await app.close()
   })
 })
+
+describe('buyurtma xatolarida `code` bo\'lishi', () => {
+  test('rekvizitsiz do\'konga TRANSFER → code=TRANSFER_UNAVAILABLE', async () => {
+    const { app } = await buildOrdersTestApp(seed)
+    const res = await app.inject({
+      method: 'POST', url: '/api/orders/guest', headers: json,
+      payload: {
+        storeSlug: 'asma', customerName: 'Ali', phone: '+998901234567',
+        paymentMethod: 'transfer', items: [{ productId: 'p1', quantity: 1 }],
+      },
+    })
+    assert.equal(res.statusCode, 400)
+    assert.equal(res.json().code, 'TRANSFER_UNAVAILABLE')
+    await app.close()
+  })
+
+  test('boshqa do\'kon mahsuloti → code=INVALID_CART_ITEMS', async () => {
+    const { app } = await buildOrdersTestApp(seed)
+    const res = await app.inject({
+      method: 'POST', url: '/api/orders/guest', headers: json,
+      payload: {
+        storeSlug: 'asma', customerName: 'Ali', phone: '+998901234567',
+        items: [{ productId: 'yoq-mahsulot', quantity: 1 }],
+      },
+    })
+    assert.equal(res.json().code, 'INVALID_CART_ITEMS')
+    await app.close()
+  })
+})

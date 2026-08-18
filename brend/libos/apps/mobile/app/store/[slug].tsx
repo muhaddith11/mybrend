@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { api, useT } from '@libos/shared'
+import { api, useT, translateApiError } from '@libos/shared'
 import type { Product, Store } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
 import { useLangStore } from '../../store/lang'
@@ -55,7 +55,7 @@ export default function StoreScreen() {
     },
     onError: (e: any, _v, ctx) => {
       if (ctx?.prev) queryClient.setQueryData(['favorites'], ctx.prev)
-      Alert.alert(tr.mErrorTitle, e?.message ?? tr.mErrorGeneric)
+      Alert.alert(tr.mErrorTitle, translateApiError(e, tr))
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['favorites'] }),
   })

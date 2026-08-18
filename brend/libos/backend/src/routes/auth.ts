@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { PrismaClient } from '@prisma/client'
 import { sendSms } from '../plugins/sms.js'
 import { phoneSchema } from '../lib/phone.js'
+import { fail, ErrorCodes } from '../lib/apiError.js'
 
 // purpose: 'login' (kirish) yoki 'delete' (profilni o'chirish) — SMS matni farqlanadi
 const sendOtpSchema = z.object({ phone: phoneSchema, purpose: z.enum(['login', 'delete']).optional() })
@@ -80,7 +81,8 @@ export default async function authRoutes(app: FastifyInstance) {
       const elapsed = Date.now() - existing.lastOtpSentAt.getTime()
       if (elapsed < OTP_COOLDOWN_MS) {
         const wait = Math.ceil((OTP_COOLDOWN_MS - elapsed) / 1000)
-        return reply.status(429).send({ error: `Iltimos, ${wait} soniyadan keyin qayta urining` })
+        return fail(reply, 429, ErrorCodes.OTP_COOLDOWN,
+          `Iltimos, ${wait} soniyadan keyin qayta urining`, { seconds: wait })
       }
     }
 
@@ -128,18 +130,18 @@ export default async function authRoutes(app: FastifyInstance) {
 
     const user = await prisma.user.findUnique({ where: { phone } })
     if (!user || !user.otp || !user.otpExpiry) {
-      return reply.status(400).send({ error: "Avval kod so'rang" })
+      return fail(reply, 400, ErrorCodes.OTP_NOT_REQUESTED, "Avval kod so'rang")
     }
     if (new Date() > user.otpExpiry) {
-      return reply.status(400).send({ error: 'Kod muddati tugagan' })
+      return fail(reply, 400, ErrorCodes.OTP_EXPIRED, 'Kod muddati tugagan')
     }
     // Brute-force himoyasi: juda ko'p noto'g'ri urinish bo'lsa, yangi kod kerak
     if (user.otpAttempts >= MAX_OTP_ATTEMPTS) {
-      return reply.status(429).send({ error: "Juda ko'p urinish. Yangi kod so'rang." })
+      return fail(reply, 429, ErrorCodes.OTP_TOO_MANY, "Juda ko'p urinish. Yangi kod so'rang.")
     }
     if (user.otp !== code) {
       await prisma.user.update({ where: { phone }, data: { otpAttempts: { increment: 1 } } })
-      return reply.status(400).send({ error: "Noto'g'ri kod" })
+      return fail(reply, 400, ErrorCodes.OTP_WRONG, "Noto'g'ri kod")
     }
 
     // OTP'ni tozalaymiz va urinishlarni nollaymiz. Javobda faqat xavfsiz maydonlar.
@@ -156,7 +158,7 @@ export default async function authRoutes(app: FastifyInstance) {
   app.get('/me', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { userId } = req.user as { userId: string }
     const user = await prisma.user.findUnique({ where: { id: userId }, select: PUBLIC_USER_SELECT })
-    if (!user) return reply.status(404).send({ error: 'Foydalanuvchi topilmadi' })
+    if (!user) return fail(reply, 404, ErrorCodes.USER_NOT_FOUND, 'Foydalanuvchi topilmadi')
     return reply.send(user)
   })
 
@@ -180,23 +182,23 @@ export default async function authRoutes(app: FastifyInstance) {
     const { code } = deleteAccountSchema.parse(req.body)
 
     const user = await prisma.user.findUnique({ where: { id: userId } })
-    if (!user) return reply.status(404).send({ error: 'Foydalanuvchi topilmadi' })
+    if (!user) return fail(reply, 404, ErrorCodes.USER_NOT_FOUND, 'Foydalanuvchi topilmadi')
 
     // Demo kirish — faqat review demo raqamining O'ZI uchun. Ilgari `007700`
     // har qanday akkauntni o'chirishga imkon berardi.
     if (!isDemoLogin(user.phone, code)) {
       if (!user.otp || !user.otpExpiry) {
-        return reply.status(400).send({ error: "Avval kod so'rang" })
+        return fail(reply, 400, ErrorCodes.OTP_NOT_REQUESTED, "Avval kod so'rang")
       }
       if (new Date() > user.otpExpiry) {
-        return reply.status(400).send({ error: 'Kod muddati tugagan' })
+        return fail(reply, 400, ErrorCodes.OTP_EXPIRED, 'Kod muddati tugagan')
       }
       if (user.otpAttempts >= MAX_OTP_ATTEMPTS) {
-        return reply.status(429).send({ error: "Juda ko'p urinish. Yangi kod so'rang." })
+        return fail(reply, 429, ErrorCodes.OTP_TOO_MANY, "Juda ko'p urinish. Yangi kod so'rang.")
       }
       if (user.otp !== code) {
         await prisma.user.update({ where: { id: userId }, data: { otpAttempts: { increment: 1 } } })
-        return reply.status(400).send({ error: "Noto'g'ri kod" })
+        return fail(reply, 400, ErrorCodes.OTP_WRONG, "Noto'g'ri kod")
       }
     }
 

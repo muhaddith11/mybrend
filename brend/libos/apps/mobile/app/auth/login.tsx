@@ -4,7 +4,7 @@ import { Text } from '../../components/Txt'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { api, useT } from '@libos/shared'
+import { api, useT, translateApiError } from '@libos/shared'
 import { useLangStore } from '../../store/lang'
 import { useTheme, type ThemeColors } from '../../store/theme'
 import { Logo } from '../../components/Logo'
@@ -42,7 +42,7 @@ export default function LoginScreen() {
       await api.auth.sendOtp(phone)
       router.push({ pathname: '/auth/verify', params: { phone, name: name.trim() } })
     } catch (e: any) {
-      setError(e.message ?? tr.mErrorGeneric)
+      setError(translateApiError(e, tr))
     } finally {
       setLoading(false)
     }

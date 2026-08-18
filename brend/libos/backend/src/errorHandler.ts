@@ -1,6 +1,7 @@
 import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 import * as Sentry from '@sentry/node'
 import { ZodError } from 'zod'
+import { ErrorCodes } from './lib/apiError.js'
 
 // Markaziy xato ishlovchisi.
 // - Zod validatsiya xatolari → 400 (ichki tafsilotlar oshkor qilinmaydi)
@@ -9,7 +10,7 @@ import { ZodError } from 'zod'
 // Faqat kutilmagan 500'lar Sentry'ga boradi — 4xx (mijoz xatolari) yuborilmaydi.
 export async function errorHandler(err: FastifyError, req: FastifyRequest, reply: FastifyReply) {
   if (err instanceof ZodError) {
-    return reply.status(400).send({ error: "Yaroqsiz ma'lumot yuborildi" })
+    return reply.status(400).send({ error: "Yaroqsiz ma'lumot yuborildi", code: ErrorCodes.INVALID_INPUT })
   }
 
   if (typeof err.statusCode === 'number' && err.statusCode >= 400 && err.statusCode < 500) {
@@ -25,5 +26,5 @@ export async function errorHandler(err: FastifyError, req: FastifyRequest, reply
   // shunda ilovada 500'ning sababini loglarsiz ham aniqlab bo'ladi.
   const code = (err as { code?: string }).code
   const suffix = code && /^P\d+/.test(code) ? ` (${code})` : ''
-  return reply.status(500).send({ error: `Server xatosi${suffix}` })
+  return reply.status(500).send({ error: `Server xatosi${suffix}`, code: ErrorCodes.SERVER_ERROR })
 }

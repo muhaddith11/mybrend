@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import { fail, ErrorCodes } from '../lib/apiError.js'
 import { PrismaClient } from '@prisma/client'
 
 // Yashirilgan do'konning mahsulotlari hech bir ochiq ro'yxatда chiqmasligi kerak
@@ -103,7 +104,7 @@ export default async function productsRoutes(app: FastifyInstance) {
       where: { id, store: VISIBLE_STORE },
       include: { category: true, variants: true, store: { select: { name: true, slug: true, themeColor: true } } },
     })
-    if (!product) return reply.status(404).send({ error: 'Mahsulot topilmadi' })
+    if (!product) return fail(reply, 404, ErrorCodes.PRODUCT_NOT_FOUND, 'Mahsulot topilmadi')
     return reply.send(product)
   })
 }

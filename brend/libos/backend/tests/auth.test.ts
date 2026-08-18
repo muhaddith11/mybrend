@@ -206,3 +206,43 @@ describe('send-otp — demo raqamga cooldown qo\'llanmaydi', () => {
     await app.close()
   })
 })
+
+// Ilova xatolarni `code` bo'yicha tarjima qiladi (packages/shared →
+// translateApiError). Kod yo'qolsa mijoz yana o'zbekcha matn ko'radi —
+// shuning uchun kontrakt test bilan qulflanadi.
+describe('xato javoblarida barqaror `code` bo\'lishi shart', () => {
+  test('cooldown → code=OTP_COOLDOWN va params.seconds', async () => {
+    const { app } = await buildTestApp()
+    const payload = { phone: '+998901112255' }
+    await app.inject({ method: 'POST', url: '/api/auth/send-otp', headers: json, payload })
+    const res = await app.inject({ method: 'POST', url: '/api/auth/send-otp', headers: json, payload })
+    assert.equal(res.statusCode, 429)
+    const b = res.json()
+    assert.equal(b.code, 'OTP_COOLDOWN')
+    assert.equal(typeof b.params?.seconds, 'number')
+    assert.ok(b.error) // o'zbekcha zaxira matn ham qoladi
+    await app.close()
+  })
+
+  test('noto\'g\'ri kod → code=OTP_WRONG', async () => {
+    const { app, fake } = await buildTestApp()
+    const phone = '+998901112266'
+    fake.seed({ phone, otp: '123456', otpExpiry: new Date(Date.now() + 5 * 60 * 1000) })
+    const res = await app.inject({
+      method: 'POST', url: '/api/auth/verify-otp', headers: json,
+      payload: { phone, code: '999999' },
+    })
+    assert.equal(res.json().code, 'OTP_WRONG')
+    await app.close()
+  })
+
+  test('kod so\'ralmagan → code=OTP_NOT_REQUESTED', async () => {
+    const { app } = await buildTestApp()
+    const res = await app.inject({
+      method: 'POST', url: '/api/auth/verify-otp', headers: json,
+      payload: { phone: '+998901112277', code: '123456' },
+    })
+    assert.equal(res.json().code, 'OTP_NOT_REQUESTED')
+    await app.close()
+  })
+})
