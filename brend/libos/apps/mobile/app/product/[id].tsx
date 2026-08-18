@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { View, ScrollView, TouchableOpacity, StyleSheet, Image, Dimensions } from 'react-native'
+import { View, ScrollView, TouchableOpacity, StyleSheet, Image, useWindowDimensions } from 'react-native'
 import { Text } from '../../components/Txt'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
@@ -14,7 +14,9 @@ import { getStoreDesign } from '../../lib/storeDesigns'
 import { resolveImg } from '../../lib/links'
 import { ErrorState } from '../../components/ErrorState'
 
-const { width } = Dimensions.get('window')
+// Rasm o'lchami oyna kengligiga bog'liq — `useWindowDimensions()` komponent ichida
+// chaqiriladi. Modul darajasidagi `Dimensions.get('window')` oyna o'zgarganda
+// (Android split-screen / buklanadigan telefon) eskirib qolardi.
 
 export default function ProductScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -50,7 +52,8 @@ export default function ProductScreen() {
         white: design.accentText,
       }
     : colors
-  const styles = useMemo(() => makeStyles(pc), [colors, design])
+  const { width } = useWindowDimensions()
+  const styles = useMemo(() => makeStyles(pc, width), [colors, design, width])
 
   if (isLoading) {
     return <View style={styles.loading}><Text style={{ color: pc.text2 }}>{tr.mLoading}</Text></View>
@@ -288,7 +291,7 @@ export default function ProductScreen() {
   )
 }
 
-const makeStyles = (c: ThemeColors) => StyleSheet.create({
+const makeStyles = (c: ThemeColors, width: number) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: c.surface },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: c.surface },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },

@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
-import { View, ScrollView, TouchableOpacity, StyleSheet, Image, Dimensions, useWindowDimensions, Linking, Alert, Modal, Pressable } from 'react-native'
+import { View, ScrollView, TouchableOpacity, StyleSheet, Image, useWindowDimensions, Linking, Alert, Modal, Pressable } from 'react-native'
 import type { ImageSourcePropType } from 'react-native'
 import { Text } from '../Txt'
 import { useRouter } from 'expo-router'
@@ -20,8 +20,8 @@ import { AddToCartButton } from '../AddToCartButton'
 import type { StoreDesign } from '../../lib/storeDesigns'
 import { instagramUrl, telegramUrl, telHref, resolveImg } from '../../lib/links'
 
-const { width } = Dimensions.get('window')
-const CARD_W = (width - 32 - 12) / 2
+// Karta kengligi komponent ichida hisoblanadi (pastda `useWindowDimensions`) —
+// modul darajasidagi `Dimensions.get('window')` oyna o'lchami o'zgarganda eskirardi.
 
 type StoreDetail = Store & { products: Product[] }
 
@@ -31,10 +31,11 @@ type LookItem = { source: ImageSourcePropType; productIds: string[] }
 export function BespokeStore({ store, design }: { store: StoreDetail; design: StoreDesign }) {
   const router = useRouter()
   const tr = useT(useLangStore(s => s.lang))
-  const { height } = useWindowDimensions()
+  const { width, height } = useWindowDimensions()
+  const cardW = (width - 32 - 12) / 2
   const { isLoggedIn } = useAuthStore()
   const qc = useQueryClient()
-  const styles = useMemo(() => makeStyles(design), [design])
+  const styles = useMemo(() => makeStyles(design, cardW), [design, cardW])
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [openLook, setOpenLook] = useState<LookItem | null>(null)
   const scrollRef = useRef<ScrollView>(null)
@@ -411,7 +412,7 @@ function GridCard({ product, design, styles, cur, onPress }: { product: Product;
   )
 }
 
-const makeStyles = (d: StoreDesign) => StyleSheet.create({
+const makeStyles = (d: StoreDesign, CARD_W: number) => StyleSheet.create({
   root: { flex: 1, backgroundColor: d.bg },
   topBar: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 6 },
   iconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.25)', alignItems: 'center', justifyContent: 'center' },
