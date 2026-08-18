@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { View, ScrollView, TouchableOpacity, StyleSheet, FlatList, Image, Dimensions, Linking, Alert } from 'react-native'
+import { View, ScrollView, TouchableOpacity, StyleSheet, FlatList, Image, useWindowDimensions, Linking, Alert } from 'react-native'
 import { Text } from '../../components/Txt'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -16,8 +16,9 @@ import { ErrorState } from '../../components/ErrorState'
 import { getStoreDesign } from '../../lib/storeDesigns'
 import { instagramUrl, telegramUrl, telHref, resolveImg } from '../../lib/links'
 
-const { width } = Dimensions.get('window')
-const CARD_WIDTH = (width - 48) / 2
+// Karta kengligi `ProductCard` ichida `useWindowDimensions()` bilan hisoblanadi —
+// modul darajasidagi `Dimensions.get('window')` oyna o'lchami o'zgarganda
+// (Android split-screen / buklanadigan telefon) eskirib, 2 ustunli to'r buzilardi.
 
 export default function StoreScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>()
@@ -280,9 +281,11 @@ function ProductCard({
   cur: string
   onPress: () => void
 }) {
+  const { width } = useWindowDimensions()
+  const cardWidth = (width - 48) / 2
   return (
-    <TouchableOpacity style={[styles.card, { width: CARD_WIDTH }]} onPress={onPress}>
-      <View style={styles.cardImg}>
+    <TouchableOpacity style={[styles.card, { width: cardWidth }]} onPress={onPress}>
+      <View style={[styles.cardImg, { height: cardWidth * 0.9 }]}>
         {product.images?.[0] ? (
           <Image source={{ uri: resolveImg(product.images[0]) }} style={styles.img} resizeMode="cover" />
         ) : (
@@ -329,7 +332,7 @@ const styles = StyleSheet.create({
   grid: { padding: 12, paddingBottom: 32 },
   row: { gap: 12, marginBottom: 12 },
   card: { backgroundColor: '#fff', borderRadius: 12, overflow: 'hidden', borderWidth: 0.5, borderColor: '#e0e0e0' },
-  cardImg: { width: '100%', height: CARD_WIDTH * 0.9 },
+  cardImg: { width: '100%' }, // balandlik inline (karta kengligiga bog'liq)
   img: { width: '100%', height: '100%' },
   imgPlaceholder: { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' },
   cardBody: { padding: 10 },

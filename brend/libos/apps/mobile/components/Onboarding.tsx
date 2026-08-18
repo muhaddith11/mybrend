@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
-import { View, TouchableOpacity, StyleSheet, Modal, Dimensions } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, Modal } from 'react-native'
 import { Text } from './Txt'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated'
 
-const { width } = Dimensions.get('window')
 const KEY = 'zyff_onboarding_v1'
 
 type Slide = {
@@ -133,7 +132,9 @@ const styles = StyleSheet.create({
   badge: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, marginBottom: 22 },
   badgeText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
   title: { color: '#fff', fontSize: 28, fontWeight: '800', textAlign: 'center', lineHeight: 36, letterSpacing: -0.4 },
-  sub: { color: 'rgba(255,255,255,0.75)', fontSize: 15, textAlign: 'center', lineHeight: 23, marginTop: 18, maxWidth: width - 80 },
+  // Ilgari `maxWidth: width - 80` edi (modul darajasidagi Dimensions). `marginHorizontal`
+  // aynan shu natijani beradi — har tomondan 40px — va oyna o'lchamiga o'zi moslashadi.
+  sub: { color: 'rgba(255,255,255,0.75)', fontSize: 15, textAlign: 'center', lineHeight: 23, marginTop: 18, marginHorizontal: 40 },
   bottom: { paddingBottom: 12, gap: 20 },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 7 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.3)' },

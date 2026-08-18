@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { View, TouchableOpacity, Image, StyleSheet, ScrollView, Dimensions, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
+import { View, TouchableOpacity, Image, StyleSheet, ScrollView, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent } from 'react-native'
 import { Text } from './Txt'
 import { useRouter } from 'expo-router'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -10,8 +10,10 @@ import { useTheme } from '../store/theme'
 import { resolveImg } from '../lib/links'
 import { getStoreDesign } from '../lib/storeDesigns'
 
-const { width } = Dimensions.get('window')
-const BANNER_W = width - 32
+// DIQQAT: banner kengligi komponent ICHIDA `useWindowDimensions()` bilan olinadi.
+// Ilgari `Dimensions.get('window')` modul darajasida chaqirilardi — qiymat import
+// paytida bir marta olinib, oyna o'lchami o'zgarganda (Android split-screen,
+// buklanadigan telefon) eskirib qolardi va karusel sahifasi ekranga mos kelmasdi.
 const BANNER_H = 170
 
 type Slide =
@@ -24,6 +26,8 @@ export function HeroBanner({ stores }: { stores: Store[] }) {
   const router = useRouter()
   const tr = useT(useLangStore(s => s.lang))
   const { colors } = useTheme()
+  const { width } = useWindowDimensions()
+  const BANNER_W = width - 32
   const scrollRef = useRef<ScrollView>(null)
   const [active, setActive] = useState(0)
 
@@ -44,7 +48,7 @@ export function HeroBanner({ stores }: { stores: Store[] }) {
       })
     }, 3500)
     return () => clearInterval(t)
-  }, [slides.length])
+  }, [slides.length, BANNER_W])
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const idx = Math.round(e.nativeEvent.contentOffset.x / BANNER_W)
@@ -68,7 +72,7 @@ export function HeroBanner({ stores }: { stores: Store[] }) {
               <TouchableOpacity
                 key="app"
                 activeOpacity={0.9}
-                style={styles.slide}
+                style={[styles.slide, { width: BANNER_W }]}
                 onPress={() => router.push('/stores')}
               >
                 <LinearGradient
@@ -100,7 +104,7 @@ export function HeroBanner({ stores }: { stores: Store[] }) {
             <TouchableOpacity
               key={slide.store.id}
               activeOpacity={0.9}
-              style={[styles.slide, { backgroundColor: bg }]}
+              style={[styles.slide, { width: BANNER_W, backgroundColor: bg }]}
               onPress={() => router.push(`/store/${slide.store.slug}`)}
             >
               {banner ? (
@@ -144,11 +148,13 @@ export function HeroBanner({ stores }: { stores: Store[] }) {
 
 const styles = StyleSheet.create({
   wrap: { marginHorizontal: 16, marginBottom: 16 },
+  // `width` inline beriladi (oyna kengligiga bog'liq) — bu yerda faqat statik qismi.
   slide: {
-    width: BANNER_W, height: BANNER_H, borderRadius: 24,
+    height: BANNER_H, borderRadius: 24,
     padding: 22, overflow: 'hidden', justifyContent: 'center',
   },
-  bannerImg: { ...StyleSheet.absoluteFillObject, width: BANNER_W, height: BANNER_H },
+  // absoluteFillObject slaydni to'liq qoplaydi — alohida width/height kerak emas.
+  bannerImg: { ...StyleSheet.absoluteFillObject },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)' },
   // App slide (premium navy & gold)
   orbBig: { position: 'absolute', width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(227,160,8,0.16)', top: -30, right: -20 },
