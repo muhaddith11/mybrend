@@ -28,7 +28,13 @@ export async function uploadImage(localUri: string, token: string): Promise<stri
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok || !data.url) {
-    throw new Error(data.error ?? "Rasmni yuklab bo'lmadi")
+    // Serverning `error` matni o'zbekcha va `code` yubormaydi — uni foydalanuvchiga
+    // ko'rsatib bo'lmaydi (ruscha/inglizcha interfeysga o'zbekcha sizardi). HTTP
+    // holatini biriktiramiz: `translateUploadError` shundan tarjima qiladi,
+    // `message` esa faqat log/Sentry uchun zaxira bo'lib qoladi.
+    const error = new Error(data.error ?? 'upload-failed') as Error & { status?: number }
+    error.status = res.status
+    throw error
   }
   return data.url as string
 }

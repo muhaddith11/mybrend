@@ -17,7 +17,8 @@ import { useAuthStore } from '../../store/auth'
 import { useLangStore } from '../../store/lang'
 import { WishlistHeartButton } from '../WishlistHeartButton'
 import { AddToCartButton } from '../AddToCartButton'
-import type { StoreDesign } from '../../lib/storeDesigns'
+import { withCyrillicSafeFonts, hasCyrillic, type StoreDesign } from '../../lib/storeDesigns'
+import { translateApiErrorStrict } from '../../lib/apiError'
 import { instagramUrl, telegramUrl, telHref, resolveImg } from '../../lib/links'
 
 // Karta kengligi komponent ichida hisoblanadi (pastda `useWindowDimensions`) —
@@ -28,13 +29,23 @@ type StoreDetail = Store & { products: Product[] }
 // Lookbook elementi — rasmi bazadan (URL) yoki dizayndan (bundled) kelishi mumkin.
 type LookItem = { source: ImageSourcePropType; productIds: string[] }
 
-export function BespokeStore({ store, design }: { store: StoreDetail; design: StoreDesign }) {
+export function BespokeStore({ store, design: baseDesign }: { store: StoreDetail; design: StoreDesign }) {
   const router = useRouter()
-  const tr = useT(useLangStore(s => s.lang))
+  const lang = useLangStore(s => s.lang)
+  const tr = useT(lang)
   const { width, height } = useWindowDimensions()
   const cardW = (width - 32 - 12) / 2
   const { isLoggedIn } = useAuthStore()
   const qc = useQueryClient()
+
+  // Kirill kerakmi? Ruscha interfeys — yoki sotuvchi kontentni ruscha kiritgan
+  // bo'lsa (do'kon nomi/tavsifi, mahsulot nomlari). Ba'zi do'kon dizaynlari
+  // kirill glifi yo'q shriftdan foydalanadi — u holda Inter'ga almashtiriladi.
+  const needsCyrillic = useMemo(
+    () => lang === 'ru' || hasCyrillic(store.name, store.description, ...store.products.map(p => p.name)),
+    [lang, store.name, store.description, store.products]
+  )
+  const design = useMemo(() => withCyrillicSafeFonts(baseDesign, needsCyrillic), [baseDesign, needsCyrillic])
   const styles = useMemo(() => makeStyles(design, cardW), [design, cardW])
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [openLook, setOpenLook] = useState<LookItem | null>(null)
@@ -65,7 +76,7 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
     },
     onError: (e: any, _v, ctx) => {
       if (ctx?.prev) qc.setQueryData(['favorites'], ctx.prev)
-      Alert.alert(tr.mErrorTitle, e?.message ?? tr.mErrorGeneric)
+      Alert.alert(tr.mErrorTitle, translateApiErrorStrict(e, tr, tr.mErrorGeneric))
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ['favorites'] }),
   })
@@ -84,7 +95,6 @@ export function BespokeStore({ store, design }: { store: StoreDetail; design: St
   const featuredList = featured.length ? featured : store.products.slice(0, 6)
 
   // ── Kontakt ma'lumotlari (website uslubidagi footer uchun) ──
-  const lang = useLangStore(s => s.lang)
   const phone = (store as any).phone as string | undefined
   const igUrl = instagramUrl((store as any).instagram)
   const tgUrl = telegramUrl((store as any).telegram)
