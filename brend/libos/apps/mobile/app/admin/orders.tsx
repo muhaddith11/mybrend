@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTheme, type ThemeColors } from '../../store/theme'
+import { formatDate } from '../../lib/date'
 import { useAdminStore } from '../../store/admin'
 import { adminApi } from '../../lib/adminApi'
 
@@ -82,7 +83,7 @@ export default function AdminOrders() {
             ) : null}
             <View style={styles.cardBottom}>
               <Text style={styles.price}>{item.totalPrice.toLocaleString()} so'm</Text>
-              <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString('uz-UZ')}</Text>
+              <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
             </View>
           </View>
         )}

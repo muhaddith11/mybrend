@@ -11,6 +11,7 @@ import { useLangStore } from '../../store/lang'
 import { useTheme, useThemeStore, type ThemeColors } from '../../store/theme'
 import { useAvatarStore, PERSON_EMOJIS } from '../../store/avatar'
 import { uploadImage } from '../../lib/upload'
+import { translateUploadError, translateApiErrorStrict } from '../../lib/apiError'
 import { resolveImg } from '../../lib/links'
 
 const LANGS: { code: Lang; flag: string; label: string }[] = [
@@ -63,7 +64,9 @@ export default function ProfileScreen() {
       const url = await uploadImage(res.assets[0].uri, token)
       setEditAvatar(url)
     } catch (e: any) {
-      Alert.alert(L('Xatolik', 'Ошибка', 'Error'), e.message ?? L("Rasmni yuklab bo'lmadi", 'Не удалось загрузить', 'Upload failed'))
+      // `e.message` — serverning o'zbekcha matni; uni ko'rsatmaymiz (aks holda
+      // ruscha/inglizcha interfeysga o'zbekcha xato sizadi).
+      Alert.alert(L('Xatolik', 'Ошибка', 'Error'), translateUploadError(e, lang))
     } finally {
       setUploading(false)
     }
@@ -80,7 +83,10 @@ export default function ProfileScreen() {
       setUser(updated)
       setShowPicker(false)
     } catch (e: any) {
-      Alert.alert(L('Xatolik', 'Ошибка', 'Error'), e.message ?? L("Saqlab bo'lmadi", 'Не удалось сохранить', 'Save failed'))
+      Alert.alert(
+        L('Xatolik', 'Ошибка', 'Error'),
+        translateApiErrorStrict(e, tr, L("Saqlab bo'lmadi", 'Не удалось сохранить', 'Save failed')),
+      )
     } finally {
       setSaving(false)
     }

@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { api, useT } from '@libos/shared'
 import { useLangStore } from '../../store/lang'
+import { formatDate } from '../../lib/date'
 import { useTheme, type ThemeColors } from '../../store/theme'
 import { ErrorState } from '../../components/ErrorState'
 
@@ -65,7 +66,7 @@ export default function OrdersScreen() {
             <View style={styles.cardBottom}>
               <Text style={styles.price}>{item.totalPrice.toLocaleString()} {tr.som}</Text>
               <Text style={styles.date}>
-                {new Date(item.createdAt).toLocaleDateString('uz-UZ')}
+                {formatDate(item.createdAt)}
               </Text>
             </View>
           </TouchableOpacity>

@@ -1,6 +1,8 @@
 import { useMemo, createElement } from 'react'
 import { View, StyleSheet, Linking, Platform, ActivityIndicator } from 'react-native'
 import { WebView } from 'react-native-webview'
+import type { Lang } from '@libos/shared'
+import { useLangStore } from '../store/lang'
 
 // WebView ichida Leaflet (OpenStreetMap/CARTO) — web bilan bir xil xarita,
 // Google Maps API kaliti kerak emas, Expo Go'da ishlaydi.
@@ -51,8 +53,22 @@ function buildHtml(opts: {
   dark: boolean
   initial?: { lat: number; lng: number } | null
   stores: MapStore[]
+  lang: Lang
 }): string {
-  const { mode, dark, initial, stores } = opts
+  const { mode, dark, initial, stores, lang } = opts
+  // WebView ichidagi matnlar ilgari o'zbekcha qotib qolgan edi — endi ular ham
+  // interfeys tiliga ergashadi. Nominatim'ga ham shu til yuboriladi, aks holda
+  // ruscha/inglizcha foydalanuvchi o'zi tanlagan manzilni o'zbekcha ko'rardi.
+  const L = (uz: string, ru: string, en: string) => (lang === 'ru' ? ru : lang === 'en' ? en : uz)
+  const txtJson = safeJson({
+    directions: L("Yo'nalish", 'Маршрут', 'Directions'),
+    loadFailed: L(
+      "Xarita yuklanmadi. Manzilni quyida qo'lda kiriting.",
+      'Карта не загрузилась. Введите адрес вручную ниже.',
+      'The map failed to load. Enter your address manually below.',
+    ),
+  })
+  const langJson = safeJson(lang)
   // Light: CARTO voyager (web checkout bilan bir xil). Dark: CARTO dark_all.
   const tileUrl = dark
     ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
@@ -87,6 +103,8 @@ function buildHtml(opts: {
 <body>
   <div id="map"></div>
   <script>
+    var TXT = ${txtJson};
+    var LANG = ${langJson};
     var RN = window.ReactNativeWebView;
     var post = function (obj) { if (RN) RN.postMessage(JSON.stringify(obj)); };
     // HTML injeksiyasidan himoya (do'kon nomi popup'da ko'rsatiladi).
@@ -129,7 +147,7 @@ function buildHtml(opts: {
     loadJs(JS_URLS, 0, function (err) {
       if (err || !window.L) {
         document.getElementById('map').innerHTML =
-          '<div style="display:flex;height:100%;align-items:center;justify-content:center;padding:16px;text-align:center;font-family:sans-serif;color:#888;font-size:13px;">Xarita yuklanmadi. Manzilni quyida qo\\'lda kiriting.</div>';
+          '<div style="display:flex;height:100%;align-items:center;justify-content:center;padding:16px;text-align:center;font-family:sans-serif;color:#888;font-size:13px;">' + esc(TXT.loadFailed) + '</div>';
         post({ type: 'maperror' });
         return;
       }
@@ -153,7 +171,7 @@ function buildHtml(opts: {
         if (typeof s.lat !== 'number' || typeof s.lng !== 'number') return;
         pts.push([s.lat, s.lng]);
         var m = L.marker([s.lat, s.lng], { icon: storeIcon() }).addTo(map);
-        var html = '<b>' + esc(s.name) + '</b><br/><div class="dirBtn" onclick="window.dir(' + s.lat + ',' + s.lng + ')">Yo\\'nalish</div>';
+        var html = '<b>' + esc(s.name) + '</b><br/><div class="dirBtn" onclick="window.dir(' + s.lat + ',' + s.lng + ')">' + esc(TXT.directions) + '</div>';
         m.bindPopup(html);
       });
       if (pts.length > 1) { map.fitBounds(pts, { padding: [40,40] }); }
@@ -176,7 +194,7 @@ function buildHtml(opts: {
           return;
         }
         geocoding = true;
-        fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lng + '&format=json&accept-language=uz')
+        fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lng + '&format=json&accept-language=' + encodeURIComponent(LANG))
           .then(function (r) { return r.json(); })
           .then(function (d) {
             var a = d.address || {};
@@ -203,9 +221,10 @@ function buildHtml(opts: {
 }
 
 export function LeafletWebMap({ mode, height = 260, dark = false, initial, onSelect, stores = [] }: Props) {
+  const lang = useLangStore(s => s.lang)
   const html = useMemo(
-    () => buildHtml({ mode, dark, initial, stores }),
-    [mode, dark, initial, stores]
+    () => buildHtml({ mode, dark, initial, stores, lang }),
+    [mode, dark, initial, stores, lang]
   )
 
   const handleMessage = (event: { nativeEvent: { data: string } }) => {

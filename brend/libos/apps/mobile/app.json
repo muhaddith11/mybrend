@@ -16,7 +16,9 @@
       "supportsTablet": false,
       "bundleIdentifier": "uz.zyff.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleLocalizations": ["uz", "ru", "en"],
+        "CFBundleDevelopmentRegion": "uz"
       }
     },
     "android": {
@@ -42,8 +44,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Mahsulot rasmini tanlash uchun galereyaga ruxsat bering.",
-          "cameraPermission": "Mahsulot rasmini olish uchun kameraga ruxsat bering."
+          "photosPermission": "Profil rasmingizni yoki mahsulot rasmlarini tanlash uchun galereyaga ruxsat bering.",
+          "cameraPermission": "Profil rasmingizni yoki mahsulot rasmlarini olish uchun kameraga ruxsat bering."
         }
       ],
       [
@@ -57,6 +59,11 @@
         }
       ]
     ],
+    "locales": {
+      "uz": "./locales/uz.json",
+      "ru": "./locales/ru.json",
+      "en": "./locales/en.json"
+    },
     "experiments": {
       "typedRoutes": true
     },

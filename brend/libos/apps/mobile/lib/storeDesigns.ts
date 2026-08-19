@@ -53,12 +53,51 @@ export const FONTS = {
   cormorantSemiBold: 'CormorantGaramond_600SemiBold',
   cormorantItalic: 'CormorantGaramond_500Medium_Italic',
   interRegular: 'Inter_400Regular',
+  interMedium: 'Inter_500Medium',
   interSemiBold: 'Inter_600SemiBold',
+  interBold: 'Inter_700Bold',
   interExtraBold: 'Inter_800ExtraBold',
   spaceRegular: 'SpaceGrotesk_400Regular',
   spaceMedium: 'SpaceGrotesk_500Medium',
   spaceBold: 'SpaceGrotesk_700Bold',
 } as const
+
+// Space Grotesk'da KIRILL glifi yo'q (Google Fonts subset'i: lotin + lotin-ext +
+// vetnamcha). Bunday shrift kirill matnga qo'llansa Android'da □□□ chiqadi — RN
+// maxsus shriftda glif topilmasa avtomatik zaxira shriftga o'tmaydi; iOS esa
+// tizim shriftiga sakraydi va dizayn buziladi. Ruscha interfeysda `onepro`
+// do'koni sahifasi aynan shundan buzilardi.
+//
+// Yechim: kirill kerak bo'lganda o'sha og'irlikdagi Inter'ga almashtiramiz
+// (Inter kirillikli va allaqachon yuklangan). Cormorant va Inter kirillni
+// qo'llab-quvvatlaydi — ular tegilmaydi.
+const CYRILLIC_FALLBACK: Record<string, string> = {
+  [FONTS.spaceRegular]: FONTS.interRegular,
+  [FONTS.spaceMedium]: FONTS.interMedium,
+  [FONTS.spaceBold]: FONTS.interBold,
+}
+
+const CYRILLIC_RE = /[Ѐ-ӿ]/
+
+/** Matnda kirill harfi bormi (do'kon nomi, mahsulot nomlari — bazadan keladi). */
+export function hasCyrillic(...texts: (string | null | undefined)[]): boolean {
+  return texts.some(t => !!t && CYRILLIC_RE.test(t))
+}
+
+/**
+ * Dizaynni kirillga xavfsiz holga keltiradi.
+ *
+ * `needsCyrillic` — interfeys ruscha bo'lsa YOKI do'kon kontenti (nom, tavsif,
+ * mahsulot nomlari) kirillcha bo'lsa. Sotuvchi mahsulot nomini ruscha yozishi
+ * mumkin, shuning uchun faqat `lang === 'ru'` tekshiruvi yetarli emas.
+ */
+export function withCyrillicSafeFonts(design: StoreDesign, needsCyrillic: boolean): StoreDesign {
+  if (!needsCyrillic) return design
+  const swap = (f: string) => CYRILLIC_FALLBACK[f] ?? f
+  const { heading, body, bodyBold } = design.fonts
+  if (heading === swap(heading) && body === swap(body) && bodyBold === swap(bodyBold)) return design
+  return { ...design, fonts: { heading: swap(heading), body: swap(body), bodyBold: swap(bodyBold) } }
+}
 
 const asma: StoreDesign = {
   slug: 'asma',
