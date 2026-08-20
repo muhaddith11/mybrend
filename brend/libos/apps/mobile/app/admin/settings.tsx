@@ -238,7 +238,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   logoPreview: { width: 88, height: 88, borderRadius: 14, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   bannerPreview: { width: '100%', height: 120, borderRadius: 14, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   imgFill: { width: '100%', height: '100%' },
-  imgLoading: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
+  imgLoading: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
   imgBtns: { flexDirection: 'row', gap: 8, marginTop: 8 },
   imgBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1.5, borderColor: c.border, backgroundColor: c.surface },
   imgBtnWide: { flex: 1 },

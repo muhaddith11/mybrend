@@ -60,7 +60,7 @@ export function captureException(error: unknown, context?: string): void {
 export function initSentry(): void {
   // Render'dan tashqaridagi ushlanmagan JS xatolarini ham qamrab olamiz.
   // Standart handler'ni SAQLAYMIZ — redbox (dev) / native crash ekrani baribir ishlaydi.
-  const g = global as any
+  const g = globalThis as any
   if (g?.ErrorUtils && typeof g.ErrorUtils.getGlobalHandler === 'function') {
     const prev = g.ErrorUtils.getGlobalHandler()
     g.ErrorUtils.setGlobalHandler((err: any, isFatal?: boolean) => {

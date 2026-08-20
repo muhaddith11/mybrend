@@ -90,8 +90,10 @@ export default function StoreScreen() {
   const design = getStoreDesign(slug)
   if (design) return <BespokeStore store={store} design={design} />
 
+  // themeColor/themeBg backend'da ixtiyoriy — bo'lmasa brand navy'ga tushamiz.
+  // (useTheme() bu yerda chaqirib bo'lmaydi: yuqorida shartli return bor.)
   const theme = {
-    primary: store.themeColor,
+    primary: store.themeColor ?? '#1B1F4B',
     bg: store.themeBg,
   }
 

@@ -164,12 +164,12 @@ export default function OrderScreen() {
         {/* Mahsulotlar */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>{tr.coProducts}</Text>
-          {order.items.map(item => {
+          {(order.items ?? []).map(item => {
             const variant = [(item as any).size, (item as any).color].filter(Boolean).join(' · ')
             return (
               <View key={item.id} style={styles.itemRow}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.itemName} numberOfLines={1}>{item.product.name}</Text>
+                  <Text style={styles.itemName} numberOfLines={1}>{item.product?.name ?? "—"}</Text>
                   {!!variant && <Text style={styles.itemVariant}>{variant}</Text>}
                 </View>
                 <Text style={styles.itemPrice}>

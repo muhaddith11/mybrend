@@ -279,5 +279,5 @@ export function LeafletWebMap({ mode, height = 260, dark = false, initial, onSel
 const styles = StyleSheet.create({
   wrap: { width: '100%', borderRadius: 12, overflow: 'hidden' },
   web: { flex: 1, backgroundColor: 'transparent' },
-  loading: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
+  loading: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
 })

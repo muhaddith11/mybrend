@@ -153,9 +153,9 @@ const styles = StyleSheet.create({
     height: BANNER_H, borderRadius: 24,
     padding: 22, overflow: 'hidden', justifyContent: 'center',
   },
-  // absoluteFillObject slaydni to'liq qoplaydi — alohida width/height kerak emas.
-  bannerImg: { ...StyleSheet.absoluteFillObject },
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)' },
+  // absoluteFill slaydni to'liq qoplaydi — alohida width/height kerak emas.
+  bannerImg: { ...StyleSheet.absoluteFill },
+  overlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.35)' },
   // App slide (premium navy & gold)
   orbBig: { position: 'absolute', width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(227,160,8,0.16)', top: -30, right: -20 },
   orbSmall: { position: 'absolute', width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(255,255,255,0.05)', bottom: -40, right: 40 },

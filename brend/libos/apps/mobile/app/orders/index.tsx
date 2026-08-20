@@ -61,7 +61,7 @@ export default function OrdersScreen() {
               </View>
             </View>
             <Text style={styles.items} numberOfLines={1}>
-              {item.items.map(i => i.product.name).join(', ')}
+              {(item.items ?? []).map(i => i.product?.name).filter(Boolean).join(', ')}
             </Text>
             <View style={styles.cardBottom}>
               <Text style={styles.price}>{item.totalPrice.toLocaleString()} {tr.som}</Text>

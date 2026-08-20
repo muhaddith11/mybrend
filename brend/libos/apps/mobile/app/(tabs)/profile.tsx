@@ -367,7 +367,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   avatarPreview: { width: 92, height: 92, borderRadius: 46, backgroundColor: c.brandLight, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarPreviewImg: { width: 92, height: 92 },
   avatarPreviewEmoji: { fontSize: 48 },
-  avatarPreviewLoading: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.35)', alignItems: 'center', justifyContent: 'center' },
+  avatarPreviewLoading: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.35)', alignItems: 'center', justifyContent: 'center' },
   photoBtns: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 20, flexWrap: 'wrap' },
   photoBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 10, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface2 },
   photoBtnText: { fontSize: 13, fontWeight: '500', color: c.brand },
