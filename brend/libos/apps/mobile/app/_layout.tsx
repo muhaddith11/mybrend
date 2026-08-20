@@ -101,7 +101,15 @@ export default function RootLayout() {
         <ErrorBoundary>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="auth/login" options={{ presentation: 'modal' }} />
+          {/* MUHIM: login 'modal' BO'LMASIN — verify bilan bir xil turda tursin.
+              react-native-screens iOS'da ekranlarni stack tartibiga QARAMAY, faqat
+              presentation turi bo'yicha ikkiga ajratadi (RNSScreenStack.mm → updateContainer):
+              'card'lar UINavigationController ichiga push qilinadi, 'modal'lar esa ustidan
+              present qilinadi. Login modal bo'lsa, undan push qilingan auth/verify
+              modalning ORQASIGA tushadi va ko'rinmay qoladi — foydalanuvchi uchun bu
+              "Kod olish tugmasi ishlamayapti" bo'lib ko'rinadi (App Store 2.1(a) rad javobi,
+              1.0(6) va 1.0(7) build'lari). Android'da fragment modeli tufayli sezilmaydi. */}
+          <Stack.Screen name="auth/login" options={{ presentation: 'card' }} />
           <Stack.Screen name="auth/verify" options={{ presentation: 'card' }} />
           <Stack.Screen name="auth/delete-account" options={{ presentation: 'card' }} />
           <Stack.Screen name="store/[slug]" options={{ presentation: 'card' }} />
