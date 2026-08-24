@@ -65,7 +65,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#000000"
         }
-      ]
+      ],
+      "./plugins/withAndroidLintFix"
     ],
     "locales": {
       "uz": "./locales/uz.json",
