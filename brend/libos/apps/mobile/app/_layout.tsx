@@ -57,7 +57,7 @@ export default function RootLayout() {
 
   // Do'kon dizaynlari uchun shriftlar (asma=serif, boosner=Inter, onepro=SpaceGrotesk).
   // Yuklanmaguncha ilova baribir ishlaydi — shriftlar tayyor bo'lgach avtomatik yangilanadi.
-  useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     CormorantGaramond_300Light, CormorantGaramond_500Medium,
     CormorantGaramond_600SemiBold, CormorantGaramond_500Medium_Italic,
     SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, SpaceGrotesk_700Bold,
@@ -79,6 +79,13 @@ export default function RootLayout() {
     loadFromStorage()
     loadAdmin()
   }, [])
+
+  // Shriftlar yuklanmaguncha CHIZMAYMIZ. Ilgari `useFonts()` natijasi e'tiborsiz
+  // qolardi: ilova tizim shrifti bilan chizilib, matn kengligi o'sha shrift bo'yicha
+  // o'lchanardi. Inter yuklangach matn kengroq chiziladi-yu, quti eski o'lchamda
+  // qolib, Android'da oxirgi belgi kesilib ketardi (footer'dagi "@zyff.uz" -> "@zyff.u").
+  // fontError bo'lsa ham davom etamiz — shrift yuklanmagani ilovani qamab qo'ymasin.
+  if (!fontsLoaded && !fontError) return null
 
   return (
     <PersistQueryClientProvider

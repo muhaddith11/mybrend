@@ -325,10 +325,6 @@ function HomeFooter() {
       </View>
 
       <View style={styles.footerContacts}>
-        <TouchableOpacity style={styles.footerContactRow} onPress={() => Linking.openURL('tel:+998502500550')}>
-          <Ionicons name="call-outline" size={15} color="rgba(255,255,255,0.8)" />
-          <Text style={styles.footerContact}>+998 50 250 05 50</Text>
-        </TouchableOpacity>
         <TouchableOpacity style={styles.footerContactRow} onPress={() => Linking.openURL('https://instagram.com/zyff.uz')}>
           <Ionicons name="logo-instagram" size={15} color="rgba(255,255,255,0.8)" />
           <Text style={styles.footerContact}>Instagram: @zyff.uz</Text>
@@ -407,7 +403,9 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   catChipActive: { backgroundColor: c.brand, borderColor: c.brand },
   catChipText: { fontSize: 13, fontWeight: '600', color: c.text2 },
   catChipTextActive: { color: '#fff' },
-  list: { paddingBottom: 24, gap: 10 },
+  // paddingBottom YO'Q: footer ro'yxatning oxirgi elementi, pastdan bo'shliq
+  // qoldirilsa to'q rangli footer bilan tab bar orasida oq chiziq ko'rinardi.
+  list: { gap: 10 },
   empty: { textAlign: 'center', color: c.text2, marginTop: 40, fontSize: font.body },
   section: { marginBottom: 16 },
   sectionTitle: { fontSize: font.subtitle, fontWeight: '600', color: c.text, marginBottom: 10, marginHorizontal: 16 },
