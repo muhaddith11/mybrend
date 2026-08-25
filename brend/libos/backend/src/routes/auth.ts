@@ -99,9 +99,21 @@ export default async function authRoutes(app: FastifyInstance) {
       create: { phone, otp: code, otpExpiry: expiry, lastOtpSentAt: new Date(), otpAttempts: 0 },
     })
 
+    // DIQQAT: bu matnlar TextUp.uz'da ro'yxatdan o'tgan shablonlarga SO'ZMA-SO'Z
+    // mos kelishi shart — operator har bir SMS matnini tasdiqlangan shablon bilan
+    // solishtiradi va farq bo'lsa yuborishni rad etadi.
+    //
+    // Tasdiqlangan shablonlar (TextUp kabineti -> SMS yuborish -> Matnlar):
+    //   "Tasdiqlash kodi"              -> ZYFF ilovasiga kirish uchun tasdiqlash kodi: 123456
+    //   "O'chirish uchun tasdiqlash kodi" -> ZYFF ilovasi profilingiz o'chirilishini tasdiqlash kodi: 123456
+    //
+    // 2026-08-24: o'chirish matnida "ilovasi" so'zi tushib qolgan edi — shablonga
+    // mos kelmagani uchun o'chirish kodi hech qachon yetib bormasdi (kirish kodi
+    // esa keladi, chunki uning matni aniq mos). Bu matnlarni o'zgartirishdan oldin
+    // shablonni TextUp'da yangilab, tasdiqdan o'tkazish kerak.
     const smsText =
       purpose === 'delete'
-        ? `ZYFF profilingiz o'chirilishini tasdiqlash kodi: ${code}`
+        ? `ZYFF ilovasi profilingiz o'chirilishini tasdiqlash kodi: ${code}`
         : `ZYFF ilovasiga kirish uchun tasdiqlash kodi: ${code}`
     // Demo raqamga SMS yuborilmaydi — u real raqam emas, provayder xarajati va
     // xatosi bekorga bo'ladi. Reviewer baribir `007700` bilan kiradi.
