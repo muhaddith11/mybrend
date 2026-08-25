@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTheme, type ThemeColors } from '../../store/theme'
 import { useAdminStore } from '../../store/admin'
 import { adminApi } from '../../lib/adminApi'
+import { invalidatePublicCaches } from '../../lib/adminCache'
 
 export default function AdminProducts() {
   const router = useRouter()
@@ -31,7 +32,15 @@ export default function AdminProducts() {
 
   const del = useMutation({
     mutationFn: (id: string) => adminApi.deleteProduct(token!, id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-products'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-products'] })
+      invalidatePublicCaches(qc)
+    },
+    // onError SHART: buyurtmada ishlatilgan mahsulotni backend 400 bilan rad etadi
+    // va nima qilish kerakligini aytadi ("Sotuvda bor" belgisini olib tashlang).
+    // Bu ushlanmaganda mutatsiya jimgina yiqilardi — foydalanuvchiga tugma
+    // umuman ishlamayotgandek ko'rinardi.
+    onError: (e: any) => Alert.alert('Xatolik', e.message ?? "O'chirib bo'lmadi"),
   })
 
   const confirmDelete = (id: string, name: string) => {

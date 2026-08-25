@@ -10,6 +10,7 @@ import type { LookbookLook } from '@libos/shared'
 import { useTheme, type ThemeColors } from '../../store/theme'
 import { useAdminStore } from '../../store/admin'
 import { adminApi, type AdminProduct } from '../../lib/adminApi'
+import { invalidatePublicCaches } from '../../lib/adminCache'
 import { uploadImage } from '../../lib/upload'
 import { resolveImg } from '../../lib/links'
 
@@ -86,6 +87,7 @@ export default function AdminLookbook() {
     mutationFn: () => adminApi.updateStore(token!, { lookbookLooks: looks.filter(l => l.image) }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-store'] })
+      invalidatePublicCaches(qc)
       Alert.alert('Saqlandi', 'Lookbook yangilandi')
     },
     onError: (e: any) => Alert.alert('Xatolik', e.message ?? "Saqlab bo'lmadi"),

@@ -9,6 +9,7 @@ import * as ImagePicker from 'expo-image-picker'
 import { useTheme, type ThemeColors } from '../../store/theme'
 import { useAdminStore } from '../../store/admin'
 import { adminApi } from '../../lib/adminApi'
+import { invalidatePublicCaches } from '../../lib/adminCache'
 import { uploadImage } from '../../lib/upload'
 import { resolveImg } from '../../lib/links'
 
@@ -97,6 +98,7 @@ export default function AdminSettings() {
     }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-store'] })
+      invalidatePublicCaches(qc)
       Alert.alert('Saqlandi', "Do'kon sozlamalari yangilandi")
     },
     onError: (e: any) => Alert.alert('Xatolik', e.message ?? "Saqlab bo'lmadi"),

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { View, FlatList, TouchableOpacity, StyleSheet, Modal, Pressable } from 'react-native'
+import { View, FlatList, TouchableOpacity, StyleSheet, Modal, Pressable, Alert } from 'react-native'
 import { Text } from '../../components/Txt'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -38,7 +38,15 @@ export default function AdminOrders() {
 
   const setStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) => adminApi.updateOrderStatus(token!, id, status),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-orders'] }); setEditing(null) },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-orders'] })
+      // Xaridorning "Buyurtmalarim" ekrani ham yangi holatni ko'rsatsin —
+      // `refetchOnWindowFocus: false` bo'lgani uchun ochiq ekran o'zi yangilanmaydi.
+      qc.invalidateQueries({ queryKey: ['my-orders'] })
+      qc.invalidateQueries({ queryKey: ['order'] })
+      setEditing(null)
+    },
+    onError: (e: any) => Alert.alert('Xatolik', e.message ?? "Holatni o'zgartirib bo'lmadi"),
   })
 
   return (

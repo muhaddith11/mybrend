@@ -9,6 +9,7 @@ import * as ImagePicker from 'expo-image-picker'
 import { useTheme, type ThemeColors } from '../../store/theme'
 import { useAdminStore } from '../../store/admin'
 import { adminApi, type ProductInput } from '../../lib/adminApi'
+import { invalidatePublicCaches } from '../../lib/adminCache'
 import { uploadImage } from '../../lib/upload'
 
 const PRESET_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
@@ -109,6 +110,7 @@ export default function ProductForm() {
       isEdit ? adminApi.updateProduct(token!, id!, body) : adminApi.createProduct(token!, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-products'] })
+      invalidatePublicCaches(qc)
       router.back()
     },
     onError: (e: any) => Alert.alert('Xatolik', e.message ?? "Saqlab bo'lmadi"),
