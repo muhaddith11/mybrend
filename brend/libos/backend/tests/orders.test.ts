@@ -413,3 +413,80 @@ describe('buyurtma xatolarida `code` bo\'lishi', () => {
     await app.close()
   })
 })
+
+// ── Do'kon bahosi (POST /api/orders/:id/review) ───────────────────────────────
+// Baho faqat YETKAZILGAN buyurtma uchun va BIR MARTA qo'yiladi — aks holda
+// do'kon reytingini soxta buyurtmalar bilan ko'tarib bo'lardi.
+// Test yordamchisi authenticate'ni soxtalashtiradi: joriy foydalanuvchi 'u_test'.
+
+describe('POST /api/orders/:id/review', () => {
+  // Har bir test uchun YANGI seed — route do'kon yozuvini o'zgartiradi
+  // (rating/reviewCount), umumiy obyekt bo'lsa testlar bir-biriga ta'sir qilardi.
+  const makeSeed = () => ({
+    products: [{ id: 'p1', price: 10000, name: 'Koylak' }],
+    stores: [{ id: 's1', slug: 'asma', name: 'Asma', telegramChatId: null, rating: 0, reviewCount: 0 }],
+  })
+
+  const addOrder = (fake: any, status: string, userId = 'u_test') => {
+    fake.createdOrders.push({ id: 'o1', userId, storeId: 's1', status, totalPrice: 10000 })
+  }
+  const post = (app: any, rating: unknown) =>
+    app.inject({ method: 'POST', url: '/api/orders/o1/review', headers: json, payload: { rating } })
+
+  test('yetkazilgan buyurtmaga baho qo\'yiladi va do\'kon reytingi yangilanadi', async () => {
+    const seed = makeSeed()
+    const { app, fake } = await buildOrdersTestApp(seed)
+    addOrder(fake, 'DELIVERED')
+
+    const res = await post(app, 4)
+    assert.equal(res.statusCode, 200)
+    assert.equal(res.json().rating, 4)
+    assert.equal(res.json().reviewCount, 1)
+    assert.equal(fake.reviews.length, 1)
+    assert.equal(fake.reviews[0].rating, 4)
+    // Do'kon yozuvi ham yangilangan bo'lishi kerak (kesh sifatida saqlanadi)
+    assert.equal(seed.stores[0].rating, 4)
+    assert.equal(seed.stores[0].reviewCount, 1)
+  })
+
+  test('yetkazilmagan buyurtmaga baho qo\'yib bo\'lmaydi', async () => {
+    const { app, fake } = await buildOrdersTestApp(makeSeed())
+    addOrder(fake, 'DELIVERING')
+
+    const res = await post(app, 5)
+    assert.equal(res.statusCode, 400)
+    assert.equal(res.json().code, 'ORDER_NOT_DELIVERED')
+    assert.equal(fake.reviews.length, 0)
+  })
+
+  test('bir buyurtmaga ikkinchi marta baho qo\'yib bo\'lmaydi', async () => {
+    const { app, fake } = await buildOrdersTestApp(makeSeed())
+    addOrder(fake, 'DELIVERED')
+
+    assert.equal((await post(app, 5)).statusCode, 200)
+    const second = await post(app, 1)
+    assert.equal(second.statusCode, 409)
+    assert.equal(second.json().code, 'REVIEW_EXISTS')
+    assert.equal(fake.reviews.length, 1) // ikkinchisi yozilmagan
+  })
+
+  test('boshqa foydalanuvchining buyurtmasiga baho qo\'yib bo\'lmaydi', async () => {
+    const { app, fake } = await buildOrdersTestApp(makeSeed())
+    addOrder(fake, 'DELIVERED', 'boshqa_user')
+
+    const res = await post(app, 5)
+    assert.equal(res.statusCode, 404)
+    assert.equal(fake.reviews.length, 0)
+  })
+
+  test('baho 1-5 oralig\'idan tashqarida bo\'lsa rad etiladi', async () => {
+    const { app, fake } = await buildOrdersTestApp(makeSeed())
+    addOrder(fake, 'DELIVERED')
+
+    for (const rating of [0, 6, 2.5, 'besh']) {
+      const res = await post(app, rating)
+      assert.ok(res.statusCode >= 400, `rating=${rating} qabul qilinmasligi kerak`)
+    }
+    assert.equal(fake.reviews.length, 0)
+  })
+})

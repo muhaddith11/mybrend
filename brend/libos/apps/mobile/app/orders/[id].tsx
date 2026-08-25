@@ -10,6 +10,7 @@ import { useLangStore } from '../../store/lang'
 import { useCartStore } from '../../store/cart'
 import { useTheme, type ThemeColors } from '../../store/theme'
 import { ErrorState } from '../../components/ErrorState'
+import { RateStore } from '../../components/RateStore'
 
 type Step = { key: string; label: string; icon: string }
 
@@ -93,6 +94,13 @@ export default function OrderScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
+
+        {/* Do'kon bahosi — buyurtma yetkazilgan va hali baholanmagan bo'lsa.
+            Eng tepada turadi: mijoz shu ekranga aynan "yetkazildi" xabaridan
+            keyin kiradi, shuning uchun so'rov ko'zga birinchi tashlanishi kerak. */}
+        {order.status === 'DELIVERED' && !(order as any).review && (
+          <RateStore orderId={id} />
+        )}
 
         {/* Bot orqali to'lov hali tugallanmagan — checkout Telegram'ni ochib
             bermagan bo'lishi mumkin (o'rnatilmagan/bekor qilingan). Mijoz to'lovni

@@ -45,20 +45,21 @@ enum DeliveryType {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  phone     String   @unique
-  name      String?
-  avatar    String?
-  otp       String?
-  otpExpiry DateTime?
+  id            String    @id @default(cuid())
+  phone         String    @unique
+  name          String?
+  avatar        String?
+  otp           String?
+  otpExpiry     DateTime?
   lastOtpSentAt DateTime? // OTP rate-limit: oxirgi kod yuborilgan vaqt (spam oldini olish)
   otpAttempts   Int       @default(0) // noto'g'ri urinishlar soni (brute-force oldini olish)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   orders    Order[]
   cart      CartItem[]
   favorites FavoriteStore[]
+  reviews   Review[]
 }
 
 model Store {
@@ -83,12 +84,12 @@ model Store {
   updatedAt   DateTime @updatedAt
 
   // Har bir do'kon o'z rangini tanlaydi (UI uchun)
-  themeColor  String   @default("#534AB7")
-  themeBg     String   @default("#EEEDFE")
+  themeColor String @default("#534AB7")
+  themeBg    String @default("#EEEDFE")
 
   // Xaritadagi joylashuv
-  lat           Float?
-  lng           Float?
+  lat Float?
+  lng Float?
 
   // Telegram xabarnoma — buyurtma bildirishnomalari va bot-orqali to'lov tasdig'i
   // shu chat'ga boradi (do'kon egasining shaxsiy chat ID'si).
@@ -97,41 +98,68 @@ model Store {
   // Bot orqali o'tkazma (TRANSFER) to'lovi uchun rekvizitlar. Mijoz checkout'da
   // "Bot orqali" ni tanlasa, bot shu kartani/QR'ni ko'rsatadi va pul to'g'ridan-
   // to'g'ri egasining kartasiga tushadi (platforma hisobidan o'tmaydi).
-  cardNumber  String? // masalan "8600 1234 5678 9012"
-  cardHolder  String? // karta egasining ismi
-  paymentQr   String? // QR kod rasm URL (Supabase storage)
+  cardNumber String? // masalan "8600 1234 5678 9012"
+  cardHolder String? // karta egasining ismi
+  paymentQr  String? // QR kod rasm URL (Supabase storage)
 
   // Do'kon qo'shimcha ma'lumotlari
   instagram    String?
-  telegram     String?  // ommaviy Telegram username yoki havola (t.me/...)
+  telegram     String? // ommaviy Telegram username yoki havola (t.me/...)
   workingHours String?
   deliveryText String?
 
   // Lookbook — tayyor obrazlar galereyasi (rasm URL'lari, admin yuklaydi).
   // Eski maydon (web hali shuni o'qiydi) — buzilmaydi.
-  lookbook     String[] @default([])
+  lookbook      String[] @default([])
   // Yangi: har bir "look" = 1 rasm + shu do'kon mahsulotlaridan tuzilgan obraz.
   // Shakl: [{ image: string, productIds: string[] }]. Mobil admin yozadi/ko'rsatadi.
-  lookbookLooks Json    @default("[]")
+  lookbookLooks Json     @default("[]")
 
   // Qaysi bo'limlarda ko'rinadi
-  genders   Gender[]
+  genders Gender[]
 
   // Xizmatlar
-  hasDelivery Boolean @default(false)
-  hasPickup   Boolean @default(false)
+  hasDelivery   Boolean @default(false)
+  hasPickup     Boolean @default(false)
   hasCashOnDoor Boolean @default(true)
-  deliveryTime  Int?    // daqiqalarda
+  deliveryTime  Int? // daqiqalarda
 
-  ownerId   String
-  owner     StoreOwner @relation(fields: [ownerId], references: [id])
+  ownerId String
+  owner   StoreOwner @relation(fields: [ownerId], references: [id])
 
   products   Product[]
   orders     Order[]
   favorites  FavoriteStore[]
   categories Category[]
+  reviews    Review[]
 
   @@index([genders])
+}
+
+// Do'kon bahosi. Xaridor buyurtmasi DELIVERED bo'lgach 1-5 yulduz qo'yadi.
+// Matn yo'q — faqat yulduzcha (moderatsiya talab qilmaydi).
+//
+// `orderId @unique` — har bir buyurtma uchun BITTA baho. Bu do'kon reytingini
+// sun'iy ko'tarishning oldini oladi: baho qo'yish uchun haqiqiy, yetkazilgan
+// buyurtma bo'lishi shart va uni takrorlab bo'lmaydi.
+//
+// Store.rating / Store.reviewCount shu jadvaldan qayta hisoblanadi (routes/orders.ts).
+// Ular kesh sifatida saqlanadi — do'kon ro'yxatini ko'rsatishda har safar
+// AVG() hisoblamaslik uchun.
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int // 1-5
+  createdAt DateTime @default(now())
+
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id])
+
+  // Do'kon reytingini qayta hisoblash shu bo'yicha filtrlaydi.
+  @@index([storeId])
 }
 
 model StoreOwner {
@@ -143,20 +171,20 @@ model StoreOwner {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  stores    Store[]
+  stores Store[]
 }
 
 model Category {
-  id       String    @id @default(cuid())
-  name     String
-  slug     String
-  gender   Gender
+  id     String @id @default(cuid())
+  name   String
+  slug   String
+  gender Gender
 
   // Kategoriya endi do'konga tegishli bo'lishi mumkin. storeId NULL bo'lsa —
   // global (barcha do'konlar ko'radigan) kategoriya, eski xulq bilan mos.
   // Shu sababli slug global emas, (storeId, slug) juftligi bo'yicha unikal.
-  storeId  String?
-  store    Store?    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  storeId String?
+  store   Store?  @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   products Product[]
 
@@ -181,8 +209,8 @@ model Product {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  storeId    String
-  store      Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id])
@@ -212,12 +240,12 @@ model ProductVariant {
 }
 
 model CartItem {
-  id        String         @id @default(cuid())
-  quantity  Int            @default(1)
+  id        String  @id @default(cuid())
+  quantity  Int     @default(1)
   userId    String
-  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   productId String
-  product   Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   variantId String?
 
   @@unique([userId, productId, variantId])
@@ -238,12 +266,13 @@ model Order {
   updatedAt     DateTime     @updatedAt
 
   userId  String
-  user    User    @relation(fields: [userId], references: [id])
+  user    User   @relation(fields: [userId], references: [id])
   storeId String
-  store   Store   @relation(fields: [storeId], references: [id])
+  store   Store  @relation(fields: [storeId], references: [id])
 
   items   OrderItem[]
   payment Payment?
+  review  Review?
 
   // So'rovlar userId (/orders/my) va storeId (admin orders/stats) bo'yicha filtrlaydi —
   // buyurtmalar ko'payganда to'liq jadval skanini oldini olish uchun indeks.
@@ -264,21 +293,21 @@ model OrderItem {
 }
 
 model Payment {
-  id         String          @id @default(cuid())
-  provider   PaymentProvider
-  status     PaymentStatus   @default(PENDING)
-  amount     BigInt          // tiyin (so'm × 100) — BigInt: yirik buyurtmada int4 overflow bo'lmasin
+  id       String          @id @default(cuid())
+  provider PaymentProvider
+  status   PaymentStatus   @default(PENDING)
+  amount   BigInt // tiyin (so'm × 100) — BigInt: yirik buyurtmada int4 overflow bo'lmasin
 
   // Click uchun
-  clickTransId   String? @unique
-  clickPaydocId  String?
+  clickTransId  String? @unique
+  clickPaydocId String?
 
   // Payme uchun
-  paymeTransId   String? @unique
-  paymeTime      BigInt?
-  paymeCreateTime BigInt?
-  paymePerformTime BigInt?
-  paymeCancelTime  BigInt?
+  paymeTransId      String? @unique
+  paymeTime         BigInt?
+  paymeCreateTime   BigInt?
+  paymePerformTime  BigInt?
+  paymeCancelTime   BigInt?
   paymeCancelReason Int?
 
   // Bot orqali o'tkazma (TRANSFER) uchun
@@ -286,11 +315,11 @@ model Payment {
   customerChatId String? // mijozning bot bilan chat ID'si (tasdiq/rad xabari uchun)
   customerPhone  String? // bot so'ragan telefon raqami (do'kon egasi bog'lanishi uchun)
 
-  orderId    String  @unique
-  order      Order   @relation(fields: [orderId], references: [id])
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id])
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Login brute-force throttle holati (DB'da — serverless instance'lar bo'ylab umumiy).
@@ -303,10 +332,10 @@ model LoginThrottle {
 }
 
 model FavoriteStore {
-  userId    String
-  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  storeId   String
-  store     Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@id([userId, storeId])
 }

@@ -69,6 +69,9 @@ const createOrderSchema = z.object({
   items: z.array(itemSchema).min(1).max(100),
 })
 
+// Do'kon bahosi: faqat yulduzcha (1-5), matn yo'q — moderatsiya talab qilmaydi.
+const reviewSchema = z.object({ rating: z.number().int().min(1).max(5) })
+
 const guestOrderSchema = z.object({
   storeSlug: z.string().max(100),
   customerName: z.string().min(1).max(100),
@@ -332,10 +335,59 @@ export default async function ordersRoutes(app: FastifyInstance) {
       include: {
         items: { include: { product: true } },
         store: storeInclude,
+        // Ilova qaysi buyurtmaga baho so'rashni bilishi uchun
+        review: { select: { rating: true } },
       },
       orderBy: { createdAt: 'desc' },
     })
     return reply.send({ orders })
+  })
+
+  // Do'kon bahosi — buyurtma YETKAZILGANDAN keyin 1-5 yulduz.
+  //
+  // Nega buyurtmaga bog'langan: baho qo'yish uchun haqiqiy, yakunlangan xarid
+  // bo'lishi shart. `Review.orderId` unikal, shuning uchun bir buyurtmaga bir
+  // marta baho qo'yiladi va do'kon reytingini sun'iy ko'tarib bo'lmaydi.
+  app.post('/:id/review', { preHandler: [app.authenticate] }, async (req, reply) => {
+    const { userId } = req.user as { userId: string }
+    const { id } = req.params as { id: string }
+    const { rating } = reviewSchema.parse(req.body)
+
+    const order = await prisma.order.findFirst({
+      where: { id, userId },
+      select: { id: true, storeId: true, status: true, review: { select: { id: true } } },
+    })
+    if (!order) return fail(reply, 404, ErrorCodes.ORDER_NOT_FOUND, 'Buyurtma topilmadi')
+    if (order.status !== 'DELIVERED') {
+      return fail(reply, 400, ErrorCodes.ORDER_NOT_DELIVERED,
+        "Baho faqat yetkazilgan buyurtma uchun qo'yiladi")
+    }
+    if (order.review) {
+      return fail(reply, 409, ErrorCodes.REVIEW_EXISTS, "Bu buyurtmaga baho allaqachon qo'yilgan")
+    }
+
+    // Baho yozish va do'kon reytingini qayta hisoblash BITTA tranzaksiyada.
+    // Aks holda ikki baho bir vaqtda kelganda reviewCount noto'g'ri bo'lib qolardi.
+    const result = await prisma.$transaction(async (tx) => {
+      await tx.review.create({
+        data: { rating, orderId: order.id, userId, storeId: order.storeId },
+      })
+      const agg = await tx.review.aggregate({
+        where: { storeId: order.storeId },
+        _avg: { rating: true },
+        _count: { _all: true },
+      })
+      // Bir kasr xonagacha — UI ham shunday ko'rsatadi (4.9 kabi).
+      const avg = Math.round((agg._avg.rating ?? 0) * 10) / 10
+      const count = agg._count._all
+      await tx.store.update({
+        where: { id: order.storeId },
+        data: { rating: avg, reviewCount: count },
+      })
+      return { rating: avg, reviewCount: count }
+    })
+
+    return reply.send({ success: true, ...result })
   })
 
   // Buyurtma holati
@@ -348,6 +400,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
         items: { include: { product: true } },
         store: storeInclude,
         payment: { select: { status: true } },
+        review: { select: { rating: true } },
       },
     })
     if (!order) return fail(reply, 404, ErrorCodes.ORDER_NOT_FOUND, 'Buyurtma topilmadi')

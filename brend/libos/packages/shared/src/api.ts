@@ -119,5 +119,12 @@ export const api = {
     my: () => request<Order[]>('/orders/my'),
     getById: (id: string) => request<Order>(`/orders/${id}`),
     byId: (id: string) => request<Order>(`/orders/${id}`),
+    // Do'konga baho — faqat yetkazilgan buyurtma uchun va bir marta.
+    // Javobda do'konning yangilangan o'rtacha bahosi qaytadi.
+    review: (orderId: string, rating: number) =>
+      request<{ success: boolean; rating: number; reviewCount: number }>(
+        `/orders/${orderId}/review`,
+        { method: 'POST', body: JSON.stringify({ rating }) },
+      ),
   },
 }

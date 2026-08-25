@@ -15,8 +15,15 @@ export function createOrdersFakePrisma(seed: { products: SeedProduct[]; stores: 
   const createdOrders: any[] = []
   const variants: SeedVariant[] = (seed.variants ?? []).map((v) => ({ ...v }))
 
+  const reviews: any[] = []
+
   const prisma = {
     store: {
+      async update({ where, data }: any) {
+        const st = seed.stores.find((x: any) => x.id === where.id)
+        if (st) Object.assign(st, data)
+        return st ?? { id: where.id, ...data }
+      },
       async findUnique({ where }: any) {
         return (
           seed.stores.find(
@@ -78,6 +85,24 @@ export function createOrdersFakePrisma(seed: { products: SeedProduct[]; stores: 
         return { count }
       },
     },
+    review: {
+      async create({ data }: any) {
+        const r = { id: 'rev' + reviews.length, ...data }
+        reviews.push(r)
+        // Buyurtmaga bog'laymiz — route qayta baho qo'yishni shu orqali to'sadi
+        const o = createdOrders.find((x) => x.id === data.orderId)
+        if (o) o.review = { id: r.id }
+        return r
+      },
+      async aggregate({ where }: any) {
+        const mine = reviews.filter((r) => r.storeId === where.storeId)
+        const sum = mine.reduce((n, r) => n + r.rating, 0)
+        return {
+          _avg: { rating: mine.length ? sum / mine.length : null },
+          _count: { _all: mine.length },
+        }
+      },
+    },
     order: {
       async findUnique({ where }: any) {
         return createdOrders.find((o) => o.id === where.id) ?? null
@@ -89,6 +114,7 @@ export function createOrdersFakePrisma(seed: { products: SeedProduct[]; stores: 
         return (
           createdOrders.find(
             (o) =>
+              (where.id === undefined || o.id === where.id) &&
               (where.userId === undefined || o.userId === where.userId) &&
               (where.storeId === undefined || o.storeId === where.storeId) &&
               (where.totalPrice === undefined || o.totalPrice === where.totalPrice) &&
@@ -122,7 +148,7 @@ export function createOrdersFakePrisma(seed: { products: SeedProduct[]; stores: 
   // uzatamiz (rollback'siz, lekin route mantig'ini tekshirish uchun yetarli).
   prisma.$transaction = async (fn: any) => fn(prisma)
 
-  return { prisma, createdOrders, users, variants }
+  return { prisma, createdOrders, users, variants, reviews }
 }
 
 export async function buildOrdersTestApp(seed: { products: SeedProduct[]; stores: SeedStore[]; variants?: SeedVariant[] }) {
