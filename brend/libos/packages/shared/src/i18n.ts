@@ -227,6 +227,7 @@ export const t = {
     mVisitNow: "Hozir tashrif buyuring →",
     // ── Backend xato kodlari (lib/apiError.ts) ──
     errOTP_COOLDOWN: 'Iltimos, {seconds} soniyadan keyin qayta urining',
+    errSMS_FAILED: "Kod yuborilmadi. Biroz kutib, qayta urinib ko'ring.",
     errOTP_NOT_REQUESTED: "Avval kod so'rang",
     errOTP_EXPIRED: 'Kod muddati tugagan',
     errOTP_TOO_MANY: "Juda ko'p urinish. Yangi kod so'rang.",
@@ -457,6 +458,7 @@ export const t = {
     mVisitNow: "Посетить сейчас →",
     // ── Backend xato kodlari (lib/apiError.ts) ──
     errOTP_COOLDOWN: 'Повторите попытку через {seconds} сек.',
+    errSMS_FAILED: 'Код не отправлен. Подождите немного и попробуйте снова.',
     errOTP_NOT_REQUESTED: 'Сначала запросите код',
     errOTP_EXPIRED: 'Срок действия кода истёк',
     errOTP_TOO_MANY: 'Слишком много попыток. Запросите новый код.',
@@ -687,6 +689,7 @@ export const t = {
     mVisitNow: "Visit now →",
     // ── Backend xato kodlari (lib/apiError.ts) ──
     errOTP_COOLDOWN: 'Please try again in {seconds} seconds',
+    errSMS_FAILED: 'The code could not be sent. Please wait a moment and try again.',
     errOTP_NOT_REQUESTED: 'Request a code first',
     errOTP_EXPIRED: 'The code has expired',
     errOTP_TOO_MANY: 'Too many attempts. Please request a new code.',

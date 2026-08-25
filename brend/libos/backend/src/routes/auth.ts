@@ -106,12 +106,17 @@ export default async function authRoutes(app: FastifyInstance) {
     // Demo raqamga SMS yuborilmaydi — u real raqam emas, provayder xarajati va
     // xatosi bekorga bo'ladi. Reviewer baribir `007700` bilan kiradi.
     if (!demo) {
-      // SMS provayder yiqilsa ham login oqimi to'xtamasin — kod DB'da saqlangan.
-      // Xato serverda loglanadi.
+      // SMS yuborilmasa MIJOZGA AYTAMIZ. Ilgari xato jimgina logga yozilib,
+      // javob baribir `success: true` bo'lardi — foydalanuvchi kod ekranida
+      // o'tirib qolar, kod esa hech qachon kelmasdi va sabab ko'rinmasdi.
+      // (Kod DB'da saqlangani bu yerda yordam bermaydi: foydalanuvchi uni
+      // ololmaydi, shuning uchun oqimni davom ettirishning ma'nosi yo'q.)
       try {
         await sendSms(phone, smsText)
       } catch (e) {
         req.log.error({ err: e }, 'SMS yuborilmadi (provayder)')
+        return fail(reply, 502, ErrorCodes.SMS_FAILED,
+          "Kod yuborilmadi. Biroz kutib, qayta urinib ko'ring.")
       }
     }
     return reply.send({ success: true, message: 'Kod yuborildi' })
