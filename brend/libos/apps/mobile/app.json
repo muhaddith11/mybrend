@@ -2,7 +2,7 @@
   "expo": {
     "name": "ZYFF",
     "slug": "zyff",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "zyff",
@@ -85,7 +85,7 @@
       }
     },
     "runtimeVersion": {
-      "policy": "fingerprint"
+      "policy": "appVersion"
     },
     "updates": {
       "url": "https://u.expo.dev/b56d7ee9-41ae-4fc3-9ecd-833e133ea6cd"
