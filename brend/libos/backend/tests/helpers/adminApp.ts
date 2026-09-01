@@ -119,6 +119,11 @@ export function createAdminFakePrisma(seed: AdminSeed) {
           .filter((p) => ids.includes(p.id) && (!where.storeId || p.storeId === where.storeId))
           .map((p) => ({ ...p }))
       },
+      async update({ where, data }: any) {
+        const p = products.find((x) => x.id === where.id)
+        if (p) Object.assign(p, data)
+        return p ? { ...p } : null
+      },
       async delete({ where }: any) {
         const idx = products.findIndex((x) => x.id === where.id)
         const [removed] = idx >= 0 ? products.splice(idx, 1) : [null]

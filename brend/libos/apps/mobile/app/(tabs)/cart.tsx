@@ -25,7 +25,7 @@ export default function CartScreen() {
 
   if (items.length === 0) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView edges={['top']} style={styles.safe}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>{tr.cart}</Text>
         </View>
@@ -45,7 +45,7 @@ export default function CartScreen() {
   const storeIds = Object.keys(byStore)
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView edges={['top']} style={styles.safe}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{tr.cart}</Text>
         <Text style={styles.headerCount}>{items.length} {tr.mItemsWord}</Text>

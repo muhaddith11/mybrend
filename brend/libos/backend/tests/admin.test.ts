@@ -137,8 +137,10 @@ describe('PATCH /api/admin/orders/:id/status — bekor qilishda stok', () => {
   })
 })
 
-// OrderItem.product bog'lanishi RESTRICT — sotilgan mahsulotni o'chirish FK xatosi
-// bilan 500 berardi. Endi tushunarli 400 qaytadi, buyurtma tarixi buzilmaydi.
+// OrderItem.product bog'lanishi RESTRICT — buyurtmada ishlatilgan mahsulotni
+// butunlay o'chirib bo'lmaydi. Endi SOFT-DELETE: arxivlanadi (archivedAt +
+// inStock:false), qator saqlanadi, buyurtma tarixi buzilmaydi. Buyurtmasiz
+// mahsulot esa avvalgidek butunlay o'chadi.
 describe('DELETE /api/admin/products/:id', () => {
   const base = {
     ...seed,
@@ -159,12 +161,16 @@ describe('DELETE /api/admin/products/:id', () => {
   const del = (app: any, token: string, id: string) =>
     app.inject({ method: 'DELETE', url: `/api/admin/products/${id}`, headers: { authorization: `Bearer ${token}` } })
 
-  test('buyurtmada ishlatilgan mahsulot → 400 (500 emas), o\'chirilmaydi', async () => {
+  test('buyurtmada ishlatilgan mahsulot → soft-delete (arxivlanadi, 200)', async () => {
     const { app, fake, token } = await authed()
     const res = await del(app, token, 'p1')
-    assert.equal(res.statusCode, 400)
-    assert.match(res.json().error, /buyurtmalarda ishlatilgan/)
+    assert.equal(res.statusCode, 200)
+    assert.equal(res.json().archived, true)
+    // Hard-delete BO'LMAYDI — qator saqlanadi (buyurtma tarixi uchun).
     assert.equal(fake.products.length, 2)
+    const p1 = fake.products.find((p: any) => p.id === 'p1')
+    assert.ok(p1.archivedAt, 'archivedAt belgilanadi')
+    assert.equal(p1.inStock, false, 'mijozdan yashiriladi')
     await app.close()
   })
 

@@ -206,6 +206,11 @@ model Product {
   inStock       Boolean  @default(true)
   featured      Boolean  @default(false)
   isNew         Boolean  @default(false)
+  // Soft-delete. Buyurtmada ishlatilgan mahsulotni butunlay o'chirib bo'lmaydi
+  // (OrderItem RESTRICT — buyurtma tarixi buzilmasin). "O'chirish" bosilganda
+  // arxivlanadi: admin ro'yxatidan (archivedAt filtri) ham, mijozdan (inStock:false)
+  // ham yo'qoladi, lekin OrderItem yozuvi saqlanadi. Qarang routes/admin.ts.
+  archivedAt    DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

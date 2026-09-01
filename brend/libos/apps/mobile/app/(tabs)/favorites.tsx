@@ -31,7 +31,7 @@ export default function FavoritesScreen() {
   })
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView edges={['top']} style={styles.safe}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{tr.mFavorites}</Text>
       </View>

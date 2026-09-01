@@ -118,7 +118,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
 
     const productIds = body.items.map(i => i.productId)
     // Faqat shu do'konning mahsulotlari — boshqa do'kon yoki mavjud bo'lmagan ID jimgina 0 narx bermasin
-    const products = await prisma.product.findMany({ where: { id: { in: productIds }, storeId: store.id } })
+    const products = await prisma.product.findMany({ where: { id: { in: productIds }, storeId: store.id, archivedAt: null } })
     const foundIds = new Set(products.map(p => p.id))
     const invalid = productIds.filter(id => !foundIds.has(id))
     if (invalid.length) {
@@ -234,7 +234,7 @@ export default async function ordersRoutes(app: FastifyInstance) {
 
     const productIds = body.items.map(i => i.productId)
     // Mahsulotlar shu do'konga tegishli va hammasi mavjud bo'lishi shart
-    const products = await prisma.product.findMany({ where: { id: { in: productIds }, storeId: body.storeId } })
+    const products = await prisma.product.findMany({ where: { id: { in: productIds }, storeId: body.storeId, archivedAt: null } })
     const foundIds = new Set(products.map(p => p.id))
     const invalid = productIds.filter(id => !foundIds.has(id))
     if (invalid.length) {

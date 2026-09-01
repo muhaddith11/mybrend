@@ -205,7 +205,7 @@ export default async function adminRoutes(app: FastifyInstance) {
     const store = await prisma.store.findFirst({ where: { ownerId } })
     if (!store) return reply.status(404).send({ error: 'Do\'kon topilmadi' })
     const products = await prisma.product.findMany({
-      where: { storeId: store.id },
+      where: { storeId: store.id, archivedAt: null }, // arxivlangan (o'chirilgan) mahsulotlar ko'rinmaydi
       include: { category: true, variants: true },
       orderBy: { createdAt: 'desc' },
       take: 500, // cheksiz yuklanishni oldini olish (eng yangi 500)
@@ -278,18 +278,21 @@ export default async function adminRoutes(app: FastifyInstance) {
     const product = await prisma.product.findFirst({ where: { id, store: { ownerId } } })
     if (!product) return reply.status(404).send({ error: 'Topilmadi' })
 
-    // OrderItem.product bog'lanishi RESTRICT — sotilgan mahsulotni o'chirish FK
-    // xatosi bilan 500 berardi va egaga tushunarsiz "server xatosi" ko'rinardi.
-    // Buyurtma tarixini buzmaslik uchun o'chirishga yo'l qo'ymaymiz, lekin nima
-    // qilish kerakligini aniq aytamiz.
+    // OrderItem.product bog'lanishi RESTRICT — buyurtmada ishlatilgan mahsulotni
+    // butunlay o'chirib bo'lmaydi (buyurtma tarixi buzilmasin). SOFT-DELETE:
+    // arxivlaymiz. `archivedAt` → admin ro'yxatidan tushadi; `inStock:false` →
+    // barcha customer va checkout filtrlaridan tushadi (ular allaqachon inStock'ni
+    // tekshiradi). OrderItem yozuvi saqlanadi — ega uchun mahsulot "o'chirilgan".
     const usedInOrders = await prisma.orderItem.count({ where: { productId: id } })
     if (usedInOrders > 0) {
-      return reply.status(400).send({
-        error: "Bu mahsulot buyurtmalarda ishlatilgan, o'chirib bo'lmaydi. " +
-          "Uni ko'rinmas qilish uchun \"Sotuvda bor\" belgisini olib tashlang.",
+      await prisma.product.update({
+        where: { id },
+        data: { archivedAt: new Date(), inStock: false },
       })
+      return reply.send({ success: true, archived: true })
     }
 
+    // Hech qaysi buyurtmada yo'q — butunlay o'chiramiz.
     await prisma.product.delete({ where: { id } })
     return reply.send({ success: true })
   })

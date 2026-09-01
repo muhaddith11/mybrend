@@ -144,7 +144,7 @@ export default function ProfileScreen() {
   )
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView edges={['top']} style={styles.safe}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{tr.profile}</Text>
       </View>

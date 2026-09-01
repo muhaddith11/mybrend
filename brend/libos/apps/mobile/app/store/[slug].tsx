@@ -25,7 +25,8 @@ export default function StoreScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>()
   const router = useRouter()
   const queryClient = useQueryClient()
-  const tr = useT(useLangStore(s => s.lang))
+  const lang = useLangStore(s => s.lang)
+  const tr = useT(lang)
   const { isLoggedIn } = useAuthStore()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
@@ -123,8 +124,14 @@ export default function StoreScreen() {
         <View style={styles.headerCenter}>
           <Text style={styles.headerName}>{store.name}</Text>
           <View style={styles.headerMeta}>
-            <Ionicons name="star" size={12} color="#FFD700" />
-            <Text style={styles.headerRating}> {(store.rating ?? 0).toFixed(1)}</Text>
+            {store.reviewCount ? (
+              <>
+                <Ionicons name="star" size={12} color="#FFD700" />
+                <Text style={styles.headerRating}> {(store.rating ?? 0).toFixed(1)}</Text>
+              </>
+            ) : (
+              <Text style={styles.headerRating}>{lang === 'ru' ? 'Новый' : lang === 'en' ? 'New' : 'Yangi'}</Text>
+            )}
             <Text style={styles.headerDot}> · </Text>
             <View style={[styles.openDot, { backgroundColor: store.isOpen ? '#4ade80' : '#f87171' }]} />
             <Text style={styles.headerOpen}> {store.isOpen ? tr.open : tr.closed}</Text>

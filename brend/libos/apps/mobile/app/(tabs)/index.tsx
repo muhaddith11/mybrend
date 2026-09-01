@@ -114,7 +114,7 @@ export default function HomeScreen() {
 
   if (searchQuery) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView edges={['top']} style={styles.safe}>
         <HomeHeader />
         {searchBar}
         <FlatList
@@ -167,7 +167,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView edges={['top']} style={styles.safe}>
       <FlatList
         data={data?.stores ?? []}
         keyExtractor={item => item.id}

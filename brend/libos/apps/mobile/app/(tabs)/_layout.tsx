@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useT } from '@libos/shared'
 import { useLangStore } from '../../store/lang'
 import { useTheme } from '../../store/theme'
@@ -7,6 +8,12 @@ import { useTheme } from '../../store/theme'
 export default function TabsLayout() {
   const tr = useT(useLangStore(s => s.lang))
   const { colors } = useTheme()
+  // Android 16 (API 36) edge-to-edge MAJBURIY — ilova tizim navigatsiya paneli
+  // ORTIDA chiziladi. Qat'iy height/paddingBottom insetni hisobga olmagani uchun
+  // tab tugmalari Samsung tizim tugmalari bilan ustma-ust tushardi, past qismda
+  // esa fon to'lmay bo'sh joy qolardi. Insetni qo'shamiz: kontent tugmalardan
+  // yuqoriga chiqadi, fon pastki chekkagacha to'ladi. (Gesture nav'da inset ~0.)
+  const insets = useSafeAreaInsets()
   return (
     <Tabs
       screenOptions={{
@@ -19,9 +26,9 @@ export default function TabsLayout() {
           backgroundColor: colors.surface,
           borderTopWidth: 0.5,
           borderTopColor: colors.border,
-          paddingBottom: 12,
+          paddingBottom: 12 + insets.bottom,
           paddingTop: 8,
-          height: 76,
+          height: 76 + insets.bottom,
         },
         tabBarLabelStyle: { fontSize: 10, fontWeight: '600', marginBottom: 2 },
       }}

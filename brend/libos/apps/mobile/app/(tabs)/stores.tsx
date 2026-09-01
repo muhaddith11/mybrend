@@ -31,7 +31,7 @@ export default function StoresScreen() {
   })
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView edges={['top']} style={styles.safe}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{tr.mAllStores}</Text>
       </View>

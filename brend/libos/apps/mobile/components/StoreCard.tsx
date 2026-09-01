@@ -11,7 +11,8 @@ import { resolveImg } from '../lib/links'
 import { getStoreDesign } from '../lib/storeDesigns'
 
 export function StoreCard({ store, onPress }: { store: Store; onPress: () => void }) {
-  const tr = useT(useLangStore(s => s.lang))
+  const lang = useLangStore(s => s.lang)
+  const tr = useT(lang)
   const { colors } = useTheme()
   const styles = useMemo(() => makeStyles(colors), [colors])
   // Bazadagi logo ustun; bo'lmasa maxsus dizaynli do'konning bundled logotipi.
@@ -33,7 +34,11 @@ export function StoreCard({ store, onPress }: { store: Store; onPress: () => voi
       </View>
       <View style={styles.storeRight}>
         <Text style={styles.rating}>
-          ⭐ {(store.rating ?? 0).toFixed(1)}{!!store.reviewCount && ` (${store.reviewCount})`}
+          {/* Reyting yo'q (yangi do'kon) bo'lsa "⭐ 0.0" o'rniga "Yangi" — 0.0
+              past bahodek ko'rinmasin. Reyting paydo bo'lgach yulduz + son. */}
+          {store.reviewCount
+            ? `⭐ ${(store.rating ?? 0).toFixed(1)} (${store.reviewCount})`
+            : lang === 'ru' ? 'Новый' : lang === 'en' ? 'New' : 'Yangi'}
         </Text>
         <Text style={styles.itemCount}>{store._count?.products ?? 0} {tr.products}</Text>
         <View style={[styles.openBadge, { backgroundColor: store.isOpen ? '#22C55E' : '#6B7280' }]}>
