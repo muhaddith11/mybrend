@@ -9,3 +9,9 @@ expo-env.d.ts
 credentials/
 *.p8
 google-play-service-account.json
+
+# Firebase (FCM) sozlamasi. Repo OCHIQ bo'lgani uchun commit qilinmaydi — ichidagi
+# API kaliti botlar tomonidan yig'ib olinadi. EAS build'ga baribir yetadi:
+# .easignore mavjud bo'lsa EAS .gitignore'ni o'qimaydi (qarang: .easignore).
+# Yangi kompyuterda: Firebase console -> Project settings -> google-services.json.
+google-services.json

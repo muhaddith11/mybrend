@@ -2,7 +2,7 @@
   "expo": {
     "name": "ZYFF",
     "slug": "zyff",
-    "version": "1.1.1",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "zyff",
@@ -26,6 +26,7 @@
         "backgroundColor": "#000000"
       },
       "package": "uz.zyff.app",
+      "googleServicesFile": "./google-services.json",
       "permissions": [],
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
