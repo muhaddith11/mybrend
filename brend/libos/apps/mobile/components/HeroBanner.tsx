@@ -14,7 +14,7 @@ import { getStoreDesign } from '../lib/storeDesigns'
 // Ilgari `Dimensions.get('window')` modul darajasida chaqirilardi — qiymat import
 // paytida bir marta olinib, oyna o'lchami o'zgarganda (Android split-screen,
 // buklanadigan telefon) eskirib qolardi va karusel sahifasi ekranga mos kelmasdi.
-const BANNER_H = 170
+const BANNER_H = 196
 
 type Slide =
   | { kind: 'app' }
@@ -159,9 +159,9 @@ const styles = StyleSheet.create({
   // App slide (premium navy & gold)
   orbBig: { position: 'absolute', width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(227,160,8,0.16)', top: -30, right: -20 },
   orbSmall: { position: 'absolute', width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(255,255,255,0.05)', bottom: -40, right: 40 },
-  appBadge: { color: '#F5C453', fontSize: 11, fontWeight: '700', marginBottom: 12, letterSpacing: 0.3 },
-  appTitle: { color: '#fff', fontSize: 23, fontWeight: '800', lineHeight: 30, marginBottom: 16, letterSpacing: -0.3 },
-  ctaBtn: { alignSelf: 'flex-start', backgroundColor: '#E3A008', borderRadius: 14, paddingHorizontal: 18, paddingVertical: 11 },
+  appBadge: { color: '#F5C453', fontSize: 11, fontWeight: '700', marginBottom: 8, letterSpacing: 0.3 },
+  appTitle: { color: '#fff', fontSize: 20, fontWeight: '800', lineHeight: 25, marginBottom: 12, letterSpacing: -0.3 },
+  ctaBtn: { alignSelf: 'flex-start', backgroundColor: '#E3A008', borderRadius: 14, paddingHorizontal: 18, paddingVertical: 10 },
   ctaBtnText: { color: '#1B1F4B', fontSize: 13, fontWeight: '700' },
   bgLetter: { position: 'absolute', right: -10, bottom: -40, fontSize: 180, fontWeight: '800', color: 'rgba(255,255,255,0.04)' },
   // Store slide
