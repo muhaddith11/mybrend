@@ -34,15 +34,16 @@ jobs:
           check "backend health"  "https://libos-api.vercel.app/health" "200"
           check "www -> zyff.uz"   "https://www.zyff.uz/"             "308"
 
-          # Eng muhim: sitemap mahsulotlarni o'z ichiga oladimi?
-          # (web -> backend -> DB butun zanjir ishlayotganini isbotlaydi)
+          # Sitemap mahsulotlarni o'z ichiga oladimi? (web -> backend -> DB zanjiri)
+          # Ogohlantirish sifatida — do'konlarda vaqtincha sotuvda mahsulot bo'lmasligi
+          # (masalan katalog tozalanganda) me'yoriy holat, bu boshqa tekshiruvlarni
+          # to'xtatmasligi kerak.
           sm=$(curl -sL -m 30 "https://zyff.uz/sitemap.xml")
           if echo "$sm" | grep -q "/product/"; then
             count=$(echo "$sm" | grep -c "/product/")
             echo "✅ sitemap: $count ta mahsulot URL"
           else
-            echo "❌ sitemap'da mahsulot YO'Q — data qatlami buzilgan bo'lishi mumkin (NEXT_PUBLIC_API_URL?)"
-            fail=1
+            echo "⚠️ sitemap'da mahsulot YO'Q — do'konlarda sotuvda mahsulot yo'q bo'lishi mumkin (yoki data qatlami buzilgan, NEXT_PUBLIC_API_URL?)"
           fi
 
           exit $fail

@@ -35,6 +35,9 @@
       "ios": {
         "ascAppId": "6800536645",
         "appleTeamId": "CRLRPGPWL2",
+        "ascApiKeyPath": "./credentials/AuthKey_22GXNUDC8B.p8",
+        "ascApiKeyId": "22GXNUDC8B",
+        "ascApiKeyIssuerId": "eefb30f9-e5b4-4cef-8714-76031777d705",
         "language": "en-US"
       },
       "android": {
