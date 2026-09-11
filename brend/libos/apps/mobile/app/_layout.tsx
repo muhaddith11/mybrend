@@ -15,6 +15,7 @@ import { SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, SpaceGrotesk_700Bold }
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold } from '@expo-google-fonts/inter'
 import { useAuthStore } from '../store/auth'
 import { useAdminStore } from '../store/admin'
+import { useThemeStore } from '../store/theme'
 import { Onboarding } from '../components/Onboarding'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import { initSentry } from '../lib/sentry'
@@ -54,6 +55,7 @@ const persister = createAsyncStoragePersister({
 export default function RootLayout() {
   const loadFromStorage = useAuthStore(s => s.loadFromStorage)
   const loadAdmin = useAdminStore(s => s.loadFromStorage)
+  const dark = useThemeStore(s => s.dark)
 
   // Do'kon dizaynlari uchun shriftlar (asma=serif, boosner=Inter, onepro=SpaceGrotesk).
   // Yuklanmaguncha ilova baribir ishlaydi — shriftlar tayyor bo'lgach avtomatik yangilanadi.
@@ -64,15 +66,32 @@ export default function RootLayout() {
     Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold,
   })
 
-  // Web'da TextInput fokusda xunuk qora ramka (outline) chiqadi — barcha
-  // input/textarea'lardan global o'chiramiz (native'da bu e'tiborsiz).
+  // Web'da: (1) TextInput fokusda xunuk qora ramka (outline) chiqadi —
+  // input/textarea'lardan o'chiramiz; (2) brauzerning odatiy semiz scrollbar'i
+  // ilova dizayniga mos emas — ingichka, shaffof, mavzuga mos (gold/navy)
+  // scrollbar bilan almashtiramiz. Ikkalasi ham faqat web'da, native'da
+  // e'tiborsiz qoladi.
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      const style = document.createElement('style')
-      style.textContent = 'input, textarea, select { outline: none !important; }'
-      document.head.appendChild(style)
+      let style = document.getElementById('zyff-web-style') as HTMLStyleElement | null
+      if (!style) {
+        style = document.createElement('style')
+        style.id = 'zyff-web-style'
+        document.head.appendChild(style)
+      }
+      const thumb = dark ? 'rgba(227,160,8,0.35)' : 'rgba(27,31,75,0.22)'
+      const thumbHover = dark ? 'rgba(227,160,8,0.55)' : 'rgba(27,31,75,0.38)'
+      style.textContent = `
+        input, textarea, select { outline: none !important; }
+        * { scrollbar-width: thin; scrollbar-color: ${thumb} transparent; }
+        *::-webkit-scrollbar { width: 7px; height: 7px; }
+        *::-webkit-scrollbar-track { background: transparent; }
+        *::-webkit-scrollbar-thumb { background: ${thumb}; border-radius: 999px; }
+        *::-webkit-scrollbar-thumb:hover { background: ${thumbHover}; }
+        *::-webkit-scrollbar-corner { background: transparent; }
+      `
     }
-  }, [])
+  }, [dark])
 
   // Ilova ochilganda saqlangan token(lar)ni yuklash
   useEffect(() => {

@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useCartStore } from '../store/cart'
 import { useTheme, type ThemeColors } from '../store/theme'
 import { Logo } from './Logo'
+import { CityPicker } from './CityPicker'
 
 export function HomeHeader() {
   const router = useRouter()
@@ -15,7 +16,11 @@ export function HomeHeader() {
 
   return (
     <View style={styles.header}>
-      <Logo size={20} />
+      <View style={styles.left}>
+        <Logo size={20} />
+        <View style={styles.divider} />
+        <CityPicker />
+      </View>
       <TouchableOpacity style={styles.cartBtn} onPress={() => router.push('/cart')}>
         <Ionicons name="bag-outline" size={20} color={colors.brand} />
         {cartCount > 0 && (
@@ -30,6 +35,8 @@ export function HomeHeader() {
 
 const makeStyles = (c: ThemeColors) => StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 },
+  left: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1, marginRight: 12 },
+  divider: { width: 1, height: 16, backgroundColor: c.border },
   cartBtn: { width: 38, height: 38, borderRadius: 12, backgroundColor: c.brandLight, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   badge: { position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16, borderRadius: 8, backgroundColor: '#E23B3B', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
   badgeText: { color: c.white, fontSize: 10, fontWeight: '700' },

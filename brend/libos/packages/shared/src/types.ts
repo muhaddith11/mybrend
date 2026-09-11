@@ -7,6 +7,7 @@ export interface Store {
   name: string
   slug: string
   description?: string
+  city?: string
   address?: string
   phone?: string
   logo?: string

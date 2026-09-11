@@ -9,8 +9,9 @@ import { restoreStock } from '../lib/stock.js'
 // qolib, user-enumeration (timing attack) imkonsiz bo'lsin.
 const DUMMY_HASH = '$2a$10$CwTycUXWue0Thq9StjUM0uJ8DvWlZQ3PqQ9YxLk7Yb5Ym0Qe5Hq2'
 
-// Admin tokeni 12 soat amal qiladi (mijoz tokenidan qisqaroq — egalik darajasi yuqori).
-const ADMIN_TOKEN_TTL = '12h'
+// Admin tokeni 30 kun amal qiladi (mijoz tokeni bilan bir xil) — do'kon egalari
+// har safar qayta login qilmasin.
+const ADMIN_TOKEN_TTL = '30d'
 
 const loginSchema = z.object({ email: z.string().min(1), password: z.string().min(1) })
 

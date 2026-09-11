@@ -11,6 +11,7 @@
 // piksel O'LCHAMINI emas — shuning uchun bu yerda o'lchamni ham cheklaymiz.
 
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator'
+import { Platform } from 'react-native'
 
 const _rawUrl =
   (typeof process !== 'undefined' && process.env.EXPO_PUBLIC_API_URL) ||
@@ -51,7 +52,15 @@ async function shrink(localUri: string): Promise<{ uri: string; type: string; na
 export async function uploadImage(localUri: string, token: string): Promise<string> {
   const { uri, type, name } = await shrink(localUri)
   const form = new FormData()
-  form.append('file', { uri, type, name } as any)
+  if (Platform.OS === 'web') {
+    // Web'da fetch/FormData browser'ning haqiqiy API'si — RN'ning {uri,type,name}
+    // konventsiyasini tushunmaydi, uni oddiy string qilib yuboradi (fayl bo'lmay
+    // qoladi va backend 400 "Fayl topilmadi" beradi). Shu uchun blob kerak.
+    const blob = await (await fetch(uri)).blob()
+    form.append('file', blob, name)
+  } else {
+    form.append('file', { uri, type, name } as any)
+  }
 
   const res = await fetch(`${BASE_URL}/upload`, {
     method: 'POST',

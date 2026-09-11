@@ -63,9 +63,10 @@ export const api = {
   },
 
   stores: {
-    list: (params: { gender?: Gender; search?: string; page?: number; limit?: number } = {}) => {
+    list: (params: { gender?: Gender; city?: string; search?: string; page?: number; limit?: number } = {}) => {
       const q = new URLSearchParams()
       if (params.gender) q.set('gender', params.gender)
+      if (params.city) q.set('city', params.city)
       if (params.search) q.set('search', params.search)
       if (params.page) q.set('page', String(params.page))
       if (params.limit) q.set('limit', String(params.limit))
@@ -82,12 +83,17 @@ export const api = {
   },
 
   products: {
-    featured: () => request<{ products: Product[] }>('/products/featured'),
-    discounted: () => request<{ products: Product[] }>('/products/discounted'),
-    search: (q: string) =>
-      request<{ products: (Product & { store?: { name: string; slug: string; themeColor?: string; themeBg?: string } })[] }>(
-        `/products?search=${encodeURIComponent(q)}`
-      ),
+    featured: (city?: string) =>
+      request<{ products: Product[] }>(`/products/featured${city ? `?city=${encodeURIComponent(city)}` : ''}`),
+    discounted: (city?: string) =>
+      request<{ products: Product[] }>(`/products/discounted${city ? `?city=${encodeURIComponent(city)}` : ''}`),
+    search: (q: string, city?: string) => {
+      const params = new URLSearchParams({ search: q })
+      if (city) params.set('city', city)
+      return request<{ products: (Product & { store?: { name: string; slug: string; themeColor?: string; themeBg?: string } })[] }>(
+        `/products?${params}`
+      )
+    },
     byStore: (storeId: string, categoryId?: string) => {
       const q = categoryId ? `?categoryId=${categoryId}` : ''
       return request<Product[]>(`/products/store/${storeId}${q}`)

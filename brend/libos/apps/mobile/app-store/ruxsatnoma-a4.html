@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<title>ZYFF — Do'kon ruxsatnomalari</title>
+<style>
+  /* Chegara @page da EMAS, .sheet ning padding'ida beriladi. Ikkalasida ham
+     bo'lsa varaq bosiladigan maydondan baland bo'lib, har xat 2 betga bo'linadi. */
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Times New Roman", Georgia, serif;
+    font-size: 11.5pt; line-height: 1.5; color: #000; background: #fff;
+    margin: 0; padding: 0;
+  }
+  .sheet {
+    width: 210mm; min-height: 297mm; padding: 18mm 20mm;
+    margin: 0 auto 8mm; background: #fff;
+  }
+  .sheet + .sheet { page-break-before: always; }
+  h1 {
+    font-size: 15pt; text-align: center; letter-spacing: 1px;
+    margin: 0 0 2mm; text-transform: uppercase;
+  }
+  .sub { text-align: center; font-size: 10pt; color: #444; margin: 0 0 8mm; }
+  .rule { border: none; border-top: 1.5px solid #000; margin: 0 0 7mm; }
+  h2 {
+    font-size: 11pt; text-transform: uppercase; letter-spacing: 0.8px;
+    margin: 7mm 0 3mm; padding-bottom: 1mm; border-bottom: 1px solid #999;
+  }
+  table.details { width: 100%; border-collapse: collapse; margin-bottom: 2mm; }
+  table.details td { padding: 1.6mm 0; vertical-align: top; }
+  table.details td.k { width: 62mm; color: #333; }
+  table.details td.v { font-weight: bold; }
+  /* Egasi telefonda o'zi to'ldiradigan maydonlar */
+  .fill { display: inline-block; min-width: 62mm; border-bottom: 1px dotted #666; }
+  p { margin: 0 0 3mm; text-align: justify; }
+  ol { margin: 0 0 3mm; padding-left: 6mm; }
+  li { margin-bottom: 2mm; text-align: justify; }
+  .sign { margin-top: 10mm; width: 100%; border-collapse: collapse; }
+  .sign td { padding-top: 12mm; vertical-align: bottom; font-size: 10.5pt; }
+  .sign .line { border-bottom: 1px solid #000; height: 1px; margin-bottom: 1.5mm; }
+  .stamp {
+    width: 34mm; height: 34mm; border: 1px dashed #bbb; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    text-align: center; color: #aaa; font-size: 8pt; line-height: 1.35;
+    padding: 3mm;
+  }
+  .note {
+    margin-top: 6mm; font-size: 8.5pt; color: #666; font-style: italic;
+    border-top: 1px solid #ddd; padding-top: 2mm;
+  }
+  @media screen {
+    body { background: #d8d8dc; padding: 8mm 0; }
+    .sheet { box-shadow: 0 2px 10px rgba(0,0,0,.25); }
+  }
+  @media print {
+    /* overflow:hidden — yaxlitlash xatosi tufayli 1px oshib ketib, ortiqcha
+       bo'sh bet chiqib qolmasligi uchun */
+    .sheet { margin: 0; box-shadow: none; min-height: auto; height: 297mm; overflow: hidden; }
+    /* Imzo bloki matnidan ajralib boshqa betga o'tib ketmasin */
+    .sign { page-break-inside: avoid; break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ 1-VARAQ: AURA MED FORMA ============ -->
+<section class="sheet">
+  <h1>Ruxsatnoma</h1>
+  <p class="sub">Authorisation Letter</p>
+  <hr class="rule">
+
+  <table class="details">
+    <tr><td class="k">Do'kon nomi / <i>Store name</i></td><td class="v">Aura Med Forma</td></tr>
+    <tr><td class="k">Egasi / <i>Owner</i></td><td class="v">Abdurashidov Sardor</td></tr>
+    <tr><td class="k">Manzil / <i>Address</i></td><td class="v">Qo'qon shahri, Turkiston ko'chasi, 212-uy</td></tr>
+    <tr><td class="k">Telefon / <i>Phone</i></td><td class="v"><span class="fill">&nbsp;</span></td></tr>
+    <tr><td class="k">Sana / <i>Date</i></td><td class="v"><span class="fill">&nbsp;</span></td></tr>
+  </table>
+
+  <h2>O'zbekcha</h2>
+  <p>Men, yuqorida ko'rsatilgan do'kon egasi, &laquo;ZYFF&raquo; mobil ilovasi va <b>zyff.uz</b> veb-saytiga quyidagilarga ruxsat beraman:</p>
+  <ol>
+    <li>Do'konimning nomi, logotipi, manzili va mahsulotlarim (rasm, nom, tavsif, narx) ZYFF platformasida ko'rsatilishi;</li>
+    <li>Xaridorlarning do'konimga mo'ljallangan buyurtmalarini ZYFF orqali qabul qilinishi va menga yetkazilishi.</li>
+  </ol>
+  <p>Tasdiqlayman: platformaga joylanadigan barcha mahsulot rasmlari, nomlari va tavsiflari menga tegishli yoki men ulardan foydalanish huquqiga egaman; ushbu kontentni ZYFF o'zi olmagan &mdash; men do'kon egasi panelidan o'zim joylayman va boshqaraman; ZYFF menga yoki xaridorlarga ilovadan foydalanish uchun to'lov belgilamaydi va to'lovlarni o'zi qabul qilmaydi.</p>
+  <p>Ushbu ruxsat men uni yozma ravishda bekor qilmagunimcha amal qiladi.</p>
+
+  <h2>English</h2>
+  <p>I, the owner of the store named above, hereby authorise the mobile application <b>ZYFF</b> and the website <b>zyff.uz</b> to:</p>
+  <ol>
+    <li>Display my store's name, logo, address and my products (images, names, descriptions and prices) on the ZYFF platform;</li>
+    <li>Receive customer orders addressed to my store through ZYFF and forward them to me.</li>
+  </ol>
+  <p>I confirm that all product images, names and descriptions published on the platform belong to me or that I hold the rights to use them; that this content was not collected by ZYFF &mdash; I upload and manage it myself through the store-owner panel; and that ZYFF charges neither me nor the customers any fee for access to the application, and does not collect payments on my behalf.</p>
+  <p>This authorisation remains valid until I withdraw it in writing.</p>
+
+  <table class="sign">
+    <tr>
+      <td style="width:58%">
+        <div class="line"></div>
+        Imzo / <i>Signature</i><br>
+        <b>Abdurashidov Sardor</b>
+      </td>
+      <td style="width:42%; text-align:right">
+        <span class="stamp">Muhr &mdash; agar bo'lsa<br><i>Stamp &mdash; if any</i></span>
+      </td>
+    </tr>
+  </table>
+
+  <p class="note">Ushbu hujjat App Store review jarayoni uchun tayyorlangan (Guideline 5.2.2).</p>
+</section>
+
+<!-- ============ 2-VARAQ: ASMA DESIGN ============ -->
+<section class="sheet">
+  <h1>Ruxsatnoma</h1>
+  <p class="sub">Authorisation Letter</p>
+  <hr class="rule">
+
+  <table class="details">
+    <tr><td class="k">Do'kon nomi / <i>Store name</i></td><td class="v">Asma Design</td></tr>
+    <tr><td class="k">Egasi / <i>Owner</i></td><td class="v">Alisher Zokirov</td></tr>
+    <tr><td class="k">Manzil / <i>Address</i></td><td class="v">Qo'qon shahri, Istiqbol ko'chasi, 42</td></tr>
+    <tr><td class="k">Telefon / <i>Phone</i></td><td class="v"><span class="fill">&nbsp;</span></td></tr>
+    <tr><td class="k">Sana / <i>Date</i></td><td class="v"><span class="fill">&nbsp;</span></td></tr>
+  </table>
+
+  <h2>O'zbekcha</h2>
+  <p>Men, yuqorida ko'rsatilgan do'kon egasi, &laquo;ZYFF&raquo; mobil ilovasi va <b>zyff.uz</b> veb-saytiga quyidagilarga ruxsat beraman:</p>
+  <ol>
+    <li>Do'konimning nomi, logotipi, manzili va mahsulotlarim (rasm, nom, tavsif, narx) ZYFF platformasida ko'rsatilishi;</li>
+    <li>Xaridorlarning do'konimga mo'ljallangan buyurtmalarini ZYFF orqali qabul qilinishi va menga yetkazilishi.</li>
+  </ol>
+  <p>Tasdiqlayman: platformaga joylanadigan barcha mahsulot rasmlari, nomlari va tavsiflari menga tegishli yoki men ulardan foydalanish huquqiga egaman; ushbu kontentni ZYFF o'zi olmagan &mdash; men do'kon egasi panelidan o'zim joylayman va boshqaraman; ZYFF menga yoki xaridorlarga ilovadan foydalanish uchun to'lov belgilamaydi va to'lovlarni o'zi qabul qilmaydi.</p>
+  <p>Ushbu ruxsat men uni yozma ravishda bekor qilmagunimcha amal qiladi.</p>
+
+  <h2>English</h2>
+  <p>I, the owner of the store named above, hereby authorise the mobile application <b>ZYFF</b> and the website <b>zyff.uz</b> to:</p>
+  <ol>
+    <li>Display my store's name, logo, address and my products (images, names, descriptions and prices) on the ZYFF platform;</li>
+    <li>Receive customer orders addressed to my store through ZYFF and forward them to me.</li>
+  </ol>
+  <p>I confirm that all product images, names and descriptions published on the platform belong to me or that I hold the rights to use them; that this content was not collected by ZYFF &mdash; I upload and manage it myself through the store-owner panel; and that ZYFF charges neither me nor the customers any fee for access to the application, and does not collect payments on my behalf.</p>
+  <p>This authorisation remains valid until I withdraw it in writing.</p>
+
+  <table class="sign">
+    <tr>
+      <td style="width:58%">
+        <div class="line"></div>
+        Imzo / <i>Signature</i><br>
+        <b>Alisher Zokirov</b>
+      </td>
+      <td style="width:42%; text-align:right">
+        <span class="stamp">Muhr &mdash; agar bo'lsa<br><i>Stamp &mdash; if any</i></span>
+      </td>
+    </tr>
+  </table>
+
+  <p class="note">Ushbu hujjat App Store review jarayoni uchun tayyorlangan (Guideline 5.2.2).</p>
+</section>
+
+</body>
+</html>

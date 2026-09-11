@@ -2,7 +2,7 @@
   "expo": {
     "name": "ZYFF",
     "slug": "zyff",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "zyff",
