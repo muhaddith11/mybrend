@@ -14,7 +14,7 @@ export const CITIES: City[] = [
   { key: "Qo'qon", uz: "Qo'qon", ru: 'Коканд', en: 'Kokand' },
   { key: "Marg'ilon", uz: "Marg'ilon", ru: 'Маргилан', en: 'Margilan' },
   { key: "Farg'ona", uz: "Farg'ona", ru: 'Фергана', en: 'Fergana' },
-  { key: 'Quva', uz: 'Quva', ru: 'Ква', en: 'Kuva' },
+  { key: 'Quva', uz: 'Quva', ru: 'Quva', en: 'Quva' },
   { key: 'Andijon', uz: 'Andijon', ru: 'Андижан', en: 'Andijan' },
   { key: 'Asaka', uz: 'Asaka', ru: 'Асака', en: 'Asaka' },
   { key: 'Namangan', uz: 'Namangan', ru: 'Наманган', en: 'Namangan' },
