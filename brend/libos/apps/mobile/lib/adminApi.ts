@@ -106,4 +106,10 @@ export const adminApi = {
     }),
   getCategories: (token: string) => adminRequest<AdminCategory[]>('/categories', token),
   getStats: (token: string) => adminRequest<AdminStats>('/stats', token),
+  // Do'kon e'loni — javobdagi `sent` nechta mijozga ketgani.
+  notify: (token: string, title: string, body: string) =>
+    adminRequest<{ sent: number }>('/notify', token, {
+      method: 'POST',
+      body: JSON.stringify({ title, body }),
+    }),
 }

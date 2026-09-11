@@ -222,6 +222,10 @@ export default async function authRoutes(app: FastifyInstance) {
     await prisma.$transaction([
       prisma.cartItem.deleteMany({ where: { userId } }),
       prisma.favoriteStore.deleteMany({ where: { userId } }),
+      // Bildirishnomalar ham o'chadi: token qolsa o'chirilgan hisobning qurilmasiga
+      // push ketib turardi, yozuvlar esa buyurtma tarixi kabi saqlanishi shart emas.
+      prisma.pushToken.deleteMany({ where: { userId } }),
+      prisma.notification.deleteMany({ where: { userId } }),
       prisma.user.update({
         where: { id: userId },
         data: {

@@ -105,3 +105,17 @@ export interface User {
   name?: string
   avatar?: string
 }
+
+export type NotificationType = 'ORDER_STATUS' | 'STORE_ANNOUNCEMENT'
+
+export interface Notification {
+  id: string
+  type: NotificationType
+  title: string
+  body: string
+  // Bosilganda qayerga o'tish: buyurtma holati uchun `{ orderId }`,
+  // do'kon e'loni uchun `{ storeSlug }`.
+  data?: { orderId?: string; storeSlug?: string } | null
+  read: boolean
+  createdAt: string
+}

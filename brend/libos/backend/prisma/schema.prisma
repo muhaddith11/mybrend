@@ -44,6 +44,11 @@ enum DeliveryType {
   CASH_ON_DOOR
 }
 
+enum NotificationType {
+  ORDER_STATUS // buyurtma holati o'zgardi (avtomatik)
+  STORE_ANNOUNCEMENT // do'kon egasi yuborgan e'lon
+}
+
 model User {
   id            String    @id @default(cuid())
   phone         String    @unique
@@ -53,13 +58,50 @@ model User {
   otpExpiry     DateTime?
   lastOtpSentAt DateTime? // OTP rate-limit: oxirgi kod yuborilgan vaqt (spam oldini olish)
   otpAttempts   Int       @default(0) // noto'g'ri urinishlar soni (brute-force oldini olish)
+  // Bildirishnoma matni shu tilda render qilinadi. Ilova tilini mijoz o'zgartirganda
+  // push token bilan birga yuboriladi (server mijozning UI tilini boshqa bilmaydi).
+  lang          String    @default("uz")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  orders    Order[]
-  cart      CartItem[]
-  favorites FavoriteStore[]
-  reviews   Review[]
+  orders        Order[]
+  cart          CartItem[]
+  favorites     FavoriteStore[]
+  reviews       Review[]
+  pushTokens    PushToken[]
+  notifications Notification[]
+}
+
+// Qurilma push tokeni (Expo push xizmati). Bitta foydalanuvchida bir nechta qurilma
+// bo'lishi mumkin. `token` unikal — bitta qurilma boshqa hisobga kirsa, token yangi
+// egasiga ko'chadi (upsert), eski hisobga push ketib qolmaydi.
+model PushToken {
+  id        String   @id @default(cuid())
+  token     String   @unique // ExponentPushToken[...]
+  platform  String // "ios" | "android"
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// Mijozga yuborilgan bildirishnoma. Push yetib bormasa ham (ruxsat berilmagan,
+// qurilma oflayn) yozuv saqlanadi — mijoz ilova ichidagi ro'yxatda ko'radi.
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  title     String
+  body      String
+  data      Json? // { orderId } yoki { storeSlug } — bosilganda qayerga o'tish
+  read      Boolean          @default(false)
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, createdAt]) // ro'yxat (eng yangisi birinchi)
+  @@index([userId, read]) // o'qilmaganlar soni
 }
 
 model Store {

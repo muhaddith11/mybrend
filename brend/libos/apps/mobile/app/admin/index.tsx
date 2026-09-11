@@ -44,6 +44,7 @@ export default function AdminDashboard() {
     { icon: 'cube-outline', label: 'Mahsulotlar', desc: "Qo'shish, tahrirlash, o'chirish", to: '/admin/products' },
     { icon: 'images-outline', label: 'Lookbook (obrazlar)', desc: 'Rasm + mahsulotlardan obraz', to: '/admin/lookbook' },
     { icon: 'receipt-outline', label: 'Buyurtmalar', desc: 'Holatni boshqarish', to: '/admin/orders' },
+    { icon: 'megaphone-outline', label: "Mijozlarga e'lon", desc: 'Yangilik va chegirma xabari', to: '/admin/notify' },
     { icon: 'settings-outline', label: "Do'kon sozlamalari", desc: "Ma'lumot, to'lov, yetkazish", to: '/admin/settings' },
   ] as const
 

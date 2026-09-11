@@ -137,6 +137,53 @@ describe('PATCH /api/admin/orders/:id/status — bekor qilishda stok', () => {
   })
 })
 
+// Mijoz buyurtmasi holati o'zgarganda xabar olishi kerak (ilgari faqat do'kon
+// egasi Telegram orqali xabar olardi, mijoz esa hech narsa bilmasdi).
+describe('PATCH /api/admin/orders/:id/status — mijozga bildirishnoma', () => {
+  const notifySeed = {
+    ...seed,
+    orders: [{ id: 'ord1', storeId: 's1', status: 'PENDING', userId: 'u1' }],
+  }
+
+  async function authed() {
+    const { app, fake } = await buildAdminTestApp(notifySeed)
+    const token = (await login(app, 'owner@zyff.uz', 'parol123')).json().token
+    return { app, fake, token }
+  }
+
+  const patch = (app: any, token: string, status: string) =>
+    app.inject({
+      method: 'PATCH',
+      url: '/api/admin/orders/ord1/status',
+      headers: { ...json, authorization: `Bearer ${token}` },
+      payload: { status },
+    })
+
+  // Bildirishnoma "fire-and-forget" yuboriladi (javobni kutmaydi) — shuning uchun
+  // tekshirishdan oldin navbatdagi mikrovazifalar tugashini kutamiz.
+  const settle = () => new Promise((r) => setImmediate(r))
+
+  test('status o\'zgarsa — bildirishnoma yoziladi', async () => {
+    const { app, fake, token } = await authed()
+    await patch(app, token, 'CONFIRMED')
+    await settle()
+    assert.equal(fake.notifications.length, 1)
+    assert.equal(fake.notifications[0].userId, 'u1')
+    assert.equal(fake.notifications[0].type, 'ORDER_STATUS')
+    assert.equal(fake.notifications[0].data.orderId, 'ord1')
+    await app.close()
+  })
+
+  test('takror bir xil status — ikkinchi bildirishnoma yo\'q', async () => {
+    const { app, fake, token } = await authed()
+    await patch(app, token, 'CONFIRMED')
+    await patch(app, token, 'CONFIRMED')
+    await settle()
+    assert.equal(fake.notifications.length, 1)
+    await app.close()
+  })
+})
+
 // OrderItem.product bog'lanishi RESTRICT — buyurtmada ishlatilgan mahsulotni
 // butunlay o'chirib bo'lmaydi. Endi SOFT-DELETE: arxivlanadi (archivedAt +
 // inStock:false), qator saqlanadi, buyurtma tarixi buzilmaydi. Buyurtmasiz

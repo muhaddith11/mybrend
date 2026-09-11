@@ -34,6 +34,8 @@ export function createAdminFakePrisma(seed: AdminSeed) {
   const orderItems = (seed.orderItems ?? []).map((i) => ({ size: null, color: null, ...i }))
   const variants = (seed.variants ?? []).map((v) => ({ size: null, color: null, ...v }))
   const products = (seed.products ?? []).map((p) => ({ name: 'Mahsulot', ...p }))
+  // Route yaratgan bildirishnomalar — testда tekshirish uchun yig'iladi.
+  const notifications: any[] = []
 
   // In-memory login throttle (DB-asosli helper o'rniga test uchun)
   const throttle = new Map<string, { count: number; windowStart: number }>()
@@ -83,18 +85,51 @@ export function createAdminFakePrisma(seed: AdminSeed) {
     },
     // Buyurtma statusini o'zgartirish (bekor qilishda stok qaytishi) testlari uchun.
     order: {
-      async findFirst({ where }: any) {
+      async findFirst({ where, include }: any) {
         const o = orders.find((x) => x.id === where.id)
         if (!o) return null
         // `where.store.ownerId` — egasi boshqa do'konning buyurtmasiga tegmasin
         const ownerId = where.store?.ownerId
         if (ownerId && !stores.some((s) => s.id === o.storeId && s.ownerId === ownerId)) return null
-        return { ...o }
+        // Status o'zgarganda mijozga bildirishnoma yuboriladi — route do'kon nomi
+        // va mijoz tilini shu `include` orqali oladi (routes/admin.ts).
+        const rel = include
+          ? {
+              store: { name: stores.find((s) => s.id === o.storeId)?.name ?? 'Store' },
+              user: { id: (o as any).userId ?? 'u1', lang: 'uz' },
+            }
+          : {}
+        return { ...o, ...rel }
       },
       async update({ where, data }: any) {
         const o = orders.find((x) => x.id === where.id)
         if (o) Object.assign(o, data)
         return { ...o }
+      },
+    },
+    // Bildirishnoma: yozuv yaratiladi, push esa token bo'lmagani uchun yuborilmaydi
+    // (testда tarmoqqa chiqilmaydi). `notifications` massivi tekshirish uchun ochiq.
+    notification: {
+      async create({ data }: any) {
+        notifications.push({ ...data })
+        return { id: `n${notifications.length}`, ...data }
+      },
+      async createMany({ data }: any) {
+        for (const d of data) notifications.push({ ...d })
+        return { count: data.length }
+      },
+    },
+    pushToken: {
+      async findMany() {
+        return []
+      },
+      async deleteMany() {
+        return { count: 0 }
+      },
+    },
+    favoriteStore: {
+      async findMany() {
+        return []
       },
     },
     orderItem: {
@@ -149,7 +184,7 @@ export function createAdminFakePrisma(seed: AdminSeed) {
 
   prisma.$transaction = async (fn: any) => fn(prisma)
 
-  return { prisma, owners, stores, orders, orderItems, variants, products }
+  return { prisma, owners, stores, orders, orderItems, variants, products, notifications }
 }
 
 export async function buildAdminTestApp(seed: AdminSeed) {

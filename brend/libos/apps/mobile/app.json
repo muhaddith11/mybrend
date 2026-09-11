@@ -66,6 +66,12 @@
           "backgroundColor": "#000000"
         }
       ],
+      [
+        "expo-notifications",
+        {
+          "color": "#E3A008"
+        }
+      ],
       "./plugins/withAndroidLintFix"
     ],
     "locales": {

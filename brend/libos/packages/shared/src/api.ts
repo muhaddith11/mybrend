@@ -1,4 +1,4 @@
-import type { Store, Product, Order, User, Gender } from './types'
+import type { Store, Product, Order, User, Gender, Notification } from './types'
 
 // Support both Expo and Next.js env vars; strip BOM that Windows tools can inject
 const _rawUrl =
@@ -132,5 +132,24 @@ export const api = {
         `/orders/${orderId}/review`,
         { method: 'POST', body: JSON.stringify({ rating }) },
       ),
+  },
+
+  notifications: {
+    list: () => request<{ notifications: Notification[] }>('/notifications'),
+    unreadCount: () => request<{ count: number }>('/notifications/unread-count'),
+    markRead: (id: string) =>
+      request<{ success: boolean }>(`/notifications/${id}/read`, { method: 'POST' }),
+    markAllRead: () =>
+      request<{ success: boolean }>('/notifications/read-all', { method: 'POST' }),
+    // Qurilma push tokeni. `lang` — bildirishnoma matni shu tilda keladi
+    // (server mijozning ilova tilini boshqa yo'l bilan bilmaydi).
+    registerPushToken: (token: string, platform: 'ios' | 'android', lang?: string) =>
+      request<{ success: boolean }>('/notifications/push-token', {
+        method: 'POST', body: JSON.stringify({ token, platform, ...(lang ? { lang } : {}) }),
+      }),
+    unregisterPushToken: (token: string) =>
+      request<{ success: boolean }>('/notifications/push-token', {
+        method: 'DELETE', body: JSON.stringify({ token }),
+      }),
   },
 }

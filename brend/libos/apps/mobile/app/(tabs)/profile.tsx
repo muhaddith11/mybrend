@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { View, TouchableOpacity, StyleSheet, Switch, Modal, Pressable, ScrollView, Alert, Image, TextInput, ActivityIndicator } from 'react-native'
 import { Text } from '../../components/Txt'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useRouter } from 'expo-router'
+import { useRouter, useFocusEffect } from 'expo-router'
+import { useQuery } from '@tanstack/react-query'
 import * as ImagePicker from 'expo-image-picker'
 import { api, useT, type Lang } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
@@ -102,8 +103,23 @@ export default function ProfileScreen() {
     ])
   }
 
+  // O'qilmagan bildirishnomalar soni. Ekran fokusga kelganda yangilanadi —
+  // doimiy polling yo'q (butun ilova bo'ylab turadigan so'rov batareyani yeydi).
+  const { data: unread, refetch: refetchUnread } = useQuery({
+    queryKey: ['notifications-unread'],
+    queryFn: () => api.notifications.unreadCount(),
+    enabled: isLoggedIn,
+  })
+  useFocusEffect(useCallback(() => { if (isLoggedIn) refetchUnread() }, [isLoggedIn]))
+
   const menuItems = [
     { icon: 'receipt-outline', label: tr.myOrders, onPress: () => router.push('/orders') },
+    {
+      icon: 'notifications-outline',
+      label: tr.ntTitle,
+      onPress: () => router.push('/notifications'),
+      badge: unread?.count ?? 0,
+    },
     { icon: 'heart-outline', label: tr.mFavStores, onPress: () => router.push('/favorites') },
     { icon: 'help-circle-outline', label: tr.help, onPress: () => router.push('/help') },
   ]
@@ -174,6 +190,11 @@ export default function ProfileScreen() {
             <TouchableOpacity key={item.label} style={styles.menuItem} onPress={item.onPress}>
               <Ionicons name={item.icon as any} size={20} color={colors.accent} />
               <Text style={styles.menuLabel}>{item.label}</Text>
+              {!!item.badge && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{item.badge > 99 ? '99+' : item.badge}</Text>
+                </View>
+              )}
               <Ionicons name="chevron-forward" size={16} color={colors.text3} />
             </TouchableOpacity>
           ))}
@@ -341,6 +362,10 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   userPhone: { fontSize: 13, color: c.text2, marginTop: 2 },
   menuItem: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: c.surface, padding: 16, marginHorizontal: 16, marginBottom: 1, borderRadius: 2 },
   menuLabel: { flex: 1, fontSize: 14, color: c.text },
+  // Savat badge'i bilan bir xil qizil (components/HomeHeader.tsx) — gold fon ustida
+  // oq matn o'qilmasdi, hisob belgisi esa ilovada doim shu rangda.
+  badge: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: 10, backgroundColor: '#E23B3B', alignItems: 'center', justifyContent: 'center' },
+  badgeText: { fontSize: 11, fontWeight: '700', color: c.white },
   settingsSection: { backgroundColor: c.surface, marginHorizontal: 16, marginTop: 16, borderRadius: 12, padding: 16, borderWidth: 0.5, borderColor: c.border },
   settingsTitle: { fontSize: 12, fontWeight: '600', color: c.text3, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 },
   langRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },

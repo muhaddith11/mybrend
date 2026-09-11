@@ -249,6 +249,12 @@ export const t = {
     errFORBIDDEN: "Ruxsat yo'q",
     errINVALID_INPUT: "Yaroqsiz ma'lumot yuborildi",
     errSERVER_ERROR: 'Server xatosi',
+    // ── Bildirishnomalar ──
+    ntTitle: 'Bildirishnomalar',
+    ntEmpty: "Hozircha bildirishnoma yo'q",
+    ntEmptyHint: "Buyurtmangiz holati o'zgarganda va do'konlar e'lon qilganda shu yerda ko'rasiz",
+    ntMarkAllRead: "Hammasini o'qilgan qilish",
+    ntLoginView: "Bildirishnomalarni ko'rish uchun kiring",
   },
   ru: {
     deliveryAcross: 'Доставка по всему Узбекистану',
@@ -486,6 +492,12 @@ export const t = {
     errFORBIDDEN: 'Нет доступа',
     errINVALID_INPUT: 'Отправлены неверные данные',
     errSERVER_ERROR: 'Ошибка сервера',
+    // ── Уведомления ──
+    ntTitle: 'Уведомления',
+    ntEmpty: 'Пока нет уведомлений',
+    ntEmptyHint: 'Здесь появятся изменения статуса заказа и объявления магазинов',
+    ntMarkAllRead: 'Отметить все прочитанными',
+    ntLoginView: 'Войдите, чтобы увидеть уведомления',
   },
   en: {
     deliveryAcross: 'Delivery across Uzbekistan',
@@ -723,6 +735,12 @@ export const t = {
     errFORBIDDEN: 'Access denied',
     errINVALID_INPUT: 'Invalid data was submitted',
     errSERVER_ERROR: 'Server error',
+    // ── Notifications ──
+    ntTitle: 'Notifications',
+    ntEmpty: 'No notifications yet',
+    ntEmptyHint: 'Order status updates and store announcements will appear here',
+    ntMarkAllRead: 'Mark all as read',
+    ntLoginView: 'Sign in to see your notifications',
   },
 } satisfies Record<string, Record<string, string>>
 

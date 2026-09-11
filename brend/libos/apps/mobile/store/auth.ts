@@ -3,6 +3,7 @@ import { Platform } from 'react-native'
 import * as SecureStore from 'expo-secure-store'
 import { api, setToken } from '@libos/shared'
 import type { User } from '@libos/shared'
+import { getCurrentPushToken, setCurrentPushToken } from '../lib/pushNotifications'
 
 const TOKEN_KEY = 'libos_token'
 
@@ -46,6 +47,17 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   logout: async () => {
+    // Qurilma tokenini serverdan olib tashlaymiz — aks holda chiqib ketgan
+    // hisobning bildirishnomalari shu telefonga kelib turardi.
+    // Kutmaymiz (chiqish tarmoqqa bog'lanib qolmasin): `request()` Authorization
+    // sarlavhasini chaqiruv paytida o'qiydi, quyidagi `setToken(null)` esa
+    // undan keyin ishlaydi — so'rov baribir to'g'ri token bilan ketadi.
+    const pushToken = getCurrentPushToken()
+    if (pushToken) {
+      api.notifications.unregisterPushToken(pushToken).catch(() => {})
+      setCurrentPushToken(null)
+    }
+
     await tokenStorage.deleteItemAsync(TOKEN_KEY)
     setToken(null)
     set({ token: null, user: null, isLoggedIn: false })

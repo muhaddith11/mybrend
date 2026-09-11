@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { checkLoginThrottle, bumpLoginThrottle, resetLoginThrottle } from '../lib/loginThrottle.js'
 import { restoreStock } from '../lib/stock.js'
+import { notifyUser, notifyUsers, orderStatusMessage } from '../lib/notifications.js'
 
 // Mavjud bo'lmagan email uchun ham bcrypt.compare chaqiramiz — javob vaqti bir xil
 // qolib, user-enumeration (timing attack) imkonsiz bo'lsin.
@@ -14,6 +15,13 @@ const DUMMY_HASH = '$2a$10$CwTycUXWue0Thq9StjUM0uJ8DvWlZQ3PqQ9YxLk7Yb5Ym0Qe5Hq2'
 const ADMIN_TOKEN_TTL = '30d'
 
 const loginSchema = z.object({ email: z.string().min(1), password: z.string().min(1) })
+
+// Do'kon e'loni. Uzunlik cheklovi push ko'rinishiga moslangan — uzun matn
+// qurilma bildirishnomasida baribir kesiladi.
+const announceSchema = z.object({
+  title: z.string().trim().min(1).max(100),
+  body: z.string().trim().min(1).max(300),
+})
 
 const productSchema = z.object({
   sku: z.string().max(50).optional(),
@@ -320,7 +328,11 @@ export default async function adminRoutes(app: FastifyInstance) {
     const { ownerId } = req.user as { ownerId: string }
     const { id } = req.params as { id: string }
     const { status } = z.object({ status: z.enum(['CONFIRMED','PREPARING','DELIVERING','DELIVERED','CANCELLED']) }).parse(req.body)
-    const order = await prisma.order.findFirst({ where: { id, store: { ownerId } } })
+    const order = await prisma.order.findFirst({
+      where: { id, store: { ownerId } },
+      // do'kon nomi va mijoz tili — bildirishnoma matnini tuzish uchun
+      include: { store: { select: { name: true } }, user: { select: { id: true, lang: true } } },
+    })
     if (!order) return reply.status(404).send({ error: 'Topilmadi' })
 
     // Bekor qilinganda stok qaytarilishi SHART — aks holda buyurtma yaratilganda
@@ -334,7 +346,53 @@ export default async function adminRoutes(app: FastifyInstance) {
       if (mustRestore) await restoreStock(tx, id)
       return u
     })
+
+    // Mijozga xabar — faqat status HAQIQATAN o'zgarganda (egа bir xil tugmani
+    // qayta bossa ikkinchi push ketmasin). Fire-and-forget: bildirishnoma xatosi
+    // status yangilanishini bekor qilmaydi (orders.ts:203 bilan bir xil yondashuv).
+    if (order.status !== status) {
+      const msg = orderStatusMessage(status, order.store.name, order.user.lang)
+      if (msg) {
+        notifyUser(prisma, order.userId, {
+          type: 'ORDER_STATUS',
+          title: msg.title,
+          body: msg.body,
+          data: { orderId: order.id },
+        }).catch((err) => req.log.error({ err, orderId: order.id }, 'Bildirishnoma yuborilmadi'))
+      }
+    }
+
     return reply.send(updated)
+  })
+
+  // Do'kon e'loni — egа o'z mijozlariga bir martalik xabar yuboradi.
+  // Auditoriya: shu do'kondan buyurtma bergan YOKI do'konni sevimliga qo'shganlar.
+  app.post('/notify', { preHandler: [adminAuth] }, async (req, reply) => {
+    const { ownerId } = req.user as { ownerId: string }
+    const { title, body } = announceSchema.parse(req.body)
+    const store = await prisma.store.findFirst({ where: { ownerId } })
+    if (!store) return reply.status(404).send({ error: 'Do\'kon topilmadi' })
+
+    const [buyers, fans] = await Promise.all([
+      prisma.order.findMany({
+        where: { storeId: store.id },
+        select: { userId: true },
+        distinct: ['userId'],
+      }),
+      prisma.favoriteStore.findMany({ where: { storeId: store.id }, select: { userId: true } }),
+    ])
+    const userIds = [...new Set([...buyers, ...fans].map((r) => r.userId))]
+
+    // Yuborish uzoq davom etishi mumkin (yuzlab qurilma) — javobni kutib
+    // turmaymiz, egаga darhol "nechta mijozga ketdi" ni qaytaramiz.
+    notifyUsers(prisma, userIds, {
+      type: 'STORE_ANNOUNCEMENT',
+      title,
+      body,
+      data: { storeSlug: store.slug },
+    }).catch((err) => req.log.error({ err, storeId: store.id }, "E'lon yuborilmadi"))
+
+    return reply.send({ sent: userIds.length })
   })
 
   // Kategoriyalar — global (storeId=null) + shu do'konning o'z kategoriyalari.

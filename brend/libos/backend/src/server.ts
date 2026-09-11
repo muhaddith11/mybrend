@@ -21,6 +21,7 @@ import ordersRoutes from './routes/orders.js'
 import clickRoutes from './routes/payment/click.js'
 import paymeRoutes from './routes/payment/payme.js'
 import adminRoutes from './routes/admin.js'
+import notificationRoutes from './routes/notifications.js'
 import uploadRoutes from './routes/upload.js'
 import telegramRoutes from './routes/telegram.js'
 import clientErrorRoutes from './routes/clientError.js'
@@ -127,6 +128,7 @@ app.register(ordersRoutes,   { prefix: '/api/orders' })
 app.register(clickRoutes,    { prefix: '/api/payment' })
 app.register(paymeRoutes,    { prefix: '/api/payment' })
 app.register(adminRoutes,    { prefix: '/api/admin' })
+app.register(notificationRoutes, { prefix: '/api/notifications' })
 app.register(uploadRoutes,   { prefix: '/api' })
 app.register(telegramRoutes, { prefix: '/api' })
 app.register(clientErrorRoutes, { prefix: '/api' })

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
-import { Platform } from 'react-native'
-import { Stack } from 'expo-router'
+import { AppState, Platform } from 'react-native'
+import { Stack, router } from 'expo-router'
+import * as Notifications from 'expo-notifications'
 import { QueryClient } from '@tanstack/react-query'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister'
@@ -16,9 +17,12 @@ import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, In
 import { useAuthStore } from '../store/auth'
 import { useAdminStore } from '../store/admin'
 import { useThemeStore } from '../store/theme'
+import { useLangStore } from '../store/lang'
 import { Onboarding } from '../components/Onboarding'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import { initSentry } from '../lib/sentry'
+import { pushSupported, registerForPushNotificationsAsync, setCurrentPushToken } from '../lib/pushNotifications'
+import { api } from '@libos/shared'
 
 // Sentry'ni ilova yuklanishidan oldin ishga tushiramiz (DSN bo'lsa).
 initSentry()
@@ -56,6 +60,8 @@ export default function RootLayout() {
   const loadFromStorage = useAuthStore(s => s.loadFromStorage)
   const loadAdmin = useAdminStore(s => s.loadFromStorage)
   const dark = useThemeStore(s => s.dark)
+  const isLoggedIn = useAuthStore(s => s.isLoggedIn)
+  const lang = useLangStore(s => s.lang)
 
   // Do'kon dizaynlari uchun shriftlar (asma=serif, boosner=Inter, onepro=SpaceGrotesk).
   // Yuklanmaguncha ilova baribir ishlaydi — shriftlar tayyor bo'lgach avtomatik yangilanadi.
@@ -97,6 +103,54 @@ export default function RootLayout() {
   useEffect(() => {
     loadFromStorage()
     loadAdmin()
+  }, [])
+
+  // Push: mijoz kirgach qurilmani ro'yxatdan o'tkazamiz. Ruxsat berilmasa yoki
+  // simulyatorda bo'lsa `null` qaytadi — ilova ichidagi ro'yxat baribir ishlaydi.
+  // `lang` ham yuboriladi: bildirishnoma matnini server shu tilda tuzadi.
+  useEffect(() => {
+    if (!pushSupported || !isLoggedIn) return
+    let cancelled = false
+    registerForPushNotificationsAsync()
+      .then((token) => {
+        if (cancelled || !token) return
+        setCurrentPushToken(token)
+        return api.notifications.registerPushToken(token, Platform.OS as 'ios' | 'android', lang)
+      })
+      .catch(() => {}) // push majburiy emas — xato ilovani bezovta qilmasin
+    return () => { cancelled = true }
+  }, [isLoggedIn, lang])
+
+  // Bildirishnoma bosilganda tegishli sahifaga o'tamiz; ilova ochiq turganda
+  // kelgan xabar esa o'qilmaganlar sonini yangilaydi.
+  useEffect(() => {
+    if (!pushSupported) return
+
+    const tapped = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as { orderId?: string } | undefined
+      if (data?.orderId) router.push(`/orders/${data.orderId}`)
+      else router.push('/notifications')
+    })
+
+    const received = Notifications.addNotificationReceivedListener(() => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications-unread'] })
+    })
+
+    // Ilova fonga tushib qaytganda o'qilmaganlar soni yangilansin (push fonda
+    // kelgan bo'lishi mumkin). `refetchOnWindowFocus` global o'chirilgani uchun
+    // buni qo'lda qilamiz — faqat bildirishnoma so'rovlari uchun.
+    const appState = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') return
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications-unread'] })
+    })
+
+    return () => {
+      tapped.remove()
+      received.remove()
+      appState.remove()
+    }
   }, [])
 
   // Shriftlar yuklanmaguncha CHIZMAYMIZ. Ilgari `useFonts()` natijasi e'tiborsiz

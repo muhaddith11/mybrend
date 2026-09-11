@@ -1,6 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '@libos/shared'
 import { useAuthStore } from '../store/auth'
 import { useThemeStore } from '../store/theme'
 import { useLangStore, type Lang } from '../store/lang'
@@ -33,6 +35,14 @@ export function ProfileDrawer() {
   const tr = useT(lang)
   const [showPicker, setShowPicker] = useState(false)
   const [showOwner, setShowOwner] = useState(false)
+
+  // O'qilmagan bildirishnomalar soni. Drawer har ochilganda qayta so'raladi
+  // (komponent yopilganda unmount bo'ladi) — alohida polling kerak emas.
+  const { data: unread } = useQuery({
+    queryKey: ['notifications-unread'],
+    queryFn: () => api.notifications.unreadCount(),
+    enabled: isLoggedIn && showProfileDrawer,
+  })
 
   // Drawer ochiq bo'lganda orqa fon (sahifa) scroll'ini bloklash —
   // shunda scroll faqat drawer ichida ishlaydi
@@ -113,6 +123,18 @@ export function ProfileDrawer() {
                 <Link href="/orders" className={styles.menuItem} onClick={closeProfile}>
                   <span className={styles.menuIcon}>📦</span>
                   <span className={styles.menuLabel}>{tr.myOrders}</span>
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+                <Link href="/notifications" className={styles.menuItem} onClick={closeProfile}>
+                  <span className={styles.menuIcon}>🔔</span>
+                  <span className={styles.menuLabel}>{tr.ntTitle}</span>
+                  {!!unread?.count && (
+                    <span className={styles.unreadBadge}>
+                      {unread.count > 99 ? '99+' : unread.count}
+                    </span>
+                  )}
                   <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
