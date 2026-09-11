@@ -12,12 +12,12 @@ export default async function productsRoutes(app: FastifyInstance) {
 
   // Global qidiruv — barcha do'konlar bo'ylab mahsulot qidirish
   app.get('/', async (req, reply) => {
-    const { search } = z.object({ search: z.string().optional() }).parse(req.query)
+    const { search, city } = z.object({ search: z.string().optional(), city: z.string().optional() }).parse(req.query)
     const q = (search ?? '').trim()
     const products = await prisma.product.findMany({
       where: {
         inStock: true,
-        store: VISIBLE_STORE,
+        store: city ? { ...VISIBLE_STORE, city: { equals: city, mode: 'insensitive' } } : VISIBLE_STORE,
         ...(q
           ? {
               OR: [
@@ -41,8 +41,9 @@ export default async function productsRoutes(app: FastifyInstance) {
 
   // Ommabop mahsulotlar (homepage uchun)
   app.get('/featured', async (req, reply) => {
+    const { city } = z.object({ city: z.string().optional() }).parse(req.query)
     const products = await prisma.product.findMany({
-      where: { inStock: true, store: VISIBLE_STORE },
+      where: { inStock: true, store: city ? { ...VISIBLE_STORE, city: { equals: city, mode: 'insensitive' } } : VISIBLE_STORE },
       include: {
         store: { select: { name: true, slug: true, themeColor: true, themeBg: true } },
         category: { select: { name: true, slug: true } },
@@ -55,8 +56,13 @@ export default async function productsRoutes(app: FastifyInstance) {
 
   // Chegirmadagi mahsulotlar (homepage uchun)
   app.get('/discounted', async (req, reply) => {
+    const { city } = z.object({ city: z.string().optional() }).parse(req.query)
     const products = await prisma.product.findMany({
-      where: { inStock: true, originalPrice: { gt: 0 }, store: VISIBLE_STORE },
+      where: {
+        inStock: true,
+        originalPrice: { gt: 0 },
+        store: city ? { ...VISIBLE_STORE, city: { equals: city, mode: 'insensitive' } } : VISIBLE_STORE,
+      },
       include: {
         store: { select: { name: true, slug: true, themeColor: true, themeBg: true } },
         category: { select: { name: true, slug: true } },

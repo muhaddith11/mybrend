@@ -21,8 +21,10 @@ import { StoreCardSkeletonList } from '../../components/Skeleton'
 import { PressableScale } from '../../components/PressableScale'
 import { LeafletWebMap, type MapStore } from '../../components/LeafletWebMap'
 import { useLangStore } from '../../store/lang'
+import { useCityStore } from '../../store/city'
 import { useTheme, type ThemeColors, font } from '../../store/theme'
 import { resolveImg } from '../../lib/links'
+import { CITIES_WITH_STORES } from '../../lib/cities'
 
 const GENDERS: Gender[] = ['MEN', 'WOMEN', 'KIDS']
 
@@ -40,6 +42,8 @@ export default function HomeScreen() {
   const [activeCat, setActiveCat] = useState<string>('all')
   const [search, setSearch] = useState('')
   const genderLabel: Record<Gender, string> = { MEN: tr.men, WOMEN: tr.women, KIDS: tr.kids }
+  const city = useCityStore(s => s.city)
+  const cityHasStores = CITIES_WITH_STORES.has(city)
 
   const searchQuery = search.trim()
   // Qidiruv so'rovini 300ms kechiktiramiz (har harfda tarmoq so'rovi ketmasin).
@@ -51,20 +55,20 @@ export default function HomeScreen() {
   }, [searchQuery])
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['stores', activeGender],
-    queryFn: () => api.stores.list({ gender: activeGender }),
+    queryKey: ['stores', activeGender, city],
+    queryFn: () => api.stores.list({ gender: activeGender, city }),
     enabled: !searchQuery,
   })
 
   const { data: featured } = useQuery({
-    queryKey: ['products', 'featured'],
-    queryFn: () => api.products.featured(),
+    queryKey: ['products', 'featured', city],
+    queryFn: () => api.products.featured(city),
     enabled: !searchQuery,
   })
 
   const { data: discounted } = useQuery({
-    queryKey: ['products', 'discounted'],
-    queryFn: () => api.products.discounted(),
+    queryKey: ['products', 'discounted', city],
+    queryFn: () => api.products.discounted(city),
     enabled: !searchQuery,
   })
 
@@ -87,15 +91,15 @@ export default function HomeScreen() {
 
   // Butun mahsulotlar bo'ylab qidiruv (bitta do'kon nomi bilan cheklanmaydi)
   const { data: searchResults, isLoading: searchLoading } = useQuery({
-    queryKey: ['products', 'search', debouncedQuery],
-    queryFn: () => api.products.search(debouncedQuery),
+    queryKey: ['products', 'search', debouncedQuery, city],
+    queryFn: () => api.products.search(debouncedQuery, city),
     enabled: !!debouncedQuery,
   })
 
   // Banner uchun eng yaxshi do'konlar (gender'dan mustaqil — tab almashtirilganda o'zgarmasin)
   const { data: topStores } = useQuery({
-    queryKey: ['stores', 'top'],
-    queryFn: () => api.stores.list({ limit: 8 }),
+    queryKey: ['stores', 'top', city],
+    queryFn: () => api.stores.list({ limit: 8, city }),
     enabled: !searchQuery,
   })
 
@@ -210,6 +214,11 @@ export default function HomeScreen() {
             <StoreCardSkeletonList count={6} />
           ) : isError ? (
             <ErrorState onRetry={() => refetch()} compact />
+          ) : !cityHasStores ? (
+            <View style={styles.comingSoon}>
+              <Ionicons name="storefront-outline" size={32} color={colors.text3} />
+              <Text style={styles.comingSoonText}>{tr.mOtherCitiesSoon}</Text>
+            </View>
           ) : (
             <Text style={styles.empty}>{tr.mStoresNotFound}</Text>
           )
@@ -407,6 +416,8 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   // qoldirilsa to'q rangli footer bilan tab bar orasida oq chiziq ko'rinardi.
   list: { gap: 10 },
   empty: { textAlign: 'center', color: c.text2, marginTop: 40, fontSize: font.body },
+  comingSoon: { alignItems: 'center', gap: 10, marginTop: 40, paddingHorizontal: 40 },
+  comingSoonText: { textAlign: 'center', color: c.text2, fontSize: font.body },
   section: { marginBottom: 16 },
   sectionTitle: { fontSize: font.subtitle, fontWeight: '600', color: c.text, marginBottom: 10, marginHorizontal: 16 },
   mapSection: { marginHorizontal: 16, marginBottom: 16 },
