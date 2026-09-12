@@ -70,7 +70,7 @@
       [
         "expo-notifications",
         {
-          "color": "#E3A008"
+          "color": "#3B6CFF"
         }
       ],
       "./plugins/withAndroidLintFix"

@@ -21,7 +21,7 @@ export function CityPicker() {
   return (
     <>
       <TouchableOpacity style={styles.trigger} onPress={() => setOpen(true)} activeOpacity={0.75}>
-        <Ionicons name="location" size={14} color={colors.accent} />
+        <Ionicons name="location" size={14} color={colors.brand} />
         <Text style={styles.triggerText} numberOfLines={1}>{cityLabel(current, lang)}</Text>
         <Ionicons name="chevron-down" size={14} color={colors.text2} />
       </TouchableOpacity>
@@ -50,7 +50,7 @@ export function CityPicker() {
                     <Text style={[styles.rowText, selected && styles.rowTextActive]}>{cityLabel(c, lang)}</Text>
                     {!hasStores && <Text style={styles.soon}>{tr.mOtherCitiesSoon}</Text>}
                   </View>
-                  {selected && <Ionicons name="checkmark-circle" size={20} color={colors.accent} />}
+                  {selected && <Ionicons name="checkmark-circle" size={20} color={colors.brand} />}
                 </TouchableOpacity>
               )
             })}

@@ -74,7 +74,7 @@ export default function RootLayout() {
 
   // Web'da: (1) TextInput fokusda xunuk qora ramka (outline) chiqadi —
   // input/textarea'lardan o'chiramiz; (2) brauzerning odatiy semiz scrollbar'i
-  // ilova dizayniga mos emas — ingichka, shaffof, mavzuga mos (gold/navy)
+  // ilova dizayniga mos emas — ingichka, shaffof, mavzuga mos (ko'k/navy)
   // scrollbar bilan almashtiramiz. Ikkalasi ham faqat web'da, native'da
   // e'tiborsiz qoladi.
   useEffect(() => {
@@ -85,8 +85,8 @@ export default function RootLayout() {
         style.id = 'zyff-web-style'
         document.head.appendChild(style)
       }
-      const thumb = dark ? 'rgba(227,160,8,0.35)' : 'rgba(27,31,75,0.22)'
-      const thumbHover = dark ? 'rgba(227,160,8,0.55)' : 'rgba(27,31,75,0.38)'
+      const thumb = dark ? 'rgba(59,108,255,0.35)' : 'rgba(27,31,75,0.22)'
+      const thumbHover = dark ? 'rgba(59,108,255,0.55)' : 'rgba(27,31,75,0.38)'
       style.textContent = `
         input, textarea, select { outline: none !important; }
         * { scrollbar-width: thin; scrollbar-color: ${thumb} transparent; }

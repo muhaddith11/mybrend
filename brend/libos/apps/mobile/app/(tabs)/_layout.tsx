@@ -18,8 +18,8 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        // Faol tab — brend rangi (light: navy, dark: gold). Endi umumiy Navy & Gold
-        // tizimiga mos; avvalgi tasodifiy ko'k (#2F6BFF) brenddan chetda edi.
+        // Faol tab — brend rangi (light: navy, dark: ko'k #3B6CFF) — umumiy Navy & Ko'k
+        // tizimiga mos.
         tabBarActiveTintColor: colors.brand,
         tabBarInactiveTintColor: colors.text3,
         tabBarStyle: {

@@ -269,7 +269,7 @@ export default function HomeScreen() {
             {/* ── Haftalik chegirmalar promo ── */}
             <View style={styles.promo}>
               <View style={styles.promoLeft}>
-                <Ionicons name="flame" size={26} color={colors.accent} style={styles.promoIcon} />
+                <Ionicons name="flame" size={26} color={colors.highlight} style={styles.promoIcon} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.promoTitle}>{tr.weeklyDeals}</Text>
                   <Text style={styles.promoSub}>{tr.weeklyDealsSub}</Text>
@@ -291,17 +291,40 @@ export default function HomeScreen() {
             {(() => {
               const mapStores: MapStore[] = (topStores?.stores ?? [])
                 .filter(s => typeof s.lat === 'number' && typeof s.lng === 'number')
-                .map(s => ({ id: s.id, name: s.name, lat: s.lat!, lng: s.lng!, isOpen: s.isOpen }))
+                .map(s => ({
+                  id: s.id,
+                  name: s.name,
+                  slug: s.slug,
+                  lat: s.lat!,
+                  lng: s.lng!,
+                  isOpen: s.isOpen,
+                  address: s.address,
+                  logo: s.logo ? resolveImg(s.logo) : undefined,
+                  rating: s.rating,
+                  reviewCount: s.reviewCount,
+                  hasDelivery: s.hasDelivery,
+                  deliveryTime: s.deliveryTime,
+                  hasPickup: s.hasPickup,
+                  productCount: s._count?.products,
+                  phone: s.phone,
+                }))
               if (mapStores.length === 0) return null
               return (
                 <View style={styles.mapSection}>
                   <View style={styles.mapSectionHead}>
-                    <Ionicons name="location" size={16} color={colors.accent} />
+                    <Ionicons name="location" size={16} color={colors.highlight} />
                     <Text style={styles.mapSectionTitle}>
                       {lang === 'ru' ? 'Магазины на карте' : lang === 'en' ? 'Stores on the map' : "Xaritada do'konlar"}
                     </Text>
                   </View>
-                  <LeafletWebMap mode="display" height={220} dark={dark} stores={mapStores} />
+                  {/* Pin bosilganda do'kon kartochkasi chiqadi — sig'ishi uchun xarita balandroq */}
+                  <LeafletWebMap
+                    mode="display"
+                    height={300}
+                    dark={dark}
+                    stores={mapStores}
+                    onOpenStore={slug => router.push(`/store/${slug}`)}
+                  />
                 </View>
               )
             })()}
@@ -322,7 +345,7 @@ function HomeFooter() {
   return (
     <View style={styles.footer}>
       <View style={styles.footerBrand}>
-        <Logo size={22} color="#fff" accentColor="#E3A008" />
+        <Logo size={24} color="#fff" />
       </View>
       <Text style={styles.footerDesc}>{tr.footerDesc}</Text>
 

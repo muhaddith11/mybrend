@@ -2,18 +2,20 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
-// ZYFF mobil PREMIUM dizayn tokenlari — "Navy & Gold" (variant 1a).
+// ZYFF mobil PREMIUM dizayn tokenlari — "Navy & Ko'k" (2026-09: Gold → Ko'k #3B6CFF).
 // SHARED paketga tegmasdan, mobil ichida saqlanadi (web/shared'ga ta'sir yo'q).
-// Navy (#1B1F4B) = asosiy rang, Gold (#E3A008) = urg'u (CTA, ikonlar, toggle).
+// Navy (#1B1F4B) = asosiy rang, Ko'k (#3B6CFF) = urg'u (CTA, ikonlar, toggle).
+// Sariq (#E3A008, eski Gold) faqat chegirma va xarita belgilarida qoldi — `highlight`.
 
 export type ThemeMode = 'light' | 'dark'
 
 export interface ThemeColors {
-  brand: string       // asosiy (light: navy, dark: gold — ko'rinishi uchun)
+  brand: string       // asosiy (light: navy, dark: ko'k — ko'rinishi uchun)
   brandDark: string   // quyuq navy (footer, promo)
   brandLight: string  // ochiq tint (ikon-tugma foni, chip)
-  accent: string      // GOLD urg'u
-  accentSoft: string  // gold tiniq fon (til aktiv, tint)
+  accent: string      // KO'K urg'u
+  accentSoft: string  // ko'k tiniq fon (til aktiv, tint)
+  highlight: string   // sariq urg'u — chegirma va xarita belgilari
   text: string
   text2: string
   text3: string
@@ -27,13 +29,14 @@ export interface ThemeColors {
   danger: string
 }
 
-// Light — Navy & Gold
+// Light — Navy & Ko'k
 export const lightColors: ThemeColors = {
   brand: '#1B1F4B',
   brandDark: '#12142E',
   brandLight: '#EFEEF9',
-  accent: '#E3A008',
-  accentSoft: 'rgba(227,160,8,0.12)',
+  accent: '#3B6CFF',
+  accentSoft: 'rgba(59,108,255,0.12)',
+  highlight: '#E3A008',
   text: '#10122B',
   text2: '#6B6E8A',
   text3: '#9EA0B8',
@@ -47,13 +50,14 @@ export const lightColors: ThemeColors = {
   danger: '#E0574A',
 }
 
-// Dark — Navy & Gold (dark). Quyuq fonda navy ko'rinmagani uchun brand = gold.
+// Dark — Navy & Ko'k (dark). Quyuq fonda navy ko'rinmagani uchun brand = ko'k.
 export const darkColors: ThemeColors = {
-  brand: '#E3A008',
+  brand: '#3B6CFF',
   brandDark: '#12142E',
-  brandLight: 'rgba(227,160,8,0.16)',
-  accent: '#E3A008',
-  accentSoft: 'rgba(227,160,8,0.16)',
+  brandLight: 'rgba(59,108,255,0.16)',
+  accent: '#3B6CFF',
+  accentSoft: 'rgba(59,108,255,0.16)',
+  highlight: '#E3A008',
   text: '#F2F2FA',
   text2: 'rgba(242,242,250,0.6)',
   text3: 'rgba(242,242,250,0.42)',

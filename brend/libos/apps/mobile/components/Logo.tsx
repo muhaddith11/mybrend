@@ -1,51 +1,31 @@
-import { type TextStyle, type StyleProp } from 'react-native'
-import { Text } from './Txt'
+import { Image, type ImageStyle, type StyleProp } from 'react-native'
 import { useTheme } from '../store/theme'
 
-// ZYFF brend wordmark'i — bitta joyda. Hamma header/footer/ekranlarda shu ishlatiladi.
-// Qo'yilgan joyning uslubiga moslashadi: size/color/accentColor/font/weight prop orqali.
-// - Default: tizim shrifti (fontWeight 800, letterSpacing 1.5) — hozirgi ko'rinish.
-// - font berilsa (masalan bespoke do'kon shrifti) — o'sha shrift ishlatiladi,
-//   bunda fontWeight tushiriladi (shrift fayli o'z qalinligini olib keladi).
+// ZYFF brend belgisi — bitta joyda. Ilova ikonkasidagi kontur yozuvning o'zi:
+// assets/zyff-wordmark.png icon.png'dan ajratib olingan (ramka oq, ichi va tashqarisi
+// shaffof). Rang `tintColor` bilan beriladi; ichi shaffof bo'lgani uchun har doim fon
+// ko'rinadi — to'q fonda oq ramka, ochiq fonda to'q ramka.
+// Shrift bilan chizilmaydi: aks holda belgi ikonkadagidan farq qilib qolardi.
+const WORDMARK = require('../assets/zyff-wordmark.png')
+const RATIO = 984 / 268 // PNG o'lchami (kenglik / balandlik)
+
 interface LogoProps {
+  /** Belgi balandligi (px). Kengligi nisbatdan hisoblanadi. */
   size?: number
-  /** "ZY" qismi rangi (default — mavzu matn rangi) */
+  /** Ramka rangi (default — mavzu matn rangi) */
   color?: string
-  /** "FF" urg'u qismi rangi (default — mavzu gold accent) */
-  accentColor?: string
-  /** Joy shriftiga moslash uchun (masalan 'SpaceGrotesk_700Bold'). Berilmasa — tizim shrifti. */
-  font?: string
-  weight?: TextStyle['fontWeight']
-  letterSpacing?: number
-  style?: StyleProp<TextStyle>
+  style?: StyleProp<ImageStyle>
 }
 
-export function Logo({
-  size = 20,
-  color,
-  accentColor,
-  font,
-  weight = '800',
-  letterSpacing = 1.5,
-  style,
-}: LogoProps) {
+export function Logo({ size = 20, color, style }: LogoProps) {
   const { colors } = useTheme()
-
-  const base: TextStyle = {
-    fontSize: size,
-    letterSpacing,
-    color: color ?? colors.text,
-    // Maxsus shrift bo'lsa fontWeight bermaymiz (fayl o'z qalinligini beradi).
-    ...(font ? { fontFamily: font } : { fontWeight: weight }),
-  }
-  const accent: TextStyle = {
-    color: accentColor ?? colors.accent,
-    ...(font ? { fontFamily: font } : null),
-  }
-
   return (
-    <Text style={[base, style]} allowFontScaling={false}>
-      ZY<Text style={accent}>FF</Text>
-    </Text>
+    <Image
+      source={WORDMARK}
+      style={[{ height: size, width: Math.round(size * RATIO), tintColor: color ?? colors.text }, style]}
+      resizeMode="contain"
+      accessibilityRole="image"
+      accessibilityLabel="ZYFF"
+    />
   )
 }

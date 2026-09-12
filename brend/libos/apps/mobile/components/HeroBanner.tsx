@@ -9,6 +9,7 @@ import { useLangStore } from '../store/lang'
 import { useTheme } from '../store/theme'
 import { resolveImg } from '../lib/links'
 import { getStoreDesign } from '../lib/storeDesigns'
+import { Logo } from './Logo'
 
 // DIQQAT: banner kengligi komponent ICHIDA `useWindowDimensions()` bilan olinadi.
 // Ilgari `Dimensions.get('window')` modul darajasida chaqirilardi — qiymat import
@@ -20,7 +21,7 @@ type Slide =
   | { kind: 'app' }
   | { kind: 'store'; store: Store; badge: string }
 
-const GRADIENTS = ['#F59E0B', '#8B5CF6', '#10B981']
+const GRADIENTS = ['#3B6CFF', '#8B5CF6', '#10B981']
 
 export function HeroBanner({ stores }: { stores: Store[] }) {
   const router = useRouter()
@@ -83,10 +84,14 @@ export function HeroBanner({ stores }: { stores: Store[] }) {
                 />
                 <View style={styles.orbBig} />
                 <View style={styles.orbSmall} />
-                <Text style={styles.appBadge}>✨ ZYFF — Qo'qon</Text>
+                {/* ZYFF nomi doim kontur belgi bilan (components/Logo.tsx) */}
+                <View style={styles.appBadgeRow}>
+                  <Logo size={14} color="#fff" />
+                  <Text style={styles.appBadge}>— Qo'qon</Text>
+                </View>
                 <Text style={styles.appTitle}>
                   {tr.heroAppL1} {tr.heroAppHL}{'\n'}
-                  <Text style={{ color: '#F5C453' }}>{tr.heroAppL3}</Text>
+                  <Text style={{ color: '#8FB0FF' }}>{tr.heroAppL3}</Text>
                 </Text>
                 <View style={styles.ctaBtn}>
                   <Text style={styles.ctaBtnText}>{tr.heroAppCta}</Text>
@@ -156,13 +161,14 @@ const styles = StyleSheet.create({
   // absoluteFill slaydni to'liq qoplaydi — alohida width/height kerak emas.
   bannerImg: { ...StyleSheet.absoluteFill },
   overlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.35)' },
-  // App slide (premium navy & gold)
-  orbBig: { position: 'absolute', width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(227,160,8,0.16)', top: -30, right: -20 },
+  // App slide (premium navy & ko'k)
+  orbBig: { position: 'absolute', width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(59,108,255,0.22)', top: -30, right: -20 },
   orbSmall: { position: 'absolute', width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(255,255,255,0.05)', bottom: -40, right: 40 },
-  appBadge: { color: '#F5C453', fontSize: 11, fontWeight: '700', marginBottom: 8, letterSpacing: 0.3 },
+  appBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  appBadge: { color: '#8FB0FF', fontSize: 11, fontWeight: '700', letterSpacing: 0.3 },
   appTitle: { color: '#fff', fontSize: 20, fontWeight: '800', lineHeight: 25, marginBottom: 12, letterSpacing: -0.3 },
-  ctaBtn: { alignSelf: 'flex-start', backgroundColor: '#E3A008', borderRadius: 14, paddingHorizontal: 18, paddingVertical: 10 },
-  ctaBtnText: { color: '#1B1F4B', fontSize: 13, fontWeight: '700' },
+  ctaBtn: { alignSelf: 'flex-start', backgroundColor: '#3B6CFF', borderRadius: 14, paddingHorizontal: 18, paddingVertical: 10 },
+  ctaBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
   bgLetter: { position: 'absolute', right: -10, bottom: -40, fontSize: 180, fontWeight: '800', color: 'rgba(255,255,255,0.04)' },
   // Store slide
   storeInitial: { position: 'absolute', right: 10, top: 10, fontSize: 130, fontWeight: '800', color: 'rgba(255,255,255,0.15)' },

@@ -5,12 +5,17 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated'
+import { Logo } from './Logo'
 
 const KEY = 'zyff_onboarding_v1'
 
 type Slide = {
   colors: [string, string, string]
   accent: string
+  /** Urg'u fonidagi (tugma) matn rangi */
+  onAccent: string
+  /** true bo'lsa yorliq o'rnida ZYFF kontur belgisi chiqadi */
+  logo?: boolean
   badge: string
   initial: string
   title: string
@@ -18,12 +23,15 @@ type Slide = {
   sub: string
 }
 
-// Web Onboarding bilan bir xil kontent
+// Web Onboarding bilan bir xil kontent. 1-slayd ZYFF'niki (ko'k urg'u); Asma va
+// Boosner slaydlari o'z do'kon ranglarida qoladi.
 const SLIDES: Slide[] = [
   {
     colors: ['#0F0C29', '#302B63', '#24243e'],
-    accent: '#FBBF24',
-    badge: '✨ ZYFF',
+    accent: '#3B6CFF',
+    onAccent: '#FFFFFF',
+    logo: true,
+    badge: 'ZYFF',
     initial: 'Z',
     title: "Shahardagi barcha kiyim do'konlari —",
     titleAccent: 'bir joyda',
@@ -32,6 +40,7 @@ const SLIDES: Slide[] = [
   {
     colors: ['#14110b', '#2a2113', '#1a1a2e'],
     accent: '#D9B45B',
+    onAccent: '#0F0C29',
     badge: '👔 ASMA DESIGN',
     initial: 'A',
     title: 'Premium erkaklar kiyimi',
@@ -40,6 +49,7 @@ const SLIDES: Slide[] = [
   {
     colors: ['#0a0a0a', '#2b0a0a', '#000000'],
     accent: '#EF4444',
+    onAccent: '#0F0C29',
     badge: '🔥 BOOSNER',
     initial: 'B',
     title: '100% Original brendlar',
@@ -90,8 +100,14 @@ export function Onboarding() {
           <View style={styles.center}>
             <Text style={[styles.watermark, { color: s.accent + '14' }]}>{s.initial}</Text>
 
-            <Animated.View key={`badge-${i}`} entering={FadeIn.duration(400)} style={[styles.badge, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
-              <Text style={[styles.badgeText, { color: s.accent }]}>{s.badge}</Text>
+            <Animated.View
+              key={`badge-${i}`}
+              entering={FadeIn.duration(400)}
+              style={s.logo ? styles.logoWrap : [styles.badge, { backgroundColor: 'rgba(255,255,255,0.1)' }]}
+            >
+              {s.logo
+                ? <Logo size={26} color="#fff" />
+                : <Text style={[styles.badgeText, { color: s.accent }]}>{s.badge}</Text>}
             </Animated.View>
 
             <Animated.Text key={`title-${i}`} entering={FadeInDown.delay(100).duration(500)} style={styles.title}>
@@ -112,7 +128,7 @@ export function Onboarding() {
               ))}
             </View>
             <TouchableOpacity style={[styles.nextBtn, { backgroundColor: s.accent }]} onPress={next} activeOpacity={0.9}>
-              <Text style={styles.nextText}>{isLast ? 'Boshlash' : 'Keyingi'}</Text>
+              <Text style={[styles.nextText, { color: s.onAccent }]}>{isLast ? 'Boshlash' : 'Keyingi'}</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -129,6 +145,7 @@ const styles = StyleSheet.create({
   skip: { color: 'rgba(255,255,255,0.7)', fontSize: 14, fontWeight: '600' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   watermark: { position: 'absolute', fontSize: 260, fontWeight: '900' },
+  logoWrap: { marginBottom: 24 },
   badge: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, marginBottom: 22 },
   badgeText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
   title: { color: '#fff', fontSize: 28, fontWeight: '800', textAlign: 'center', lineHeight: 36, letterSpacing: -0.4 },
@@ -139,5 +156,5 @@ const styles = StyleSheet.create({
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 7 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.3)' },
   nextBtn: { paddingVertical: 16, borderRadius: 16, alignItems: 'center' },
-  nextText: { color: '#0F0C29', fontSize: 16, fontWeight: '800' },
+  nextText: { fontSize: 16, fontWeight: '800' },
 })

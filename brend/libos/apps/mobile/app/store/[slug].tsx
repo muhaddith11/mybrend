@@ -126,7 +126,7 @@ export default function StoreScreen() {
           <View style={styles.headerMeta}>
             {store.reviewCount ? (
               <>
-                <Ionicons name="star" size={12} color="#FFD700" />
+                <Ionicons name="star" size={12} color="#FFFFFF" />
                 <Text style={styles.headerRating}> {(store.rating ?? 0).toFixed(1)}</Text>
               </>
             ) : (

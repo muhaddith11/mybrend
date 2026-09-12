@@ -59,7 +59,7 @@ export default function LoginScreen() {
           <View style={styles.logoMark}>
             <Text style={styles.logoLetter}>Z</Text>
           </View>
-          <Logo size={28} weight="600" letterSpacing={-0.5} accentColor={colors.brand} />
+          <Logo size={26} />
         </View>
 
         <View style={styles.card}>

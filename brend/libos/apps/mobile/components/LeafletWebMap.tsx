@@ -1,14 +1,16 @@
-import { useMemo, createElement } from 'react'
+import { useMemo, useRef, useEffect, createElement } from 'react'
 import { View, StyleSheet, Linking, Platform, ActivityIndicator } from 'react-native'
 import { WebView } from 'react-native-webview'
 import type { Lang } from '@libos/shared'
 import { useLangStore } from '../store/lang'
+import { telHref } from '../lib/links'
 
 // WebView ichida Leaflet (OpenStreetMap/CARTO) — web bilan bir xil xarita,
 // Google Maps API kaliti kerak emas, Expo Go'da ishlaydi.
 // Ikki rejim:
 //   picker  — bosib joy tanlash → onSelect(lat, lng, address)  (checkout)
-//   display — do'kon markerlari, bosib yo'nalish olish          (bosh sahifa / do'kon)
+//   display — do'kon markerlari; pin bosilganda do'kon kartochkasi:
+//             holat, baho, manzil, yetkazish, "Do'konga o'tish", yo'nalish  (bosh sahifa)
 
 const QOQON_CENTER: [number, number] = [40.5282, 70.9428]
 
@@ -18,6 +20,17 @@ export interface MapStore {
   lat: number
   lng: number
   isOpen?: boolean
+  // Kartochka uchun (ixtiyoriy — bo'lmasa o'sha qator ko'rsatilmaydi)
+  slug?: string
+  address?: string
+  logo?: string          // to'liq URL (resolveImg orqali)
+  rating?: number
+  reviewCount?: number
+  hasDelivery?: boolean
+  deliveryTime?: number
+  hasPickup?: boolean
+  productCount?: number
+  phone?: string
 }
 
 interface Props {
@@ -29,6 +42,8 @@ interface Props {
   onSelect?: (lat: number, lng: number, address: string) => void
   // display
   stores?: MapStore[]
+  /** Kartochkadagi "Do'konga o'tish" bosilganda */
+  onOpenStore?: (slug: string) => void
 }
 
 /**
@@ -44,8 +59,8 @@ function safeJson(value: unknown): string {
   return JSON.stringify(value ?? null)
     .replace(/</g, '\\u003c')
     .replace(/>/g, '\\u003e')
-    .replace(/\u2028/g, '\\u2028')
-    .replace(/\u2029/g, '\\u2029')
+    .replace(/\\u2028/g, '\\u2028')
+    .replace(/\\u2029/g, '\\u2029')
 }
 
 function buildHtml(opts: {
@@ -62,6 +77,14 @@ function buildHtml(opts: {
   const L = (uz: string, ru: string, en: string) => (lang === 'ru' ? ru : lang === 'en' ? en : uz)
   const txtJson = safeJson({
     directions: L("Yo'nalish", 'Маршрут', 'Directions'),
+    openStore: L("Do'konga o'tish", 'В магазин', 'Open store'),
+    open: L('Ochiq', 'Открыто', 'Open'),
+    closed: L('Yopiq', 'Закрыто', 'Closed'),
+    isNew: L('Yangi', 'Новый', 'New'),
+    products: L('mahsulot', 'товаров', 'products'),
+    min: L('daq', 'мин', 'min'),
+    pickup: L('Olib ketish', 'Самовывоз', 'Pickup'),
+    call: L("Qo'ng'iroq", 'Позвонить', 'Call'),
     loadFailed: L(
       "Xarita yuklanmadi. Manzilni quyida qo'lda kiriting.",
       'Карта не загрузилась. Введите адрес вручную ниже.',
@@ -76,6 +99,11 @@ function buildHtml(opts: {
   const center = initial ? [initial.lat, initial.lng] : QOQON_CENTER
   const storesJson = safeJson(stores)
   const initialJson = safeJson(initial)
+  // Kartochka ranglari — ilova mavzusi (store/theme.ts) bilan bir xil. Asosiy tugma
+  // light'da navy; dark'da navy ko'rinmagani uchun ko'k.
+  const P = dark
+    ? { bg: '#161933', text: '#F2F2FA', muted: 'rgba(242,242,250,0.6)', chip: '#1E2140', line: 'rgba(255,255,255,0.16)', primary: '#3B6CFF' }
+    : { bg: '#FFFFFF', text: '#10122B', muted: '#6B6E8A', chip: '#EFEEF9', line: 'rgba(16,18,43,0.14)', primary: '#1B1F4B' }
 
   return `<!DOCTYPE html>
 <html>
@@ -94,10 +122,33 @@ function buildHtml(opts: {
       justify-content: center; transform: rotate(45deg); font-size: 15px;
     }
     .leaflet-popup-content { font-size: 13px; }
-    .dirBtn {
-      display: inline-block; margin-top: 6px; padding: 5px 10px; background: #2563EB;
-      color: #fff; border-radius: 6px; font-size: 12px; text-align: center; cursor: pointer;
-    }
+
+    /* ── Do'kon kartochkasi (display rejimi) ── */
+    .zyffPopup .leaflet-popup-content-wrapper { background: ${P.bg}; color: ${P.text}; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+    .zyffPopup .leaflet-popup-tip { background: ${P.bg}; }
+    .zyffPopup .leaflet-popup-content { margin: 14px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; line-height: 1.35; }
+    .zyffPopup a.leaflet-popup-close-button { color: ${P.muted}; top: 6px; right: 6px; }
+    .pHead { display: flex; align-items: center; gap: 10px; padding-right: 16px; }
+    .pLogo { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; flex: none; background: ${P.chip}; }
+    .pInit { display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 17px; color: #fff; background: #1B1F4B; }
+    .pTitle { min-width: 0; }
+    .pName { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pSub { display: flex; align-items: center; gap: 4px; margin-top: 3px; font-size: 12px; white-space: nowrap; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+    .dot.on { background: #22C55E; }
+    .dot.off { background: #9CA3AF; }
+    .sep { color: ${P.muted}; margin: 0 2px; }
+    .star { color: #E3A008; }
+    .muted { color: ${P.muted}; }
+    .new { color: #3B6CFF; font-weight: 600; }
+    .pAddr { display: flex; align-items: flex-start; gap: 5px; margin-top: 10px; color: ${P.muted}; font-size: 12px; }
+    .pAddr svg { flex: none; margin-top: 1px; }
+    .pChips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px; background: ${P.chip}; color: ${P.text}; font-size: 11.5px; }
+    .pBtns { display: flex; gap: 6px; margin-top: 12px; }
+    .btn { flex: 1; display: flex; align-items: center; justify-content: center; height: 34px; border-radius: 10px; border: 1px solid ${P.line}; color: ${P.text}; font-weight: 600; font-size: 12.5px; cursor: pointer; user-select: none; -webkit-user-select: none; }
+    .btn.primary { background: ${P.primary}; border-color: ${P.primary}; color: #fff; }
+    .btn.iconBtn { flex: 0 0 34px; }
   </style>
 </head>
 <body>
@@ -106,8 +157,13 @@ function buildHtml(opts: {
     var TXT = ${txtJson};
     var LANG = ${langJson};
     var RN = window.ReactNativeWebView;
-    var post = function (obj) { if (RN) RN.postMessage(JSON.stringify(obj)); };
-    // HTML injeksiyasidan himoya (do'kon nomi popup'da ko'rsatiladi).
+    // Native'da WebView ko'prigi; web'da (iframe) — ota sahifaga postMessage.
+    var post = function (obj) {
+      var s = JSON.stringify(obj);
+      if (RN) RN.postMessage(s);
+      else if (window.parent && window.parent !== window) window.parent.postMessage(s, '*');
+    };
+    // HTML injeksiyasidan himoya (do'kon ma'lumotlari kartochkada ko'rsatiladi).
     var esc = function (s) {
       return String(s == null ? '' : s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -167,16 +223,52 @@ function buildHtml(opts: {
     if (mode === 'display') {
       var stores = ${storesJson};
       var pts = [];
-      stores.forEach(function (s) {
+      var ICON_PIN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
+      var ICON_CLOCK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+      var ICON_BAG = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>';
+      var ICON_PHONE = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>';
+
+      var popupHtml = function (s, i) {
+        var initialLetter = esc(String(s.name || '?').charAt(0).toUpperCase());
+        var logo = s.logo
+          ? '<img class="pLogo" src="' + esc(s.logo) + '" alt="" />'
+          : '<div class="pLogo pInit">' + initialLetter + '</div>';
+        var status = s.isOpen === false
+          ? '<span class="dot off"></span>' + esc(TXT.closed)
+          : '<span class="dot on"></span>' + esc(TXT.open);
+        var rating = s.reviewCount
+          ? '<span class="star">★</span>' + Number(s.rating || 0).toFixed(1) + ' <span class="muted">(' + Number(s.reviewCount) + ')</span>'
+          : '<span class="new">' + esc(TXT.isNew) + '</span>';
+        var chips = [];
+        if (s.hasDelivery && s.deliveryTime) chips.push(ICON_CLOCK + '~' + Number(s.deliveryTime) + ' ' + esc(TXT.min));
+        if (s.productCount) chips.push(ICON_BAG + Number(s.productCount) + ' ' + esc(TXT.products));
+        if (s.hasPickup) chips.push(esc(TXT.pickup));
+        return '<div class="pCard">'
+          + '<div class="pHead">' + logo
+          +   '<div class="pTitle"><div class="pName">' + esc(s.name) + '</div>'
+          +   '<div class="pSub">' + status + '<span class="sep">·</span>' + rating + '</div></div>'
+          + '</div>'
+          + (s.address ? '<div class="pAddr">' + ICON_PIN + '<span>' + esc(s.address) + '</span></div>' : '')
+          + (chips.length ? '<div class="pChips">' + chips.map(function (c) { return '<span class="chip">' + c + '</span>'; }).join('') + '</div>' : '')
+          + '<div class="pBtns">'
+          +   (s.slug ? '<div class="btn primary" onclick="window.openStore(' + i + ')">' + esc(TXT.openStore) + '</div>' : '')
+          +   '<div class="btn" onclick="window.dir(' + i + ')">' + esc(TXT.directions) + '</div>'
+          +   (s.phone ? '<div class="btn iconBtn" title="' + esc(TXT.call) + '" onclick="window.callStore(' + i + ')">' + ICON_PHONE + '</div>' : '')
+          + '</div>'
+          + '</div>';
+      };
+
+      stores.forEach(function (s, i) {
         if (typeof s.lat !== 'number' || typeof s.lng !== 'number') return;
         pts.push([s.lat, s.lng]);
         var m = L.marker([s.lat, s.lng], { icon: storeIcon() }).addTo(map);
-        var html = '<b>' + esc(s.name) + '</b><br/><div class="dirBtn" onclick="window.dir(' + s.lat + ',' + s.lng + ')">' + esc(TXT.directions) + '</div>';
-        m.bindPopup(html);
+        m.bindPopup(popupHtml(s, i), { className: 'zyffPopup', minWidth: 230, maxWidth: 260, autoPanPadding: [16, 16] });
       });
       if (pts.length > 1) { map.fitBounds(pts, { padding: [40,40] }); }
       else if (pts.length === 1) { map.setView(pts[0], 15); }
-      window.dir = function (lat, lng) { post({ type: 'directions', lat: lat, lng: lng }); };
+      window.dir = function (i) { var s = stores[i]; if (s) post({ type: 'directions', lat: s.lat, lng: s.lng }); };
+      window.openStore = function (i) { var s = stores[i]; if (s && s.slug) post({ type: 'openStore', slug: s.slug }); };
+      window.callStore = function (i) { var s = stores[i]; if (s && s.phone) post({ type: 'call', phone: s.phone }); };
     }
 
     if (mode === 'picker') {
@@ -220,7 +312,7 @@ function buildHtml(opts: {
 </html>`
 }
 
-export function LeafletWebMap({ mode, height = 260, dark = false, initial, onSelect, stores = [] }: Props) {
+export function LeafletWebMap({ mode, height = 260, dark = false, initial, onSelect, stores = [], onOpenStore }: Props) {
   const lang = useLangStore(s => s.lang)
   const html = useMemo(
     () => buildHtml({ mode, dark, initial, stores, lang }),
@@ -235,17 +327,38 @@ export function LeafletWebMap({ mode, height = 260, dark = false, initial, onSel
       } else if (msg.type === 'directions') {
         // Qurilma xarita ilovasida yo'nalish ochish
         Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${msg.lat},${msg.lng}`)
+      } else if (msg.type === 'openStore' && typeof msg.slug === 'string') {
+        onOpenStore?.(msg.slug)
+      } else if (msg.type === 'call' && typeof msg.phone === 'string') {
+        const href = telHref(msg.phone)
+        if (href) Linking.openURL(href)
       }
     } catch {
       // e'tiborsiz
     }
   }
 
+  // Web'da xarita iframe ichida: undagi tugmalar ota sahifaga postMessage yuboradi.
+  // Faqat O'Z iframe'imizdan kelgan xabarni qabul qilamiz (boshqa oynalardan emas).
+  const iframeRef = useRef<HTMLIFrameElement | null>(null)
+  const handlerRef = useRef(handleMessage)
+  handlerRef.current = handleMessage
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return
+    const onMsg = (e: MessageEvent) => {
+      if (!iframeRef.current || e.source !== iframeRef.current.contentWindow) return
+      if (typeof e.data === 'string') handlerRef.current({ nativeEvent: { data: e.data } })
+    }
+    window.addEventListener('message', onMsg)
+    return () => window.removeEventListener('message', onMsg)
+  }, [])
+
   // Web (brauzer) — react-native-webview ishlamaydi, iframe orqali ko'rsatamiz
   if (Platform.OS === 'web') {
     return (
       <View style={[styles.wrap, { height }]}>
         {createElement('iframe', {
+          ref: iframeRef,
           srcDoc: html,
           style: { border: 0, width: '100%', height: '100%' },
         })}

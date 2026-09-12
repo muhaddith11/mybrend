@@ -43,7 +43,7 @@ export function StoreCard({ store, onPress }: { store: Store; onPress: () => voi
           <View style={styles.ratingPill}>
             {store.reviewCount ? (
               <>
-                <Ionicons name="star" size={11} color="#E3A008" />
+                <Ionicons name="star" size={11} color={colors.accent} />
                 <Text style={styles.ratingText}>{(store.rating ?? 0).toFixed(1)}</Text>
               </>
             ) : (

@@ -130,7 +130,7 @@ export default function ProfileScreen() {
       <Text style={styles.settingsTitle}>{tr.settings}</Text>
 
       <View style={styles.langRow}>
-        <Ionicons name="globe-outline" size={20} color={colors.accent} />
+        <Ionicons name="globe-outline" size={20} color={colors.brand} />
         <Text style={styles.menuLabel}>{tr.language}</Text>
       </View>
       <View style={styles.langBtns}>
@@ -147,12 +147,12 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.themeRow}>
-        <Ionicons name={dark ? 'moon' : 'moon-outline'} size={20} color={colors.accent} />
+        <Ionicons name={dark ? 'moon' : 'moon-outline'} size={20} color={colors.brand} />
         <Text style={styles.menuLabel}>{tr.darkMode}</Text>
         <Switch
           value={dark}
           onValueChange={toggleTheme}
-          trackColor={{ false: colors.border, true: colors.accent }}
+          trackColor={{ false: colors.border, true: colors.brand }}
           thumbColor={colors.white}
         />
       </View>
@@ -188,7 +188,7 @@ export default function ProfileScreen() {
 
           {menuItems.map(item => (
             <TouchableOpacity key={item.label} style={styles.menuItem} onPress={item.onPress}>
-              <Ionicons name={item.icon as any} size={20} color={colors.accent} />
+              <Ionicons name={item.icon as any} size={20} color={colors.brand} />
               <Text style={styles.menuLabel}>{item.label}</Text>
               {!!item.badge && (
                 <View style={styles.badge}>
@@ -249,7 +249,7 @@ export default function ProfileScreen() {
         style={styles.ownerBtn}
         onPress={() => router.push('/admin/login')}
       >
-        <Ionicons name="storefront-outline" size={20} color={colors.accent} />
+        <Ionicons name="storefront-outline" size={20} color={colors.brand} />
         <Text style={styles.ownerLabel}>
           {lang === 'ru' ? 'Панель продавца' : lang === 'en' ? 'Seller panel' : "Do'kon egasi paneli"}
         </Text>
@@ -357,12 +357,12 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   avatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: c.brandLight, alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'visible' },
   avatarImg: { width: 52, height: 52, borderRadius: 26 },
   avatarEmoji: { fontSize: 28 },
-  avatarEdit: { position: 'absolute', right: -2, bottom: -2, width: 20, height: 20, borderRadius: 10, backgroundColor: c.accent, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: c.surface },
+  avatarEdit: { position: 'absolute', right: -2, bottom: -2, width: 20, height: 20, borderRadius: 10, backgroundColor: c.brand, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: c.surface },
   userName: { fontSize: 16, fontWeight: '600', color: c.text },
   userPhone: { fontSize: 13, color: c.text2, marginTop: 2 },
   menuItem: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: c.surface, padding: 16, marginHorizontal: 16, marginBottom: 1, borderRadius: 2 },
   menuLabel: { flex: 1, fontSize: 14, color: c.text },
-  // Savat badge'i bilan bir xil qizil (components/HomeHeader.tsx) — gold fon ustida
+  // Savat badge'i bilan bir xil qizil (components/HomeHeader.tsx) — urg'u fon ustida
   // oq matn o'qilmasdi, hisob belgisi esa ilovada doim shu rangda.
   badge: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: 10, backgroundColor: '#E23B3B', alignItems: 'center', justifyContent: 'center' },
   badgeText: { fontSize: 11, fontWeight: '700', color: c.white },
@@ -371,10 +371,10 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   langRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
   langBtns: { flexDirection: 'row', gap: 8 },
   langBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface2 },
-  langBtnActive: { borderColor: c.accent, backgroundColor: c.accentSoft },
+  langBtnActive: { borderColor: c.brand, backgroundColor: c.surface },
   langFlag: { fontSize: 16 },
   langLabel: { fontSize: 12, color: c.text2, fontWeight: '500' },
-  langLabelActive: { color: c.accent },
+  langLabelActive: { color: c.brand },
   themeRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 16 },
   logoutBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, margin: 16, marginTop: 24, padding: 16, backgroundColor: c.surface2, borderRadius: 12 },
   logoutText: { fontSize: 14, color: c.danger, fontWeight: '500' },
