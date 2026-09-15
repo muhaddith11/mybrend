@@ -18,6 +18,18 @@ interface MapPickerProps {
 // Qo'qon city center
 const QOQON_CENTER: [number, number] = [40.5282, 70.9428]
 
+// Tile'lar — Geoapify (CARTO endi kalitsiz so'rovlarga "API KEY REQUIRED" watermark
+// qo'yadi). Kalit env'da (repo ochiq): NEXT_PUBLIC_GEOAPIFY_KEY — build paytida inline
+// qilinadi, shuning uchun Vercel env'da ham bo'lishi shart. Kalit bo'lmasa CARTO'ga
+// qaytamiz (watermark bo'ladi, lekin xarita bo'sh qolmaydi). Uslub mobil ilova bilan bir xil.
+const GEOAPIFY_KEY = process.env.NEXT_PUBLIC_GEOAPIFY_KEY
+const TILE_URL = GEOAPIFY_KEY
+  ? `https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}{r}.png?apiKey=${GEOAPIFY_KEY}`
+  : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+const TILE_ATTRIBUTION = GEOAPIFY_KEY
+  ? 'Powered by <a href="https://www.geoapify.com/" target="_blank" rel="noopener">Geoapify</a> | © <a href="https://openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+  : '© OpenStreetMap © CARTO'
+
 export function MapPicker({ onAddressSelect, initialAddress }: MapPickerProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<any>(null)
@@ -48,8 +60,8 @@ export function MapPicker({ onAddressSelect, initialAddress }: MapPickerProps) {
         zoomControl: true,
       })
 
-      Leaflet.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap © CARTO',
+      Leaflet.tileLayer(TILE_URL, {
+        attribution: TILE_ATTRIBUTION,
         maxZoom: 19,
       }).addTo(map)
 
