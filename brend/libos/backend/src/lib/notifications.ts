@@ -111,8 +111,13 @@ async function sendExpoPush(messages: ExpoMessage[]): Promise<string[]> {
     // Javobdagi `data` — kiritilgan xabarlar bilan bir xil tartibda.
     const json = (await res.json().catch(() => null)) as { data?: ExpoTicket[] } | null
     json?.data?.forEach((ticket, i) => {
-      if (ticket?.status === 'error' && ticket.details?.error === 'DeviceNotRegistered') {
+      if (ticket?.status !== 'error') return
+      if (ticket.details?.error === 'DeviceNotRegistered') {
         invalid.push(batch[i].to)
+      } else {
+        // Masalan InvalidCredentials (FCM kaliti) yoki MessageRateExceeded — jimgina
+        // yutilsa push nega kelmayotgani hech qayerda ko'rinmaydi. Token loglanmaydi.
+        console.warn('[push] Expo ticket error:', ticket.details?.error ?? 'unknown', ticket.message ?? '')
       }
     })
   }

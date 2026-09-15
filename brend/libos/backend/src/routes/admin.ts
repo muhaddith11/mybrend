@@ -174,7 +174,8 @@ export default async function adminRoutes(app: FastifyInstance) {
     const { ownerId } = req.user as { ownerId: string }
     const store = await prisma.store.findFirst({
       where: { ownerId },
-      include: { _count: { select: { products: true, orders: true } } },
+      // O'chirilgan (arxivlangan) mahsulotlar sanalmaydi — ega panelidagi son ro'yxat bilan mos bo'lsin.
+      include: { _count: { select: { products: { where: { archivedAt: null } }, orders: true } } },
     })
     return reply.send(store)
   })

@@ -55,7 +55,7 @@ export default async function storesRoutes(app: FastifyInstance) {
           genders: true, hasDelivery: true, hasPickup: true, hasCashOnDoor: true,
           deliveryTime: true, themeColor: true, themeBg: true,
           lat: true, lng: true,
-          _count: { select: { products: true } },
+          _count: { select: { products: { where: { inStock: true } } } }, // faqat sotuvdagilar — o'chirilgan (arxiv) mahsulot sanalmaydi
         },
       }),
       prisma.store.count({ where }),
@@ -120,7 +120,7 @@ export default async function storesRoutes(app: FastifyInstance) {
             genders: true, hasDelivery: true, hasPickup: true, hasCashOnDoor: true,
             deliveryTime: true, themeColor: true, themeBg: true,
             lat: true, lng: true,
-            _count: { select: { products: true } },
+            _count: { select: { products: { where: { inStock: true } } } }, // faqat sotuvdagilar — o'chirilgan (arxiv) mahsulot sanalmaydi
           },
         },
       },
