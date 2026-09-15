@@ -73,6 +73,7 @@ export function AddToCartButton({
         storeId={storeId}
         storeName={storeName}
         themeColor={bg}
+        textColor={textColor}
         visible={pickerOpen}
         onClose={() => setPickerOpen(false)}
       />

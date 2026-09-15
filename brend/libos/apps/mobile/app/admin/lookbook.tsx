@@ -168,7 +168,7 @@ export default function AdminLookbook() {
           )}
 
           <TouchableOpacity style={[styles.saveBtn, save.isPending && { opacity: 0.6 }]} onPress={() => save.mutate()} disabled={save.isPending}>
-            {save.isPending ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Saqlash</Text>}
+            {save.isPending ? <ActivityIndicator color={colors.onBrand} /> : <Text style={styles.saveBtnText}>Saqlash</Text>}
           </TouchableOpacity>
         </ScrollView>
       )}
@@ -234,7 +234,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   addBtnText: { fontSize: 14, fontWeight: '600', color: c.text },
   uploadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   saveBtn: { backgroundColor: c.brand, borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 12 },
-  saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  saveBtnText: { color: c.onBrand, fontSize: 16, fontWeight: '600' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalCard: { backgroundColor: c.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 24, maxHeight: '80%' },
   modalHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10 },

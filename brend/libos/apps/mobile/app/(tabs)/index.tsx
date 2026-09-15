@@ -155,7 +155,7 @@ export default function HomeScreen() {
                 )}
               </View>
               <Text style={styles.searchStoreName}>{item.store?.name}</Text>
-              <AddToCartButton product={item as Product} bg={colors.brand} style={styles.cardAddBtn} />
+              <AddToCartButton product={item as Product} bg={colors.brand} textColor={colors.onBrand} style={styles.cardAddBtn} />
             </PressableScale>
           )}
           ListEmptyComponent={
@@ -410,7 +410,7 @@ function ProductRow({
                 <Text style={styles.productOriginalPrice}>{product.originalPrice.toLocaleString()}</Text>
               )}
             </View>
-            <AddToCartButton product={product} bg={colors.brand} style={styles.cardAddBtn} />
+            <AddToCartButton product={product} bg={colors.brand} textColor={colors.onBrand} style={styles.cardAddBtn} />
           </PressableScale>
         ))}
       </ScrollView>
@@ -434,7 +434,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   catChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border },
   catChipActive: { backgroundColor: c.brand, borderColor: c.brand },
   catChipText: { fontSize: 13, fontWeight: '600', color: c.text2 },
-  catChipTextActive: { color: '#fff' },
+  catChipTextActive: { color: c.onBrand },
   // paddingBottom YO'Q: footer ro'yxatning oxirgi elementi, pastdan bo'shliq
   // qoldirilsa to'q rangli footer bilan tab bar orasida oq chiziq ko'rinardi.
   list: { gap: 10 },

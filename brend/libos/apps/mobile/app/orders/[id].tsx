@@ -110,7 +110,7 @@ export default function OrderScreen() {
             style={styles.payBtn}
             onPress={() => Linking.openURL(order.botUrl!).catch(() => {})}
           >
-            <Ionicons name="paper-plane-outline" size={18} color="#fff" />
+            <Ionicons name="paper-plane-outline" size={18} color={colors.onBrand} />
             <Text style={styles.payBtnText}>{tr.mPayViaBot}</Text>
           </TouchableOpacity>
         )}
@@ -134,7 +134,7 @@ export default function OrderScreen() {
                         <Ionicons
                           name={step.icon as any}
                           size={14}
-                          color={done ? '#fff' : colors.text3}
+                          color={done ? colors.onBrand : colors.text3}
                         />
                       </View>
                       {i < steps.length - 1 && (
@@ -219,7 +219,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     backgroundColor: c.brand, borderRadius: 14, paddingVertical: 14,
   },
-  payBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  payBtnText: { color: c.onBrand, fontSize: 15, fontWeight: '600' },
   section: { backgroundColor: c.surface, borderRadius: 14, padding: 16, gap: 8, borderWidth: 0.5, borderColor: c.border },
   sectionLabel: { fontSize: 12, fontWeight: '600', color: c.text3, textTransform: 'uppercase', letterSpacing: 0.5 },
   value: { fontSize: 15, color: c.text, fontWeight: '500' },
@@ -244,5 +244,5 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   totalLabel: { fontSize: 14, color: c.text2 },
   totalPrice: { fontSize: 16, fontWeight: '700', color: c.text },
   homeBtn: { backgroundColor: c.brand, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
-  homeBtnText: { color: c.white, fontSize: 15, fontWeight: '600' },
+  homeBtnText: { color: c.onBrand, fontSize: 15, fontWeight: '600' },
 })

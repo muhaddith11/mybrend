@@ -136,7 +136,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   emptyTitle: { fontSize: 16, fontWeight: '600', color: c.text },
   emptyText: { fontSize: 13, color: c.text2, textAlign: 'center', paddingHorizontal: 32 },
   loginBtn: { marginTop: 8, backgroundColor: c.brand, paddingHorizontal: 32, paddingVertical: 12, borderRadius: 10 },
-  loginBtnText: { color: c.white, fontWeight: '600', fontSize: 15 },
+  loginBtnText: { color: c.onBrand, fontWeight: '600', fontSize: 15 },
   list: { paddingVertical: 16, gap: 10 },
   productRow: { flexDirection: 'row', backgroundColor: c.surface, borderRadius: 12, borderWidth: 0.5, borderColor: c.border, padding: 12, marginHorizontal: 16, gap: 12 },
   productImgWrap: { width: 64, height: 64, borderRadius: 8, overflow: 'hidden', backgroundColor: c.surface2 },

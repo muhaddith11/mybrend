@@ -9,7 +9,7 @@ import * as ImagePicker from 'expo-image-picker'
 import { api, useT, type Lang } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
 import { useLangStore } from '../../store/lang'
-import { useTheme, useThemeStore, type ThemeColors } from '../../store/theme'
+import { useTheme, useThemeStore, switchThumb, type ThemeColors } from '../../store/theme'
 import { useAvatarStore, PERSON_EMOJIS } from '../../store/avatar'
 import { uploadImage } from '../../lib/upload'
 import { translateUploadError, translateApiErrorStrict } from '../../lib/apiError'
@@ -153,7 +153,7 @@ export default function ProfileScreen() {
           value={dark}
           onValueChange={toggleTheme}
           trackColor={{ false: colors.border, true: colors.brand }}
-          thumbColor={colors.white}
+          {...switchThumb(colors, dark)}
         />
       </View>
     </View>
@@ -176,7 +176,7 @@ export default function ProfileScreen() {
                 <Text style={styles.avatarEmoji}>{emoji}</Text>
               )}
               <View style={styles.avatarEdit}>
-                <Ionicons name="pencil" size={11} color={colors.white} />
+                <Ionicons name="pencil" size={11} color={colors.onBrand} />
               </View>
             </View>
             <View style={{ flex: 1 }}>
@@ -338,7 +338,7 @@ export default function ProfileScreen() {
 
               {/* Saqlash */}
               <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.6 }]} onPress={saveProfile} disabled={saving || uploading}>
-                {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>{L('Saqlash', 'Сохранить', 'Save')}</Text>}
+                {saving ? <ActivityIndicator color={colors.onBrand} /> : <Text style={styles.saveBtnText}>{L('Saqlash', 'Сохранить', 'Save')}</Text>}
               </TouchableOpacity>
             </ScrollView>
           </Pressable>
@@ -403,10 +403,10 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   emojiChar: { fontSize: 26 },
   nameInput: { borderWidth: 1, borderColor: c.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: c.text, backgroundColor: c.surface2, marginBottom: 20 },
   saveBtn: { backgroundColor: c.brand, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
-  saveBtnText: { color: c.white, fontSize: 15, fontWeight: '600' },
+  saveBtnText: { color: c.onBrand, fontSize: 15, fontWeight: '600' },
   loginCard: { margin: 16, backgroundColor: c.surface, borderRadius: 16, padding: 24, alignItems: 'center', gap: 10, borderWidth: 0.5, borderColor: c.border },
   loginTitle: { fontSize: 18, fontWeight: '600', color: c.text },
   loginText: { fontSize: 13, color: c.text2, textAlign: 'center', lineHeight: 20 },
   loginBtn: { marginTop: 8, backgroundColor: c.brand, paddingHorizontal: 32, paddingVertical: 12, borderRadius: 10, width: '100%', alignItems: 'center' },
-  loginBtnText: { color: c.white, fontWeight: '600', fontSize: 15 },
+  loginBtnText: { color: c.onBrand, fontWeight: '600', fontSize: 15 },
 })

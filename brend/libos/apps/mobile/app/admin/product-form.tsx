@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import * as ImagePicker from 'expo-image-picker'
-import { useTheme, type ThemeColors } from '../../store/theme'
+import { useTheme, switchThumb, type ThemeColors } from '../../store/theme'
 import { useAdminStore } from '../../store/admin'
 import { adminApi, type ProductInput } from '../../lib/adminApi'
 import { invalidatePublicCaches } from '../../lib/adminCache'
@@ -230,7 +230,7 @@ export default function ProductForm() {
         <View style={styles.addRow}>
           <TextInput style={styles.addInput} value={sizeInput} onChangeText={setSizeInput} placeholder="Boshqa o'lcham (masalan 42)" placeholderTextColor={colors.text3} />
           <TouchableOpacity style={styles.addBtn} onPress={() => addCustom(sizes, setSizes, sizeInput, () => setSizeInput(''))}>
-            <Ionicons name="add" size={20} color="#fff" />
+            <Ionicons name="add" size={20} color={colors.onBrand} />
           </TouchableOpacity>
         </View>
 
@@ -246,7 +246,7 @@ export default function ProductForm() {
         <View style={styles.addRow}>
           <TextInput style={styles.addInput} value={colorInput} onChangeText={setColorInput} placeholder="Boshqa rang" placeholderTextColor={colors.text3} />
           <TouchableOpacity style={styles.addBtn} onPress={() => addCustom(productColors, setProductColors, colorInput, () => setColorInput(''))}>
-            <Ionicons name="add" size={20} color="#fff" />
+            <Ionicons name="add" size={20} color={colors.onBrand} />
           </TouchableOpacity>
         </View>
 
@@ -258,7 +258,7 @@ export default function ProductForm() {
         </View>
 
         <TouchableOpacity style={[styles.saveBtn, save.isPending && { opacity: 0.6 }]} onPress={handleSave} disabled={save.isPending}>
-          {save.isPending ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>{isEdit ? 'Saqlash' : "Qo'shish"}</Text>}
+          {save.isPending ? <ActivityIndicator color={colors.onBrand} /> : <Text style={styles.saveBtnText}>{isEdit ? 'Saqlash' : "Qo'shish"}</Text>}
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -269,7 +269,7 @@ function ToggleRow({ label, value, onChange, c, styles, last }: { label: string;
   return (
     <View style={[styles.switchRow, last && { borderBottomWidth: 0 }]}>
       <Text style={styles.switchLabel}>{label}</Text>
-      <Switch value={value} onValueChange={onChange} trackColor={{ false: c.border, true: c.accent }} thumbColor={c.white} />
+      <Switch value={value} onValueChange={onChange} trackColor={{ false: c.border, true: c.accent }} {...switchThumb(c, value)} />
     </View>
   )
 }
@@ -326,5 +326,5 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: c.border },
   switchLabel: { fontSize: 14, color: c.text, fontWeight: '500' },
   saveBtn: { backgroundColor: c.brand, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 24 },
-  saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  saveBtnText: { color: c.onBrand, fontSize: 16, fontWeight: '700' },
 })

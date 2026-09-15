@@ -67,6 +67,9 @@ export default function ProductScreen() {
   }
 
   const themeColor = design?.accent ?? (product as any).store?.themeColor ?? colors.brand
+  // themeColor foni ustidagi matn: do'kon rangi (bespoke/themeColor) bo'lsa oq, avvalgidek;
+  // ZYFF brand'iga tushsa — onBrand (tungi rejimda brand oq, matn quyuq).
+  const onTheme = design || (product as any).store?.themeColor ? '#fff' : colors.onBrand
   const images: string[] = (product.images ?? []).map(resolveImg).filter(Boolean) as string[]
   const inStock = product.inStock ?? true
   // Razmer/rang mahsulotda massiv sifatida saqlanadi (sizes/colors); variants bo'sh
@@ -140,7 +143,7 @@ export default function ProductScreen() {
             <Ionicons name="bag-outline" size={22} color={colors.text} />
             {cartCount > 0 && (
               <View style={[styles.badge, { backgroundColor: themeColor }]}>
-                <Text style={styles.badgeText}>{cartCount}</Text>
+                <Text style={[styles.badgeText, { color: onTheme }]}>{cartCount}</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -218,7 +221,7 @@ export default function ProductScreen() {
                     ]}
                     onPress={() => { setSelectedSize(size!); setSelectErr('') }}
                   >
-                    <Text style={[styles.chipText, selectedSize === size && { color: '#fff' }]}>
+                    <Text style={[styles.chipText, selectedSize === size && { color: onTheme }]}>
                       {size}
                     </Text>
                   </TouchableOpacity>
@@ -241,7 +244,7 @@ export default function ProductScreen() {
                     ]}
                     onPress={() => { setSelectedColor(color!); setSelectErr('') }}
                   >
-                    <Text style={[styles.chipText, selectedColor === color && { color: '#fff' }]}>
+                    <Text style={[styles.chipText, selectedColor === color && { color: onTheme }]}>
                       {color}
                     </Text>
                   </TouchableOpacity>
@@ -281,8 +284,8 @@ export default function ProductScreen() {
           onPress={handleAddToCart}
           disabled={!inStock}
         >
-          <Ionicons name={added ? 'checkmark' : 'bag-add-outline'} size={20} color="#fff" />
-          <Text style={styles.addBtnText}>
+          <Ionicons name={added ? 'checkmark' : 'bag-add-outline'} size={20} color={!inStock || added ? '#fff' : onTheme} />
+          <Text style={[styles.addBtnText, { color: !inStock || added ? '#fff' : onTheme }]}>
             {!inStock ? tr.mSoldOut : added ? tr.mAddedToCartShort : tr.addToCart}
           </Text>
         </TouchableOpacity>

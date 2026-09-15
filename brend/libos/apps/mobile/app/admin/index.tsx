@@ -82,7 +82,7 @@ export default function AdminDashboard() {
 
         {/* Tez amal — mahsulot qo'shish */}
         <TouchableOpacity style={styles.addProductBtn} onPress={() => router.push('/admin/product-form')}>
-          <Ionicons name="add-circle" size={22} color="#fff" />
+          <Ionicons name="add-circle" size={22} color={colors.onBrand} />
           <Text style={styles.addProductText}>Yangi mahsulot qo'shish</Text>
         </TouchableOpacity>
 
@@ -112,7 +112,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   hIconBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: c.brandLight, alignItems: 'center', justifyContent: 'center' },
   content: { padding: 16, gap: 12 },
   addProductBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: c.brand, borderRadius: 14, paddingVertical: 15, marginBottom: 4 },
-  addProductText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  addProductText: { color: c.onBrand, fontSize: 15, fontWeight: '700' },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 8 },
   statCard: { flexBasis: '47%', flexGrow: 1, backgroundColor: c.surface, borderRadius: 14, padding: 16, gap: 6, borderWidth: 0.5, borderColor: c.border },
   statValue: { fontSize: 18, fontWeight: '700', color: c.text },

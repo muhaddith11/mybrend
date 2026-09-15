@@ -26,7 +26,7 @@ const GRADIENTS = ['#3B6CFF', '#8B5CF6', '#10B981']
 export function HeroBanner({ stores }: { stores: Store[] }) {
   const router = useRouter()
   const tr = useT(useLangStore(s => s.lang))
-  const { colors } = useTheme()
+  const { colors, dark } = useTheme()
   const { width } = useWindowDimensions()
   const BANNER_W = width - 32
   const scrollRef = useRef<ScrollView>(null)
@@ -82,19 +82,19 @@ export function HeroBanner({ stores }: { stores: Store[] }) {
                   end={{ x: 1, y: 1 }}
                   style={StyleSheet.absoluteFill}
                 />
-                <View style={styles.orbBig} />
+                <View style={[styles.orbBig, dark && { backgroundColor: 'rgba(255,255,255,0.08)' }]} />
                 <View style={styles.orbSmall} />
                 {/* ZYFF nomi doim kontur belgi bilan (components/Logo.tsx) */}
                 <View style={styles.appBadgeRow}>
                   <Logo size={14} color="#fff" />
-                  <Text style={styles.appBadge}>— Qo'qon</Text>
+                  <Text style={[styles.appBadge, dark && { color: 'rgba(255,255,255,0.75)' }]}>— Qo'qon</Text>
                 </View>
                 <Text style={styles.appTitle}>
                   {tr.heroAppL1} {tr.heroAppHL}{'\n'}
-                  <Text style={{ color: '#8FB0FF' }}>{tr.heroAppL3}</Text>
+                  <Text style={{ color: dark ? '#FFFFFF' : '#8FB0FF' }}>{tr.heroAppL3}</Text>
                 </Text>
-                <View style={styles.ctaBtn}>
-                  <Text style={styles.ctaBtnText}>{tr.heroAppCta}</Text>
+                <View style={[styles.ctaBtn, { backgroundColor: colors.accent }]}>
+                  <Text style={[styles.ctaBtnText, { color: colors.onBrand }]}>{tr.heroAppCta}</Text>
                 </View>
                 <Text style={styles.bgLetter}>Z</Text>
               </TouchableOpacity>
@@ -167,8 +167,9 @@ const styles = StyleSheet.create({
   appBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
   appBadge: { color: '#8FB0FF', fontSize: 11, fontWeight: '700', letterSpacing: 0.3 },
   appTitle: { color: '#fff', fontSize: 20, fontWeight: '800', lineHeight: 25, marginBottom: 12, letterSpacing: -0.3 },
-  ctaBtn: { alignSelf: 'flex-start', backgroundColor: '#3B6CFF', borderRadius: 14, paddingHorizontal: 18, paddingVertical: 10 },
-  ctaBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  // Rangi inline: light'da ko'k/oq, tungi rejimda oq/navy (colors.accent / onBrand)
+  ctaBtn: { alignSelf: 'flex-start', borderRadius: 14, paddingHorizontal: 18, paddingVertical: 10 },
+  ctaBtnText: { fontSize: 13, fontWeight: '700' },
   bgLetter: { position: 'absolute', right: -10, bottom: -40, fontSize: 180, fontWeight: '800', color: 'rgba(255,255,255,0.04)' },
   // Store slide
   storeInitial: { position: 'absolute', right: 10, top: 10, fontSize: 130, fontWeight: '800', color: 'rgba(255,255,255,0.15)' },

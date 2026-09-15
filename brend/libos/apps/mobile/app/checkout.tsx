@@ -378,7 +378,7 @@ export default function CheckoutScreen() {
           disabled={loading}
         >
           {loading
-            ? <ActivityIndicator color="#fff" />
+            ? <ActivityIndicator color={colors.onBrand} />
             : <Text style={styles.orderBtnText}>{tr.mOrderNow}</Text>
           }
         </TouchableOpacity>
@@ -392,7 +392,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
   lockTitle: { fontSize: 18, fontWeight: '600', color: c.text },
   loginBtn: { backgroundColor: c.brand, paddingHorizontal: 32, paddingVertical: 12, borderRadius: 10 },
-  loginBtnText: { color: c.white, fontWeight: '600' },
+  loginBtnText: { color: c.onBrand, fontWeight: '600' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: c.surface, borderBottomWidth: 0.5, borderBottomColor: c.border },
   headerTitle: { fontSize: 17, fontWeight: '600', color: c.text },
   scroll: { padding: 16, gap: 12, paddingBottom: 8 },
@@ -420,7 +420,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   addrToggleBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: c.border, alignItems: 'center', backgroundColor: c.surface2 },
   addrToggleActive: { borderColor: c.brand, backgroundColor: c.brand },
   addrToggleText: { fontSize: 14, color: c.text, fontWeight: '500' },
-  addrToggleTextActive: { color: c.white },
+  addrToggleTextActive: { color: c.onBrand },
   fieldInput: { borderWidth: 1, borderColor: c.border, borderRadius: 10, padding: 12, fontSize: 14, color: c.text, backgroundColor: c.surface2 },
   addrRow: { flexDirection: 'row', gap: 8 },
   addrHalf: { flex: 1 },
@@ -433,5 +433,5 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   totalLabel: { fontSize: 15, color: c.text2 },
   totalPrice: { fontSize: 20, fontWeight: '700', color: c.text },
   orderBtn: { backgroundColor: c.brand, borderRadius: 12, paddingVertical: 16, alignItems: 'center' },
-  orderBtnText: { color: c.white, fontSize: 16, fontWeight: '600' },
+  orderBtnText: { color: c.onBrand, fontSize: 16, fontWeight: '600' },
 })

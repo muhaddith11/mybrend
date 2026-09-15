@@ -73,5 +73,5 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   subtitle: { fontSize: 14, color: c.text2, textAlign: 'center', lineHeight: 20, maxWidth: 300 },
   detail: { fontSize: 12, color: c.text3, textAlign: 'center', marginTop: 4, fontStyle: 'italic' },
   btn: { marginTop: 12, backgroundColor: c.brand, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 12 },
-  btnText: { color: c.white, fontSize: 15, fontWeight: '600' },
+  btnText: { color: c.onBrand, fontSize: 15, fontWeight: '600' },
 })

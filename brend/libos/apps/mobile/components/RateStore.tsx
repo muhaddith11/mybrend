@@ -80,7 +80,7 @@ export function RateStore({ orderId }: { orderId: string }) {
         disabled={!selected || send.isPending}
       >
         {send.isPending
-          ? <ActivityIndicator color={colors.white} />
+          ? <ActivityIndicator color={colors.onBrand} />
           : <Text style={styles.btnText}>{tr.mRateSend}</Text>}
       </TouchableOpacity>
     </View>
@@ -103,5 +103,5 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   stars: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: 18 },
   btn: { backgroundColor: c.brand, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   btnDisabled: { opacity: 0.45 },
-  btnText: { color: c.white, fontSize: 15, fontWeight: '600' },
+  btnText: { color: c.onBrand, fontSize: 15, fontWeight: '600' },
 })

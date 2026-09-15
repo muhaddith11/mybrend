@@ -53,5 +53,5 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   title: { fontSize: 18, fontWeight: '700', color: c.text, marginBottom: 10, textAlign: 'center' },
   text: { fontSize: 14, color: c.text2, lineHeight: 22, textAlign: 'center', marginBottom: 24 },
   btn: { backgroundColor: c.brand, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 40, alignItems: 'center' },
-  btnText: { color: c.white, fontSize: 15, fontWeight: '600' },
+  btnText: { color: c.onBrand, fontSize: 15, fontWeight: '600' },
 })

@@ -33,7 +33,7 @@ export function ErrorState({ onRetry, message, compact }: Props) {
       <Text style={styles.text}>{title}</Text>
       {onRetry && (
         <TouchableOpacity style={styles.btn} onPress={onRetry} activeOpacity={0.85}>
-          <Ionicons name="refresh" size={16} color={colors.white} />
+          <Ionicons name="refresh" size={16} color={colors.onBrand} />
           <Text style={styles.btnText}>{retryLabel}</Text>
         </TouchableOpacity>
       )}
@@ -46,5 +46,5 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   compact: { flex: 0, paddingVertical: 48 },
   text: { fontSize: 14, color: c.text2, textAlign: 'center', lineHeight: 20 },
   btn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: c.brand, paddingHorizontal: 22, paddingVertical: 11, borderRadius: 10 },
-  btnText: { color: c.white, fontSize: 14, fontWeight: '600' },
+  btnText: { color: c.onBrand, fontSize: 14, fontWeight: '600' },
 })

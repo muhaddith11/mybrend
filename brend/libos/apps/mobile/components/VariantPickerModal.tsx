@@ -12,12 +12,14 @@ import { resolveImg } from '../lib/links'
 // Mahsulot kartochkasidan "savatga qo'shish" bosilganda — mahsulot sahifasiga
 // o'tmasdan, o'rtada chiqadigan oynada rang/o'lcham tanlanadi va savatga qo'shiladi.
 export function VariantPickerModal({
-  product, storeId, storeName, themeColor, visible, onClose,
+  product, storeId, storeName, themeColor, textColor = '#fff', visible, onClose,
 }: {
   product: Product | null
   storeId?: string
   storeName?: string
   themeColor: string
+  /** themeColor foni ustidagi matn (tungi rejimda ZYFF brand oq — matn quyuq) */
+  textColor?: string
   visible: boolean
   onClose: () => void
 }) {
@@ -111,7 +113,7 @@ export function VariantPickerModal({
                     style={[styles.chip, selectedSize === size && { backgroundColor: themeColor, borderColor: themeColor }]}
                     onPress={() => { setSelectedSize(size); setError('') }}
                   >
-                    <Text style={[styles.chipText, selectedSize === size && { color: '#fff' }]}>{size}</Text>
+                    <Text style={[styles.chipText, selectedSize === size && { color: textColor }]}>{size}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -129,7 +131,7 @@ export function VariantPickerModal({
                     style={[styles.chip, selectedColor === color && { backgroundColor: themeColor, borderColor: themeColor }]}
                     onPress={() => { setSelectedColor(color); setError('') }}
                   >
-                    <Text style={[styles.chipText, selectedColor === color && { color: '#fff' }]}>{color}</Text>
+                    <Text style={[styles.chipText, selectedColor === color && { color: textColor }]}>{color}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -139,8 +141,8 @@ export function VariantPickerModal({
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
           <TouchableOpacity style={[styles.addBtn, { backgroundColor: themeColor }]} onPress={handleAdd} activeOpacity={0.85}>
-            <Ionicons name="bag-add-outline" size={18} color="#fff" />
-            <Text style={styles.addBtnText}>
+            <Ionicons name="bag-add-outline" size={18} color={textColor} />
+            <Text style={[styles.addBtnText, { color: textColor }]}>
               {lang === 'ru' ? 'В корзину' : lang === 'en' ? 'Add to cart' : 'Savatga qo\'shish'}
             </Text>
           </TouchableOpacity>
@@ -167,5 +169,5 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   chipText: { fontSize: 14, color: c.text, fontWeight: '500' },
   error: { fontSize: 13, color: c.danger },
   addBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 15, borderRadius: 12, marginTop: 2 },
-  addBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  addBtnText: { fontSize: 15, fontWeight: '700' },
 })

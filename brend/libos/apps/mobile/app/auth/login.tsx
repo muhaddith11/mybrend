@@ -107,7 +107,7 @@ export default function LoginScreen() {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.onBrand} />
             ) : (
               <Text style={styles.btnText}>{tr.mGetCode}</Text>
             )}
@@ -137,7 +137,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   hint: { fontSize: 12, color: c.text3, marginBottom: 24, marginLeft: 2 },
   btn: { backgroundColor: c.brand, borderRadius: 12, paddingVertical: 16, alignItems: 'center' },
   btnDisabled: { opacity: 0.6 },
-  btnText: { color: c.white, fontSize: 16, fontWeight: '600' },
+  btnText: { color: c.onBrand, fontSize: 16, fontWeight: '600' },
   terms: { textAlign: 'center', fontSize: 12, color: c.text3, marginTop: 24, lineHeight: 18 },
   termsLink: { color: c.brand },
 })

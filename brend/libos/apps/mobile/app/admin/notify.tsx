@@ -104,10 +104,10 @@ export default function AdminNotifyScreen() {
           disabled={sending}
         >
           {sending ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.onBrand} />
           ) : (
             <>
-              <Ionicons name="megaphone-outline" size={20} color="#fff" />
+              <Ionicons name="megaphone-outline" size={20} color={colors.onBrand} />
               <Text style={styles.sendText}>Yuborish</Text>
             </>
           )}
@@ -131,5 +131,5 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   // aks holda u qaysi maydonga tegishli ekani ko'rinmaydi).
   counter: { fontSize: 11, color: c.text3, textAlign: 'right', marginTop: -4 },
   sendBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: c.brand, borderRadius: 14, paddingVertical: 15, marginTop: 16 },
-  sendText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  sendText: { color: c.onBrand, fontSize: 15, fontWeight: '700' },
 })

@@ -75,7 +75,7 @@ export default function AdminLoginScreen() {
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
           <TouchableOpacity style={[styles.btn, loading && { opacity: 0.6 }]} onPress={handleLogin} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Kirish</Text>}
+            {loading ? <ActivityIndicator color={colors.onBrand} /> : <Text style={styles.btnText}>Kirish</Text>}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -95,5 +95,5 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   input: { borderWidth: 1, borderColor: c.border, borderRadius: 10, padding: 13, fontSize: 15, color: c.text, backgroundColor: c.surface2 },
   error: { fontSize: 13, color: c.danger, marginTop: 12 },
   btn: { backgroundColor: c.brand, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 20 },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  btnText: { color: c.onBrand, fontSize: 16, fontWeight: '600' },
 })

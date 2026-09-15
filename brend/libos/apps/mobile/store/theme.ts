@@ -1,20 +1,23 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { Platform, type SwitchProps } from 'react-native'
 
 // ZYFF mobil PREMIUM dizayn tokenlari — "Navy & Ko'k" (2026-09: Gold → Ko'k #3B6CFF).
 // SHARED paketga tegmasdan, mobil ichida saqlanadi (web/shared'ga ta'sir yo'q).
-// Navy (#1B1F4B) = asosiy rang, Ko'k (#3B6CFF) = urg'u (CTA, ikonlar, toggle).
+// Light: Navy (#1B1F4B) = asosiy rang, Ko'k (#3B6CFF) = urg'u (CTA, ikonlar, toggle).
+// Dark: urg'u OQ (ko'k yo'q) — oq fon ustidagi matn/ikonka `onBrand` bilan quyuq.
 // Sariq (#E3A008, eski Gold) faqat chegirma va xarita belgilarida qoldi — `highlight`.
 
 export type ThemeMode = 'light' | 'dark'
 
 export interface ThemeColors {
-  brand: string       // asosiy (light: navy, dark: ko'k — ko'rinishi uchun)
+  brand: string       // asosiy (light: navy, dark: oq)
+  onBrand: string     // brand/accent FONI ustidagi matn va ikonka (light: oq, dark: quyuq navy)
   brandDark: string   // quyuq navy (footer, promo)
   brandLight: string  // ochiq tint (ikon-tugma foni, chip)
-  accent: string      // KO'K urg'u
-  accentSoft: string  // ko'k tiniq fon (til aktiv, tint)
+  accent: string      // urg'u (light: ko'k, dark: oq)
+  accentSoft: string  // urg'u tiniq fon (til aktiv, tint)
   highlight: string   // sariq urg'u — chegirma va xarita belgilari
   text: string
   text2: string
@@ -32,6 +35,7 @@ export interface ThemeColors {
 // Light — Navy & Ko'k
 export const lightColors: ThemeColors = {
   brand: '#1B1F4B',
+  onBrand: '#FFFFFF',
   brandDark: '#12142E',
   brandLight: '#EFEEF9',
   accent: '#3B6CFF',
@@ -50,13 +54,15 @@ export const lightColors: ThemeColors = {
   danger: '#E0574A',
 }
 
-// Dark — Navy & Ko'k (dark). Quyuq fonda navy ko'rinmagani uchun brand = ko'k.
+// Dark — navy fon, OQ urg'u: tungi rejimda ko'k ishlatilmaydi (faol tab, tugma,
+// ikonka, toggle — hammasi oq). Oq fonli tugmalar matni `onBrand` (quyuq navy).
 export const darkColors: ThemeColors = {
-  brand: '#3B6CFF',
+  brand: '#FFFFFF',
+  onBrand: '#12142E',
   brandDark: '#12142E',
-  brandLight: 'rgba(59,108,255,0.16)',
-  accent: '#3B6CFF',
-  accentSoft: 'rgba(59,108,255,0.16)',
+  brandLight: 'rgba(255,255,255,0.10)',
+  accent: '#FFFFFF',
+  accentSoft: 'rgba(255,255,255,0.10)',
   highlight: '#E3A008',
   text: '#F2F2FA',
   text2: 'rgba(242,242,250,0.6)',
@@ -73,6 +79,18 @@ export const darkColors: ThemeColors = {
 
 export function getColors(mode: ThemeMode): ThemeColors {
   return mode === 'dark' ? darkColors : lightColors
+}
+
+/**
+ * Switch thumb rangi. Faol holatda track `brand`/`accent` — tungi rejimda oq, shuning
+ * uchun thumb quyuq (`onBrand`). Native'da `thumbColor` ikkala holatga ishlaydi;
+ * react-native-web esa faol holatda `activeThumbColor` o'qiydi (berilmasa standart
+ * yashil-ko'k #009688 chiqardi).
+ */
+export function switchThumb(c: ThemeColors, on: boolean): Pick<SwitchProps, 'thumbColor'> {
+  const props: Record<string, string> = { thumbColor: on ? c.onBrand : c.white }
+  if (Platform.OS === 'web') props.activeThumbColor = c.onBrand
+  return props
 }
 
 // ── Spacing va tipografiya shkalasi (mavzudan mustaqil) ──

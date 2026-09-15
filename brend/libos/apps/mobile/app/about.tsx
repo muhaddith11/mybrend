@@ -81,5 +81,5 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   blockTitle: { fontSize: 16, fontWeight: '700', color: c.text, marginBottom: 6 },
   blockText: { fontSize: 14, color: c.text2, lineHeight: 21 },
   btn: { backgroundColor: c.brand, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 12 },
-  btnText: { color: c.white, fontSize: 15, fontWeight: '600' },
+  btnText: { color: c.onBrand, fontSize: 15, fontWeight: '600' },
 })

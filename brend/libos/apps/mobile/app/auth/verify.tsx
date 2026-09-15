@@ -174,7 +174,7 @@ export default function VerifyScreen() {
             disabled={loading || code.join('').length < CODE_LENGTH}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={colors.onBrand} />
             ) : (
               <Text style={styles.btnText}>{tr.mConfirm}</Text>
             )}
@@ -228,7 +228,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   errorText: { fontSize: 13, color: c.danger },
   btn: { width: '100%', backgroundColor: c.brand, borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
   btnDisabled: { opacity: 0.4 },
-  btnText: { color: c.white, fontSize: 16, fontWeight: '600' },
+  btnText: { color: c.onBrand, fontSize: 16, fontWeight: '600' },
   resendRow: { marginTop: 20, alignItems: 'center' },
   resendTimer: { fontSize: 13, color: c.text2 },
   timerNum: { color: c.brand, fontWeight: '600' },

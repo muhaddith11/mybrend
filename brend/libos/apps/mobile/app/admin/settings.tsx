@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import * as ImagePicker from 'expo-image-picker'
-import { useTheme, type ThemeColors } from '../../store/theme'
+import { useTheme, switchThumb, type ThemeColors } from '../../store/theme'
 import { useAdminStore } from '../../store/admin'
 import { adminApi } from '../../lib/adminApi'
 import { invalidatePublicCaches } from '../../lib/adminCache'
@@ -124,7 +124,7 @@ export default function AdminSettings() {
   const T = (label: string, k: string) => (
     <View style={styles.switchRow} key={k}>
       <Text style={styles.switchLabel}>{label}</Text>
-      <Switch value={!!form[k]} onValueChange={v => set(k, v)} trackColor={{ false: colors.border, true: colors.brand }} thumbColor={colors.white} />
+      <Switch value={!!form[k]} onValueChange={v => set(k, v)} trackColor={{ false: colors.border, true: colors.brand }} {...switchThumb(colors, !!form[k])} />
     </View>
   )
 
@@ -211,7 +211,7 @@ export default function AdminSettings() {
           {T('Eshik oldida naqd', 'hasCashOnDoor')}
 
           <TouchableOpacity style={[styles.saveBtn, save.isPending && { opacity: 0.6 }]} onPress={() => save.mutate()} disabled={save.isPending}>
-            {save.isPending ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Saqlash</Text>}
+            {save.isPending ? <ActivityIndicator color={colors.onBrand} /> : <Text style={styles.saveBtnText}>Saqlash</Text>}
           </TouchableOpacity>
         </ScrollView>
       )}
@@ -233,7 +233,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: c.border },
   switchLabel: { fontSize: 14, color: c.text },
   saveBtn: { backgroundColor: c.brand, borderRadius: 12, paddingVertical: 16, alignItems: 'center', marginTop: 24 },
-  saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  saveBtnText: { color: c.onBrand, fontSize: 16, fontWeight: '600' },
   imgRow: { flexDirection: 'row', gap: 16, marginTop: 4 },
   imgCol: { alignItems: 'flex-start' },
   imgColLabel: { fontSize: 12, color: c.text3, marginTop: 12, marginBottom: 6 },

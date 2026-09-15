@@ -100,10 +100,10 @@ function buildHtml(opts: {
   const storesJson = safeJson(stores)
   const initialJson = safeJson(initial)
   // Kartochka ranglari — ilova mavzusi (store/theme.ts) bilan bir xil. Asosiy tugma
-  // light'da navy; dark'da navy ko'rinmagani uchun ko'k.
+  // light'da navy; dark'da oq, matni quyuq (onBrand). "Yangi" — light'da ko'k, dark'da oq.
   const P = dark
-    ? { bg: '#161933', text: '#F2F2FA', muted: 'rgba(242,242,250,0.6)', chip: '#1E2140', line: 'rgba(255,255,255,0.16)', primary: '#3B6CFF' }
-    : { bg: '#FFFFFF', text: '#10122B', muted: '#6B6E8A', chip: '#EFEEF9', line: 'rgba(16,18,43,0.14)', primary: '#1B1F4B' }
+    ? { bg: '#161933', text: '#F2F2FA', muted: 'rgba(242,242,250,0.6)', chip: '#1E2140', line: 'rgba(255,255,255,0.16)', primary: '#FFFFFF', onPrimary: '#12142E', accent: '#FFFFFF' }
+    : { bg: '#FFFFFF', text: '#10122B', muted: '#6B6E8A', chip: '#EFEEF9', line: 'rgba(16,18,43,0.14)', primary: '#1B1F4B', onPrimary: '#FFFFFF', accent: '#3B6CFF' }
 
   return `<!DOCTYPE html>
 <html>
@@ -140,14 +140,14 @@ function buildHtml(opts: {
     .sep { color: ${P.muted}; margin: 0 2px; }
     .star { color: #E3A008; }
     .muted { color: ${P.muted}; }
-    .new { color: #3B6CFF; font-weight: 600; }
+    .new { color: ${P.accent}; font-weight: 600; }
     .pAddr { display: flex; align-items: flex-start; gap: 5px; margin-top: 10px; color: ${P.muted}; font-size: 12px; }
     .pAddr svg { flex: none; margin-top: 1px; }
     .pChips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
     .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px; background: ${P.chip}; color: ${P.text}; font-size: 11.5px; }
     .pBtns { display: flex; gap: 6px; margin-top: 12px; }
     .btn { flex: 1; display: flex; align-items: center; justify-content: center; height: 34px; border-radius: 10px; border: 1px solid ${P.line}; color: ${P.text}; font-weight: 600; font-size: 12.5px; cursor: pointer; user-select: none; -webkit-user-select: none; }
-    .btn.primary { background: ${P.primary}; border-color: ${P.primary}; color: #fff; }
+    .btn.primary { background: ${P.primary}; border-color: ${P.primary}; color: ${P.onPrimary}; }
     .btn.iconBtn { flex: 0 0 34px; }
   </style>
 </head>

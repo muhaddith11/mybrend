@@ -130,7 +130,7 @@ export default function CartScreen() {
                 <Text style={styles.checkoutText}>
                   {tr.mOrderNow} — {storeTotal.toLocaleString()} {tr.som}
                 </Text>
-                <Ionicons name="arrow-forward" size={16} color={colors.white} />
+                <Ionicons name="arrow-forward" size={16} color={colors.onBrand} />
               </TouchableOpacity>
             </View>
           )
@@ -158,7 +158,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   emptyTitle: { fontSize: 18, fontWeight: '600', color: c.text },
   emptyText: { fontSize: 14, color: c.text2, textAlign: 'center' },
   shopBtn: { marginTop: 8, backgroundColor: c.brand, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 10 },
-  shopBtnText: { color: c.white, fontWeight: '600', fontSize: 14 },
+  shopBtnText: { color: c.onBrand, fontWeight: '600', fontSize: 14 },
   storeGroup: { backgroundColor: c.surface, borderRadius: 12, overflow: 'hidden', borderWidth: 0.5, borderColor: c.border },
   storeHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 12, borderBottomWidth: 0.5, borderBottomColor: c.border },
   storeGroupName: { fontSize: 13, fontWeight: '600', color: c.brand },
@@ -176,7 +176,7 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   qtyBtn: { width: 26, height: 26, borderRadius: 6, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' },
   qty: { fontSize: 14, fontWeight: '600', minWidth: 20, textAlign: 'center', color: c.text },
   checkoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: c.brand, margin: 12, padding: 14, borderRadius: 10 },
-  checkoutText: { color: c.white, fontWeight: '600', fontSize: 14 },
+  checkoutText: { color: c.onBrand, fontWeight: '600', fontSize: 14 },
   totalBar: { backgroundColor: c.surface, borderRadius: 12, padding: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 0.5, borderColor: c.border },
   totalLabel: { fontSize: 14, color: c.text2 },
   totalPrice: { fontSize: 16, fontWeight: '700', color: c.text },
