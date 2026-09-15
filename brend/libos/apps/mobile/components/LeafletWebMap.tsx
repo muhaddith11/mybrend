@@ -5,7 +5,7 @@ import type { Lang } from '@libos/shared'
 import { useLangStore } from '../store/lang'
 import { telHref } from '../lib/links'
 
-// WebView ichida Leaflet (OpenStreetMap/CARTO) — web bilan bir xil xarita,
+// WebView ichida Leaflet (OpenStreetMap ma'lumoti, Geoapify tile'lari) —
 // Google Maps API kaliti kerak emas, Expo Go'da ishlaydi.
 // Ikki rejim:
 //   picker  — bosib joy tanlash → onSelect(lat, lng, address)  (checkout)
@@ -13,6 +13,11 @@ import { telHref } from '../lib/links'
 //             holat, baho, manzil, yetkazish, "Do'konga o'tish", yo'nalish  (bosh sahifa)
 
 const QOQON_CENTER: [number, number] = [40.5282, 70.9428]
+
+// Tile provayderi — Geoapify (bepul tarifda tijoratga ruxsat bor). CARTO endi kalitsiz
+// so'rovlarga "API KEY REQUIRED" watermark qo'yadi. Kalit env'da (repo ochiq):
+// `.env.local` va EAS production environment → EXPO_PUBLIC_GEOAPIFY_KEY.
+const GEOAPIFY_KEY = process.env.EXPO_PUBLIC_GEOAPIFY_KEY ?? ''
 
 export interface MapStore {
   id: string
@@ -92,10 +97,17 @@ function buildHtml(opts: {
     ),
   })
   const langJson = safeJson(lang)
-  // Light: CARTO voyager (web checkout bilan bir xil). Dark: CARTO dark_all.
-  const tileUrl = dark
-    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-    : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+  // Light: Geoapify osm-bright, Dark: dark-matter. `{r}` → retina ekranda "@2x".
+  // Kalit yo'q bo'lsa (env unutilgan build) CARTO'ga qaytamiz: watermark bo'ladi,
+  // lekin xarita bo'sh qolmaydi.
+  const tileUrl = GEOAPIFY_KEY
+    ? `https://maps.geoapify.com/v1/tile/${dark ? 'dark-matter' : 'osm-bright'}/{z}/{x}/{y}{r}.png?apiKey=${GEOAPIFY_KEY}`
+    : dark
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+  const tileAttribution = GEOAPIFY_KEY
+    ? 'Powered by Geoapify · © OpenMapTiles · © OpenStreetMap contributors'
+    : '© CARTO · © OpenStreetMap contributors'
   const center = initial ? [initial.lat, initial.lng] : QOQON_CENTER
   const storesJson = safeJson(stores)
   const initialJson = safeJson(initial)
@@ -122,6 +134,7 @@ function buildHtml(opts: {
       justify-content: center; transform: rotate(45deg); font-size: 15px;
     }
     .leaflet-popup-content { font-size: 13px; }
+    #map.leaflet-container .leaflet-control-attribution { font-size: 9px; line-height: 1.5; padding: 0 5px; background: ${dark ? 'rgba(22,25,51,0.75)' : 'rgba(255,255,255,0.75)'}; color: ${dark ? 'rgba(242,242,250,0.65)' : '#6B6E8A'}; }
 
     /* ── Do'kon kartochkasi (display rejimi) ── */
     .zyffPopup .leaflet-popup-content-wrapper { background: ${P.bg}; color: ${P.text}; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
@@ -211,8 +224,11 @@ function buildHtml(opts: {
     });
 
     function initMap() {
-    var map = L.map('map', { zoomControl: true, attributionControl: false }).setView([${center[0]}, ${center[1]}], 14);
-    L.tileLayer('${tileUrl}', { maxZoom: 19 }).addTo(map);
+    var map = L.map('map', { zoomControl: true, attributionControl: true }).setView([${center[0]}, ${center[1]}], 14);
+    // Atributsiya majburiy (Geoapify + OpenMapTiles + OSM). Havolasiz matn: WebView ichida
+    // havola bosilsa xarita o'rniga sayt ochilib qolardi.
+    map.attributionControl.setPrefix(false);
+    L.tileLayer('${tileUrl}', { maxZoom: 19, attribution: ${safeJson(tileAttribution)} }).addTo(map);
     setTimeout(function () { map.invalidateSize(); }, 100);
 
     var mode = ${safeJson(mode)};
