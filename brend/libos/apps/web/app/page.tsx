@@ -14,6 +14,7 @@ import { CITIES_WITH_STORES } from '../lib/cities'
 import { useT } from '../lib/i18n'
 import { MapSection } from '../components/MapSection'
 import { Reveal } from '../components/Reveal'
+import { StoreCard as StoreRow, StoreCardSkeleton } from '../components/StoreCard'
 import styles from './page.module.css'
 
 const CARD_COLORS = [
@@ -230,10 +231,10 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
               {tr.mOtherCitiesSoon}
             </div>
           ) : (
-            <div className={styles.storesGrid}>
+            <div className={styles.storesList}>
               {storesLoading
-                ? Array.from({ length: 6 }).map((_, i) => <StoreSkeleton key={i} />)
-                : stores.map(s => <StoreListCard key={s.id} store={s} tr={tr} />)
+                ? Array.from({ length: 4 }).map((_, i) => <StoreCardSkeleton key={i} />)
+                : stores.map(s => <StoreRow key={s.id} store={s} tr={tr} lang={lang} />)
               }
             </div>
           )}
@@ -459,47 +460,7 @@ function StoreCard({ store, colorIdx, tr }: { store: Store; colorIdx: number; tr
   )
 }
 
-// ── Store List Card ───────────────────────────
-function StoreListCard({ store, tr }: { store: Store; tr: Record<string, string> }) {
-  const bg = store.themeBg ?? '#EEF2FF'
-  const color = store.themeColor ?? '#1B1F4B'
-
-  return (
-    <Link href={`/store/${store.slug}`} className={styles.storeListCard}>
-      <div className={styles.storeListCover} style={{ background: bg }}>
-        {store.logo ? (
-          <Image src={store.logo} alt={store.name} fill className={styles.cardImgEl} />
-        ) : (
-          <div className={styles.storeListInitial} style={{ color }}>{store.name.charAt(0)}</div>
-        )}
-        {store.isOpen !== undefined && (
-          <span className={store.isOpen ? styles.openBadge : styles.closedBadge}>
-            {store.isOpen ? tr.open : tr.closed}
-          </span>
-        )}
-      </div>
-      <div className={styles.storeListBody}>
-        <span className={styles.storeListName}>{store.name}</span>
-        {store.rating != null && (
-          <div className={styles.storeListMeta}>
-            <span className={styles.storeListRating}>★ {store.rating.toFixed(1)}</span>
-            {store.reviewCount ? <span className={styles.storeListReviews}>({store.reviewCount})</span> : null}
-          </div>
-        )}
-        {store.address && (
-          <div className={styles.storeListAddr}>📍 {store.address}</div>
-        )}
-        <div className={styles.storeListHours}>🕐 09:00 – 21:00</div>
-      </div>
-    </Link>
-  )
-}
-
 // ── Skeletons ─────────────────────────────────
 function CardSkeleton() {
   return <div className={styles.cardSkeleton}><div className={styles.skImg} /><div className={styles.skBody}><div className={styles.skLine} /><div className={styles.skShort} /><div className={styles.skBtn} /></div></div>
-}
-
-function StoreSkeleton() {
-  return <div className={styles.storeSkeleton}><div className={styles.skStoreCover} /><div className={styles.skStoreName} /></div>
 }

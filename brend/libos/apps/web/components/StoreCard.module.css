@@ -1,0 +1,121 @@
+/* Mobil (components/StoreCard.tsx) bilan bir xil: gorizontal qator karta —
+   halqali logotip + ma'lumot + ochiq/yopiq belgi. Ilgari web'da katta
+   muqova-rasmli grid karta ishlatilardi. */
+.card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border-radius: 18px;
+  padding: 12px;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 3px 16px rgba(27,31,75,.06);
+  transition: transform .15s, box-shadow .15s;
+}
+.card:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(27,31,75,.1); }
+
+.avatarWrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  border: 1.5px solid var(--border);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.avatarImg { object-fit: cover; }
+.avatarInitial { font-size: 22px; font-weight: 800; }
+
+.statusDot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  border: 2px solid var(--surface);
+}
+
+.info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.addr {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.addr svg { flex-shrink: 0; }
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  font-size: 11px;
+  flex-wrap: wrap;
+}
+.ratingPill { display: flex; align-items: center; gap: 3px; font-weight: 700; color: var(--text); }
+.newBadge { font-weight: 700; color: var(--accent); }
+.metaDot { color: var(--text-3); }
+.metaText { display: flex; align-items: center; gap: 3px; color: var(--text-2); }
+
+.openBadge {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.openBadge[data-open="true"] { background: rgba(34,197,94,.12); color: #16A34A; }
+.openBadge[data-open="false"] { background: rgba(107,114,128,.12); color: #6B7280; }
+.openDot { width: 5px; height: 5px; border-radius: 2.5px; background: currentColor; }
+
+/* Grid ichida ishlatilganda (stores sahifasi) to'liq kenglikni egallasin */
+.gridItem { width: 100%; }
+
+/* ── Skeleton ── */
+.skeleton {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border-radius: 18px;
+  padding: 12px;
+}
+.skAvatar {
+  width: 56px; height: 56px; border-radius: 16px; flex-shrink: 0;
+  background: linear-gradient(90deg, var(--sk-1) 25%, var(--sk-2) 50%, var(--sk-1) 75%);
+  background-size: 200% 100%;
+  animation: skShimmer 1.2s infinite;
+}
+.skInfo { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.skLine {
+  height: 13px; border-radius: 6px; width: 65%;
+  background: linear-gradient(90deg, var(--sk-1) 25%, var(--sk-2) 50%, var(--sk-1) 75%);
+  background-size: 200% 100%;
+  animation: skShimmer 1.2s infinite;
+}
+.skShort {
+  height: 11px; border-radius: 6px; width: 40%;
+  background: linear-gradient(90deg, var(--sk-1) 25%, var(--sk-2) 50%, var(--sk-1) 75%);
+  background-size: 200% 100%;
+  animation: skShimmer 1.2s infinite;
+}
+@keyframes skShimmer { to { background-position: -200% 0 } }
