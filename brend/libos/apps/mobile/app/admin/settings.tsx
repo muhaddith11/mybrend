@@ -24,8 +24,8 @@ export default function AdminSettings() {
   const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }))
   const [uploadingField, setUploadingField] = useState<string | null>(null)
 
-  // Do'kon rasmini (logo yoki banner) kamera/galereyadan olib Cloudinary'ga yuklaydi.
-  const pickImage = async (field: 'logo' | 'banner', from: 'camera' | 'library') => {
+  // Do'kon rasmini (logo, banner yoki to'lov QR-kodi) kamera/galereyadan olib yuklaydi.
+  const pickImage = async (field: 'logo' | 'banner' | 'paymentQr', from: 'camera' | 'library') => {
     const perm = from === 'camera'
       ? await ImagePicker.requestCameraPermissionsAsync()
       : await ImagePicker.requestMediaLibraryPermissionsAsync()
@@ -68,6 +68,7 @@ export default function AdminSettings() {
         deliveryTime: store.deliveryTime != null ? String(store.deliveryTime) : '',
         cardNumber: store.cardNumber ?? '',
         cardHolder: store.cardHolder ?? '',
+        paymentQr: (store as any).paymentQr ?? '',
         telegramChatId: (store as any).telegramChatId ?? '',
         isOpen: store.isOpen ?? true,
         hasDelivery: store.hasDelivery ?? true,
@@ -90,6 +91,7 @@ export default function AdminSettings() {
       deliveryTime: form.deliveryTime ? parseInt(form.deliveryTime, 10) : undefined,
       cardNumber: form.cardNumber || undefined,
       cardHolder: form.cardHolder || undefined,
+      paymentQr: form.paymentQr || undefined,
       telegramChatId: form.telegramChatId || undefined,
       isOpen: form.isOpen,
       hasDelivery: form.hasDelivery,
@@ -194,6 +196,35 @@ export default function AdminSettings() {
           <Text style={styles.sectionTitle}>To'lov (bot orqali o'tkazma)</Text>
           {F('Karta raqami', 'cardNumber', { keyboard: 'numeric' })}
           {F('Karta egasi', 'cardHolder')}
+
+          <Text style={styles.imgColLabel}>To'lov QR-kodi (ixtiyoriy)</Text>
+          <View style={styles.logoPreview}>
+            {form.paymentQr
+              ? <Image source={{ uri: resolveImg(form.paymentQr) }} style={styles.imgFill} resizeMode="cover" />
+              : <Ionicons name="qr-code-outline" size={28} color={colors.text3} />}
+            {uploadingField === 'paymentQr' && <View style={styles.imgLoading}><ActivityIndicator color="#fff" /></View>}
+          </View>
+          <View style={styles.imgBtns}>
+            <TouchableOpacity style={styles.imgBtn} onPress={() => pickImage('paymentQr', 'camera')} disabled={!!uploadingField}>
+              <Ionicons name="camera-outline" size={18} color={colors.brand} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.imgBtn} onPress={() => pickImage('paymentQr', 'library')} disabled={!!uploadingField}>
+              <Ionicons name="images-outline" size={18} color={colors.brand} />
+            </TouchableOpacity>
+            {!!form.paymentQr && (
+              <TouchableOpacity style={styles.imgBtn} onPress={() => set('paymentQr', '')}>
+                <Ionicons name="trash-outline" size={18} color={colors.danger} />
+              </TouchableOpacity>
+            )}
+          </View>
+          <View style={styles.hintRow}>
+            <Ionicons name="information-circle-outline" size={14} color={colors.text3} style={{ marginTop: 1 }} />
+            <Text style={styles.hint}>
+              Mijoz checkout'da karta raqami bilan bir qatorda shu QR-kodni ham ko'radi
+              (bank ilovasidan skanerlash uchun).
+            </Text>
+          </View>
+
           {F('Telegram ID (bot xabarlari)', 'telegramChatId', { keyboard: 'numeric' })}
           <View style={styles.hintRow}>
             <Ionicons name="chatbox-ellipses-outline" size={14} color={colors.text3} style={{ marginTop: 1 }} />
