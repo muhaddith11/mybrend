@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { api } from '@libos/shared'
-import type { Store, Product } from '@libos/shared'
+import type { Product } from '@libos/shared'
 import { useProductModal } from '../store/productModal'
 import { useWishlistStore } from '../store/wishlist'
 import { useLangStore } from '../store/lang'
@@ -16,11 +16,6 @@ import { MapSection } from '../components/MapSection'
 import { Reveal } from '../components/Reveal'
 import { StoreCard as StoreRow, StoreCardSkeleton } from '../components/StoreCard'
 import styles from './page.module.css'
-
-const CARD_COLORS = [
-  '#EEF2FF', '#FFE4E8', '#E0F2FE', '#FEF9C3', '#DCFCE7',
-  '#FDF4FF', '#FFF7ED', '#F0FDFA', '#FEE2E2', '#F3E8FF',
-]
 
 const STORE_GRADIENTS = [
   'linear-gradient(135deg, #F59E0B 0%, #EF4444 100%)',
@@ -101,14 +96,14 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
               <Link href="/" className={styles.sectionAll}>← Bosh sahifa</Link>
             </div>
             {searchLoading ? (
-              <div className={styles.productsGrid}>
-                {Array.from({ length: 10 }).map((_, i) => <CardSkeleton key={i} />)}
+              <div className={styles.searchGrid}>
+                {Array.from({ length: 10 }).map((_, i) => <CardSkeleton key={i} grid />)}
               </div>
             ) : searchResults.length > 0 ? (
               <>
                 <p style={{ color: 'var(--text-2)', marginBottom: '1rem', fontSize: 14 }}>{searchResults.length} ta mahsulot topildi</p>
-                <div className={styles.productsGrid}>
-                  {searchResults.map((p, i) => <ProductCard key={p.id} product={p as Product} colorIdx={i} tr={tr} cur={cur} />)}
+                <div className={styles.searchGrid}>
+                  {searchResults.map(p => <ProductCard key={p.id} product={p as Product} tr={tr} cur={cur} variant="grid" />)}
                 </div>
               </>
             ) : (
@@ -252,8 +247,8 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
             {featLoading || storesLoading
               ? Array.from({ length: 5 }).map((_, i) => <CardSkeleton key={i} />)
               : featured.length > 0
-                ? featured.slice(0, 5).map((p, i) => <ProductCard key={p.id} product={p} colorIdx={i} tr={tr} cur={cur} />)
-                : stores.slice(0, 5).map((s, i) => <StoreCard key={s.id} store={s} colorIdx={i} tr={tr} />)
+                ? featured.slice(0, 5).map(p => <ProductCard key={p.id} product={p} tr={tr} cur={cur} />)
+                : stores.slice(0, 5).map(s => <StoreRow key={s.id} store={s} tr={tr} lang={lang} />)
             }
           </div>
         </Reveal>
@@ -270,7 +265,6 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
                 <div className={styles.promoSub}>{tr.weeklyDealsSub}</div>
               </div>
             </div>
-            <Link href="/?sale=true" className={styles.promoBtn}>{tr.seeDeals}</Link>
           </div>
         </Reveal>
       </section>
@@ -286,8 +280,8 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
             {discLoading || storesLoading
               ? Array.from({ length: 5 }).map((_, i) => <CardSkeleton key={i} />)
               : discounted.length > 0
-                ? discounted.slice(0, 5).map((p, i) => <ProductCard key={p.id} product={p} colorIdx={i + 5} tr={tr} cur={cur} />)
-                : stores.slice(0, 5).map((s, i) => <StoreCard key={s.id} store={s} colorIdx={i + 5} tr={tr} />)
+                ? discounted.slice(0, 5).map(p => <ProductCard key={p.id} product={p} tr={tr} cur={cur} />)
+                : stores.slice(0, 5).map(s => <StoreRow key={s.id} store={s} tr={tr} lang={lang} />)
             }
           </div>
         </Reveal>
@@ -353,13 +347,11 @@ export default function HomePage() {
 }
 
 // ── Product Card ──────────────────────────────
-function ProductCard({ product, colorIdx, tr, cur }: { product: Product; colorIdx: number; tr: Record<string, string>; cur: string }) {
+function ProductCard({ product, tr, cur, variant = 'row' }: { product: Product; tr: Record<string, string>; cur: string; variant?: 'row' | 'grid' }) {
   const openModal = useProductModal(s => s.open)
   const toggleWishlist = useWishlistStore(s => s.toggle)
   const inWishlist = useWishlistStore(s => s.has(product.id))
   const discount = getDiscount(product.price, product.originalPrice)
-  const bg = product.store?.themeBg ?? CARD_COLORS[colorIdx % CARD_COLORS.length]
-  const initial = (product.store?.name ?? product.name).charAt(0).toUpperCase()
 
   function handleAdd(e: React.MouseEvent) {
     e.preventDefault()
@@ -389,78 +381,42 @@ function ProductCard({ product, colorIdx, tr, cur }: { product: Product; colorId
       storeId: product.storeId ?? product.store?.id ?? '',
       storeName: product.store?.name ?? '',
       storeSlug: product.store?.slug ?? '',
-      themeBg: bg,
+      themeBg: product.store?.themeBg,
     })
   }
 
+  const isGrid = variant === 'grid'
+
   return (
-    <Link href={product.store ? `/store/${product.store.slug}` : '#'} className={styles.productCard}>
-      <div className={styles.cardImg} style={{ background: bg }}>
-        {product.images?.[0] ? (
+    <Link href={`/product/${product.id}`} className={`${styles.productCard} ${isGrid ? styles.productCardGrid : ''}`}>
+      <div className={`${styles.cardImg} ${isGrid ? styles.cardImgGrid : ''}`}>
+        {product.images?.[0] && (
           <Image src={product.images[0]} alt={product.name} fill className={styles.cardImgEl} />
-        ) : (
-          <div className={styles.cardInitial}>{initial}</div>
         )}
         {discount && <span className={styles.discountBadge}>-{discount}%</span>}
         <button
           className={`${styles.heartBtn} ${inWishlist ? styles.heartActive : ''}`}
           onClick={handleHeart}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill={inWishlist ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill={inWishlist ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
         </button>
       </div>
       <div className={styles.cardBody}>
+        <p className={styles.productName}>{product.nameUz || product.name}</p>
         <div className={styles.priceRow}>
           <span className={styles.priceMain}>{formatPrice(product.price)} <span className={styles.priceCur}>{cur}</span></span>
-          {product.originalPrice && <span className={styles.priceOld}>{formatPrice(product.originalPrice)} {cur}</span>}
+          {product.originalPrice && <span className={styles.priceOld}>{formatPrice(product.originalPrice)}</span>}
         </div>
-        <p className={styles.productName}>{product.nameUz || product.name}</p>
-        <div className={styles.metaRow}>
-          <span className={styles.rating}>★ 4.8</span>
-          <span className={styles.storeName}>{product.store?.name ?? ''}</span>
-        </div>
-        <button className={styles.addBtn} onClick={handleAdd}>{tr.addToCart}</button>
+        {isGrid && product.store?.name && <p className={styles.cardStoreName}>{product.store.name}</p>}
       </div>
-    </Link>
-  )
-}
-
-// ── Store Card ────────────────────────────────
-function StoreCard({ store, colorIdx, tr }: { store: Store; colorIdx: number; tr: Record<string, string> }) {
-  const bg = store.themeBg ?? CARD_COLORS[colorIdx % CARD_COLORS.length]
-  const initial = store.name.charAt(0).toUpperCase()
-  const color = store.themeColor ?? '#1B1F4B'
-
-  return (
-    <Link href={`/store/${store.slug}`} className={styles.productCard}>
-      <div className={styles.cardImg} style={{ background: bg }}>
-        {store.banner ? (
-          <Image src={store.banner} alt={store.name} fill className={styles.cardImgEl} />
-        ) : (
-          <div className={styles.cardInitial} style={{ color }}>{initial}</div>
-        )}
-        {store.isOpen !== undefined && (
-          <span className={store.isOpen ? styles.openBadge : styles.closedBadge}>
-            {store.isOpen ? tr.open : tr.closed}
-          </span>
-        )}
-      </div>
-      <div className={styles.cardBody}>
-        <p className={styles.productName} style={{ fontWeight: 700 }}>{store.name}</p>
-        {store.address && <p className={styles.metaRow} style={{ fontSize: 12, color: 'var(--text-3)' }}>📍 {store.address}</p>}
-        <div className={styles.metaRow}>
-          {store.rating && <span className={styles.rating}>★ {store.rating.toFixed(1)}</span>}
-          {store._count && <span className={styles.storeName}>{store._count.products} {tr.products}</span>}
-        </div>
-        <button className={styles.addBtn} style={{ color, borderColor: color }}>{tr.view}</button>
-      </div>
+      <button className={styles.addBtn} onClick={handleAdd}>{tr.addToCart}</button>
     </Link>
   )
 }
 
 // ── Skeletons ─────────────────────────────────
-function CardSkeleton() {
-  return <div className={styles.cardSkeleton}><div className={styles.skImg} /><div className={styles.skBody}><div className={styles.skLine} /><div className={styles.skShort} /><div className={styles.skBtn} /></div></div>
+function CardSkeleton({ grid }: { grid?: boolean }) {
+  return <div className={`${styles.cardSkeleton} ${grid ? styles.cardSkeletonGrid : ''}`}><div className={styles.skImg} /><div className={styles.skBody}><div className={styles.skLine} /><div className={styles.skShort} /><div className={styles.skBtn} /></div></div>
 }

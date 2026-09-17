@@ -306,48 +306,6 @@
   z-index: 0;
 }
 
-/* Info cards */
-.heroCards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-@media (min-width: 768px) {
-  .heroCards {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-}
-
-.infoCard {
-  border-radius: 14px;
-  padding: 1.25rem 1.25rem 1.25rem 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-@media (min-width: 768px) { .infoCard { padding: 1.5rem 1.75rem; flex: 1; } }
-
-.infoTitle {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 4px;
-  line-height: 1.3;
-}
-@media (min-width: 768px) { .infoTitle { font-size: 17px; } }
-
-.infoSub {
-  font-size: 12px;
-  color: var(--text-2);
-  line-height: 1.4;
-}
-@media (min-width: 768px) { .infoSub { font-size: 13px; } }
-
-.infoEmoji { font-size: 36px; flex-shrink: 0; }
-@media (min-width: 768px) { .infoEmoji { font-size: 48px; } }
-
 /* ── Category circles ─────────────────────── */
 .catSection {
   background: var(--bg);
@@ -435,82 +393,50 @@
 .sectionAll:hover { text-decoration: underline; }
 
 /* Products grid */
+/* Mobil ProductRow bilan bir xil: gorizontal skroll qator (grid emas),
+   qat'iy kenglikdagi kartalar. */
 .productsGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
-@media (min-width: 640px) { .productsGrid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 1024px) { .productsGrid { grid-template-columns: repeat(5, 1fr); gap: 16px; } }
+.productsGrid::-webkit-scrollbar { display: none; }
 
 /* ── Product Card ───────────────────────────── */
 .productCard {
   background: var(--surface);
-  border-radius: 14px;
+  border-radius: 18px;
   overflow: hidden;
   text-decoration: none;
   color: inherit;
   border: 1px solid var(--border);
-  transition: transform .2s, box-shadow .2s;
+  flex-shrink: 0;
+  width: 155px;
   display: flex;
   flex-direction: column;
-}
-.productCard:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
 }
 
 .cardImg {
   position: relative;
-  padding-top: 120%;
+  height: 130px;
   overflow: hidden;
+  background: var(--surface-2);
 }
-@media (min-width: 480px) { .cardImg { padding-top: 110%; } }
 
 .cardImgEl { object-fit: cover; }
-
-.cardInitial {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 60px;
-  font-weight: 900;
-  opacity: .15;
-}
 
 .discountBadge {
   position: absolute;
   top: 8px;
   left: 8px;
-  background: #EF4444;
+  background: #E23B3B;
   color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 6px;
-}
-
-.openBadge {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  background: #22C55E;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 6px;
-}
-.closedBadge {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  background: #6B7280;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 7px;
   border-radius: 6px;
 }
 
@@ -518,8 +444,8 @@
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   background: var(--surface);
   border: none;
   border-radius: 50%;
@@ -534,11 +460,23 @@
 .heartActive { color: #EF4444 !important; }
 
 .cardBody {
-  padding: .75rem;
+  padding: 10px 12px 12px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  flex: 1;
+  gap: 2px;
+}
+
+.productName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+  height: 34px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 2px;
 }
 
 .priceRow {
@@ -546,67 +484,57 @@
   align-items: baseline;
   gap: 6px;
   flex-wrap: wrap;
+  margin-bottom: 8px;
 }
 .priceMain {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 800;
-  color: var(--text);
+  color: var(--brand);
   line-height: 1.2;
 }
-.priceCur { font-size: 12px; font-weight: 500; }
+.priceCur { font-size: 11px; font-weight: 500; }
 .priceOld {
   font-size: 11px;
   color: var(--text-3);
   text-decoration: line-through;
 }
 
-.productName {
-  font-size: 12px;
-  color: var(--text-2);
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.metaRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px;
-  margin-top: auto;
-}
-.rating {
-  font-size: 12px;
-  color: var(--highlight);
-  font-weight: 600;
-}
-.storeName {
-  font-size: 11px;
-  color: var(--text-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 80px;
-}
-
 .addBtn {
-  margin-top: 8px;
-  width: 100%;
+  margin: 0 12px 12px;
   padding: 9px;
-  background: var(--surface);
-  color: var(--brand);
-  border: 1.5px solid var(--brand);
-  border-radius: 8px;
+  background: var(--brand);
+  color: var(--on-brand);
+  border: none;
+  border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: background .15s, color .15s;
-  min-height: 38px;
+  transition: background .15s;
+  min-height: 36px;
 }
-.addBtn:hover { background: var(--brand); color: var(--on-brand); }
+.addBtn:hover { background: var(--brand-dark); }
+
+/* ── Qidiruv natijalari — 2-ustunli grid (mobil FlatList numColumns=2 bilan
+   bir xil), yuqoridagi gorizontal qatordan farqli. ── */
+.searchGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+@media (min-width: 640px) { .searchGrid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1024px) { .searchGrid { grid-template-columns: repeat(4, 1fr); } }
+
+.productCardGrid { width: 100%; }
+.cardImgGrid { height: auto; aspect-ratio: 1; }
+.cardStoreName {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 2px;
+  margin-bottom: 6px;
+}
+.cardSkeletonGrid { width: 100%; }
+.cardSkeletonGrid .skImg { height: auto; aspect-ratio: 1; }
 
 /* ── Promo banner ─────────────────────────── */
 .promoBanner {
@@ -614,51 +542,38 @@
   padding: 0 0 1.5rem;
 }
 
+/* Mobil bilan bir xil: doim to'q navy karta (mavzudan qat'i nazar), tugmasiz —
+   pastdagi "Chegirmadagi mahsulotlar" bo'limi CTA vazifasini bajaradi. */
 .promoInner {
-  background: color-mix(in srgb, #EF4444 10%, var(--surface));
+  background: var(--brand-dark);
   border-radius: 14px;
-  padding: 1.25rem 1.5rem;
+  padding: 1rem 1.25rem;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
+  gap: 14px;
 }
 
 .promoLeft {
   display: flex;
   align-items: center;
   gap: 14px;
+  flex: 1;
 }
 
-.promoIcon { font-size: 28px; }
+.promoIcon { font-size: 26px; flex-shrink: 0; }
 
 .promoTitle {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
-  color: #DC2626;
+  color: #fff;
   margin-bottom: 2px;
 }
 
 .promoSub {
-  font-size: 13px;
-  color: var(--text-2);
+  font-size: 12px;
+  color: rgba(255,255,255,.8);
+  line-height: 1.4;
 }
-
-.promoBtn {
-  display: inline-flex;
-  align-items: center;
-  padding: 12px 22px;
-  background: #DC2626;
-  color: #fff;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background .15s;
-  white-space: nowrap;
-}
-.promoBtn:hover { background: #B91C1C; }
 
 /* ── Stores list (mobil FlatList bilan bir xil — vertikal, grid emas) ── */
 .storesList {
@@ -669,9 +584,10 @@
 }
 
 /* ── Footer ───────────────────────────────── */
+/* Mobil bilan bir xil: footer doim to'q navy (mavzudan qat'i nazar,
+   apps/mobile "Footer va promo banner qasddan doim to'q rangda" izohi). */
 .footer {
-  background: var(--surface);
-  border-top: 1px solid var(--border);
+  background: var(--brand-dark);
   padding: 3rem 0 1.5rem;
   /* Sticky footer: kontent kalta bo'lsa pastга suriladi */
   margin-top: auto;
@@ -705,8 +621,8 @@
 .footerLogoMark {
   width: 36px;
   height: 36px;
-  background: var(--brand);
-  color: var(--on-brand);
+  background: #fff;
+  color: var(--brand-dark);
   border-radius: 10px;
   display: grid;
   place-items: center;
@@ -716,12 +632,12 @@
 .footerLogoText {
   font-size: 20px;
   font-weight: 800;
-  color: var(--text);
+  color: #fff;
 }
 
 .footerDesc {
   font-size: 13px;
-  color: var(--text-2);
+  color: rgba(255,255,255,.55);
   line-height: 1.6;
   max-width: 260px;
 }
@@ -735,21 +651,21 @@
 .footerColTitle {
   font-size: 14px;
   font-weight: 700;
-  color: var(--text);
+  color: #fff;
   margin-bottom: 4px;
 }
 
 .footerLink {
   font-size: 13px;
-  color: var(--text-2);
+  color: rgba(255,255,255,.8);
   text-decoration: none;
   transition: color .15s;
 }
-.footerLink:hover { color: var(--brand); }
+.footerLink:hover { color: #fff; }
 
 .footerText {
   font-size: 13px;
-  color: var(--text-2);
+  color: rgba(255,255,255,.8);
 }
 
 /* ── Skeletons ─────────────────────────────── */
@@ -757,12 +673,14 @@
 
 .cardSkeleton {
   background: var(--surface);
-  border-radius: 14px;
+  border-radius: 18px;
   border: 1px solid var(--border);
   overflow: hidden;
+  flex-shrink: 0;
+  width: 155px;
 }
 .skImg {
-  padding-top: 120%;
+  height: 130px;
   background: linear-gradient(90deg, var(--sk-1) 25%, var(--sk-2) 50%, var(--sk-1) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.2s infinite;
@@ -789,7 +707,7 @@
 
 
 .footerBottom {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(255,255,255,.15);
   padding-top: 1.25rem;
   display: flex;
   align-items: center;
@@ -797,5 +715,5 @@
   flex-wrap: wrap;
   gap: 8px;
   font-size: 12px;
-  color: var(--text-3);
+  color: rgba(255,255,255,.4);
 }
