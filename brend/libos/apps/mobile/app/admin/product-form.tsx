@@ -15,6 +15,28 @@ import { uploadImage } from '../../lib/upload'
 const PRESET_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
 const PRESET_COLORS = ['Qora', 'Oq', 'Kulrang', "Ko'k", 'Qizil', 'Yashil', 'Sariq', 'Jigarrang', 'Bej', 'Pushti']
 
+// Bespoke do'konlar (asma/boosner/onepro) o'z sahifasida rangni DOIRACHA
+// (swatch) sifatida chizadi — buning uchun `colors[]`da ID (masalan "black")
+// saqlanishi shart, shunda web'ning colorMap'i (lib/createStoreState.ts) uni
+// tanib oladi. Oddiy so'z ("Qora") CSS rang emas — doiracha bo'sh chiqadi.
+// Shu sababli shu 3 do'kon uchun tayyor ranglar ID bilan, boshqa hamma do'kon
+// uchun esa avvalgidek erkin matn (PRESET_COLORS) bilan ishlaydi.
+const BESPOKE_SLUGS = new Set(['asma', 'boosner', 'onepro'])
+const BESPOKE_COLOR_PRESETS: { id: string; label: string }[] = [
+  { id: 'black', label: 'Qora' },
+  { id: 'white', label: 'Oq' },
+  { id: 'navy', label: "To'q ko'k" },
+  { id: 'charcoal', label: 'Kulrang-qora' },
+  { id: 'grey', label: 'Kulrang' },
+  { id: 'brown', label: 'Jigarrang' },
+  { id: 'camel', label: 'Tuyaqush' },
+  { id: 'lightblue', label: "Och ko'k" },
+  { id: 'pink', label: 'Pushti' },
+  { id: 'beige', label: 'Beige' },
+  { id: 'red', label: 'Qizil' },
+  { id: 'green', label: 'Yashil' },
+]
+
 export default function ProductForm() {
   const router = useRouter()
   const { id } = useLocalSearchParams<{ id?: string }>()
@@ -39,6 +61,13 @@ export default function ProductForm() {
   const [inStock, setInStock] = useState(true)
   const [featured, setFeatured] = useState(false)
   const [isNew, setIsNew] = useState(false)
+
+  const { data: store } = useQuery({
+    queryKey: ['admin-store'],
+    queryFn: () => adminApi.getStore(token!),
+    enabled: !!token,
+  })
+  const isBespoke = !!store?.slug && BESPOKE_SLUGS.has(store.slug)
 
   const { data: categories = [] } = useQuery({
     queryKey: ['admin-categories'],
@@ -236,15 +265,46 @@ export default function ProductForm() {
 
         {/* Ranglar */}
         <Text style={styles.label}>Ranglar</Text>
+        {isBespoke && (
+          <View style={styles.hintRow}>
+            <Ionicons name="color-palette-outline" size={12} color={colors.text3} />
+            <Text style={styles.hint}>
+              Bu do'kon o'z sahifasida rangni doiracha qilib ko'rsatadi — shuning uchun
+              tayyor ranglardan tanlang yoki pastda hex kod kiriting (masalan #7a5230).
+            </Text>
+          </View>
+        )}
         <View style={styles.chips}>
-          {[...new Set([...PRESET_COLORS, ...productColors])].map(cl => (
-            <TouchableOpacity key={cl} style={[styles.chip, productColors.includes(cl) && styles.chipActive]} onPress={() => toggle(productColors, setProductColors, cl)}>
-              <Text style={[styles.chipText, productColors.includes(cl) && styles.chipTextActive]}>{cl}</Text>
+          {isBespoke
+            ? BESPOKE_COLOR_PRESETS.map(c => (
+                <TouchableOpacity key={c.id} style={[styles.chip, productColors.includes(c.id) && styles.chipActive]} onPress={() => toggle(productColors, setProductColors, c.id)}>
+                  <Text style={[styles.chipText, productColors.includes(c.id) && styles.chipTextActive]}>{c.label}</Text>
+                </TouchableOpacity>
+              ))
+            : [...new Set([...PRESET_COLORS, ...productColors])].map(cl => (
+                <TouchableOpacity key={cl} style={[styles.chip, productColors.includes(cl) && styles.chipActive]} onPress={() => toggle(productColors, setProductColors, cl)}>
+                  <Text style={[styles.chipText, productColors.includes(cl) && styles.chipTextActive]}>{cl}</Text>
+                </TouchableOpacity>
+              ))
+          }
+          {/* Tanlangan, lekin tayyor ro'yxatda yo'q qiymatlar (masalan qo'lda kiritilgan
+              hex) — doiracha ko'rinishida, o'chirish uchun ham bosiladi */}
+          {isBespoke && productColors.filter(c => !BESPOKE_COLOR_PRESETS.some(p => p.id === c)).map(c => (
+            <TouchableOpacity key={c} style={[styles.chip, styles.chipActive, styles.chipRow]} onPress={() => toggle(productColors, setProductColors, c)}>
+              <View style={[styles.colorDot, { backgroundColor: c, borderColor: colors.border }]} />
+              <Text style={[styles.chipText, styles.chipTextActive]}>{c}</Text>
             </TouchableOpacity>
           ))}
         </View>
         <View style={styles.addRow}>
-          <TextInput style={styles.addInput} value={colorInput} onChangeText={setColorInput} placeholder="Boshqa rang" placeholderTextColor={colors.text3} />
+          <TextInput
+            style={styles.addInput}
+            value={colorInput}
+            onChangeText={setColorInput}
+            placeholder={isBespoke ? 'Hex kod (masalan #7a5230)' : 'Boshqa rang'}
+            placeholderTextColor={colors.text3}
+            autoCapitalize="none"
+          />
           <TouchableOpacity style={styles.addBtn} onPress={() => addCustom(productColors, setProductColors, colorInput, () => setColorInput(''))}>
             <Ionicons name="add" size={20} color={colors.onBrand} />
           </TouchableOpacity>
@@ -307,6 +367,8 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface },
   chipActive: { borderColor: c.accent, backgroundColor: c.accentSoft },
+  chipRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  colorDot: { width: 12, height: 12, borderRadius: 6, borderWidth: 1 },
   chipText: { fontSize: 13, color: c.text2, fontWeight: '500' },
   chipTextActive: { color: c.accent, fontWeight: '700' },
   meta: { fontSize: 12, color: c.text2 },
