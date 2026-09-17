@@ -6,16 +6,20 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '@libos/shared'
 import type { Store } from '@libos/shared'
 import { useLangStore } from '../../store/lang'
+import { useCityStore } from '../../store/city'
+import { CITIES_WITH_STORES } from '../../lib/cities'
 import { useT } from '../../lib/i18n'
 import styles from './page.module.css'
 
 function StoresPageInner() {
   const lang = useLangStore(s => s.lang)
   const tr = useT(lang)
+  const city = useCityStore(s => s.city)
+  const cityHasStores = CITIES_WITH_STORES.has(city)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['stores-all'],
-    queryFn: () => api.stores.list({ limit: 100 }),
+    queryKey: ['stores-all', city],
+    queryFn: () => api.stores.list({ limit: 100, city }),
     staleTime: 60_000,
   })
 
@@ -27,12 +31,18 @@ function StoresPageInner() {
         <h1 className={styles.heading}>{tr.storesSection}</h1>
         <p className={styles.sub}>{tr.topStores}</p>
 
-        <div className={styles.grid}>
-          {isLoading
-            ? Array.from({ length: 8 }).map((_, i) => <StoreSkeleton key={i} />)
-            : stores.map(s => <StoreCard key={s.id} store={s} tr={tr} />)
-          }
-        </div>
+        {!isLoading && !cityHasStores ? (
+          <div style={{ padding: '3rem 0', textAlign: 'center', color: 'var(--text-3)', fontSize: 14 }}>
+            {tr.mOtherCitiesSoon}
+          </div>
+        ) : (
+          <div className={styles.grid}>
+            {isLoading
+              ? Array.from({ length: 8 }).map((_, i) => <StoreSkeleton key={i} />)
+              : stores.map(s => <StoreCard key={s.id} store={s} tr={tr} />)
+            }
+          </div>
+        )}
       </div>
     </div>
   )

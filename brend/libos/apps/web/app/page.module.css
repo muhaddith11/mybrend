@@ -579,7 +579,7 @@
 }
 .rating {
   font-size: 12px;
-  color: #F59E0B;
+  color: var(--highlight);
   font-weight: 600;
 }
 .storeName {
@@ -606,7 +606,7 @@
   transition: background .15s, color .15s;
   min-height: 38px;
 }
-.addBtn:hover { background: var(--brand); color: #fff; }
+.addBtn:hover { background: var(--brand); color: var(--on-brand); }
 
 /* ── Promo banner ─────────────────────────── */
 .promoBanner {
@@ -716,7 +716,7 @@
 .storeListRating {
   font-size: 12px;
   font-weight: 600;
-  color: #F59E0B;
+  color: var(--highlight);
 }
 .storeListReviews {
   font-size: 11px;
@@ -772,7 +772,7 @@
   width: 36px;
   height: 36px;
   background: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
   border-radius: 10px;
   display: grid;
   place-items: center;

@@ -9,6 +9,8 @@ import type { Store, Product } from '@libos/shared'
 import { useProductModal } from '../store/productModal'
 import { useWishlistStore } from '../store/wishlist'
 import { useLangStore } from '../store/lang'
+import { useCityStore } from '../store/city'
+import { CITIES_WITH_STORES } from '../lib/cities'
 import { useT } from '../lib/i18n'
 import { MapSection } from '../components/MapSection'
 import { Reveal } from '../components/Reveal'
@@ -42,22 +44,24 @@ function formatPrice(n: number) {
 function HomePageInner() {
   const lang = useLangStore(s => s.lang)
   const tr = useT(lang)
+  const city = useCityStore(s => s.city)
+  const cityHasStores = CITIES_WITH_STORES.has(city)
 
 const { data: featuredData, isLoading: featLoading } = useQuery({
-    queryKey: ['products-featured'],
-    queryFn: () => api.products.featured(),
+    queryKey: ['products-featured', city],
+    queryFn: () => api.products.featured(city),
     staleTime: 60_000,
   })
 
   const { data: discountedData, isLoading: discLoading } = useQuery({
-    queryKey: ['products-discounted'],
-    queryFn: () => api.products.discounted(),
+    queryKey: ['products-discounted', city],
+    queryFn: () => api.products.discounted(city),
     staleTime: 60_000,
   })
 
   const { data: storesData, isLoading: storesLoading } = useQuery({
-    queryKey: ['stores-home'],
-    queryFn: () => api.stores.list({ limit: 8 }),
+    queryKey: ['stores-home', city],
+    queryFn: () => api.stores.list({ limit: 8, city }),
     staleTime: 60_000,
   })
 
@@ -69,8 +73,8 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
   const searchParams = useSearchParams()
   const searchQuery = (searchParams.get('search') ?? '').trim()
   const { data: searchData, isLoading: searchLoading } = useQuery({
-    queryKey: ['products-search', searchQuery],
-    queryFn: () => api.products.search(searchQuery),
+    queryKey: ['products-search', searchQuery, city],
+    queryFn: () => api.products.search(searchQuery, city),
     enabled: searchQuery.length > 0,
     staleTime: 30_000,
   })
@@ -221,12 +225,18 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
             <h2 className={styles.sectionTitle}>{tr.storesSection}</h2>
             <Link href="/stores" className={styles.sectionAll}>{tr.seeAll}</Link>
           </div>
-          <div className={styles.storesGrid}>
-            {storesLoading
-              ? Array.from({ length: 6 }).map((_, i) => <StoreSkeleton key={i} />)
-              : stores.map(s => <StoreListCard key={s.id} store={s} tr={tr} />)
-            }
-          </div>
+          {!storesLoading && !cityHasStores ? (
+            <div style={{ padding: '2.5rem 0', textAlign: 'center', color: 'var(--text-3)', fontSize: 14 }}>
+              {tr.mOtherCitiesSoon}
+            </div>
+          ) : (
+            <div className={styles.storesGrid}>
+              {storesLoading
+                ? Array.from({ length: 6 }).map((_, i) => <StoreSkeleton key={i} />)
+                : stores.map(s => <StoreListCard key={s.id} store={s} tr={tr} />)
+              }
+            </div>
+          )}
         </Reveal>
       </section>
 

@@ -35,7 +35,7 @@
 .loginBtn {
   padding: 12px 28px;
   background: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
   border: none;
   border-radius: 14px;
   font-size: 15px;

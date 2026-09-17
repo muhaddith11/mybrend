@@ -25,7 +25,7 @@
   align-items: center;
   justify-content: center;
   background: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
   font-size: 13px;
   font-weight: 700;
   border-radius: 20px;
@@ -63,7 +63,7 @@
   display: inline-block;
   padding: 12px 32px;
   background: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
   border-radius: 12px;
   font-size: 15px;
   font-weight: 600;
@@ -164,7 +164,7 @@
   flex: 1;
   padding: 8px 4px;
   background: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
   border: none;
   border-radius: 10px;
   font-size: 13px;

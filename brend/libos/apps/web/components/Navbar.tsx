@@ -6,7 +6,9 @@ import { useCartStore } from '../store/cart'
 import { useAuthStore } from '../store/auth'
 import { useWishlistStore } from '../store/wishlist'
 import { useLangStore } from '../store/lang'
+import { useCityStore } from '../store/city'
 import { useT } from '../lib/i18n'
+import { CITIES, CITIES_WITH_STORES, cityLabel, findCity } from '../lib/cities'
 import styles from './Navbar.module.css'
 
 function NavInner() {
@@ -19,6 +21,8 @@ function NavInner() {
   const { isLoggedIn, user, logout, openLogin, openProfile } = useAuthStore()
   const lang = useLangStore(s => s.lang)
   const tr = useT(lang)
+  const { city, setCity } = useCityStore()
+  const currentCity = findCity(city) ?? CITIES[0]
   const [search, setSearch] = useState('')
   const [cityOpen, setCityOpen] = useState(false)
 
@@ -84,7 +88,7 @@ function NavInner() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              <span>Qo'qon</span>
+              <span>{cityLabel(currentCity, lang)}</span>
               <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
@@ -93,18 +97,21 @@ function NavInner() {
               <>
                 <div className={styles.cityOverlay} onClick={() => setCityOpen(false)} />
                 <div className={styles.cityDropdown}>
-                  <div className={styles.cityItem} onClick={() => setCityOpen(false)}>
-                    <span className={styles.cityCheck}>✓</span> Qo'qon
-                  </div>
-                  <div className={`${styles.cityItem} ${styles.citySoon}`}>
-                    <span className={styles.citySoonBadge}>Tez kunda</span> Toshkent
-                  </div>
-                  <div className={`${styles.cityItem} ${styles.citySoon}`}>
-                    <span className={styles.citySoonBadge}>Tez kunda</span> Farg'ona
-                  </div>
-                  <div className={`${styles.cityItem} ${styles.citySoon}`}>
-                    <span className={styles.citySoonBadge}>Tez kunda</span> Samarqand
-                  </div>
+                  {CITIES.map(c => {
+                    const hasStores = CITIES_WITH_STORES.has(c.key)
+                    const selected = c.key === currentCity.key
+                    return (
+                      <div
+                        key={c.key}
+                        className={`${styles.cityItem} ${!hasStores ? styles.citySoon : ''}`}
+                        onClick={() => { if (hasStores) { setCity(c.key); setCityOpen(false) } }}
+                      >
+                        {selected && <span className={styles.cityCheck}>✓</span>}
+                        {cityLabel(c, lang)}
+                        {!hasStores && <span className={styles.citySoonBadge}>{tr.mOtherCitiesSoon}</span>}
+                      </div>
+                    )
+                  })}
                 </div>
               </>
             )}

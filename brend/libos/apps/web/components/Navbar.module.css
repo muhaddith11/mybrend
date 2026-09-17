@@ -74,7 +74,7 @@
   width: 36px;
   height: 36px;
   background: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
   border-radius: 10px;
   display: grid;
   place-items: center;
@@ -210,7 +210,7 @@
   padding: 0 20px;
   height: 42px;
   background: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
   border: none;
   border-radius: 0 10px 10px 0;
   font-size: 14px;
@@ -288,7 +288,7 @@
   height: 28px;
   border-radius: 50%;
   background: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
   font-weight: 700;
   font-size: 13px;
   display: grid;

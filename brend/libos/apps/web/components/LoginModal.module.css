@@ -46,7 +46,7 @@
 .logoMark {
   width: 32px; height: 32px;
   background: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
   border-radius: 8px;
   display: grid;
   place-items: center;
@@ -113,7 +113,7 @@
   width: 100%;
   height: 50px;
   background: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
   border: none;
   border-radius: 14px;
   font-size: 16px;

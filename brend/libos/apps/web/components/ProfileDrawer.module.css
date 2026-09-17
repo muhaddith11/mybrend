@@ -228,7 +228,7 @@
   transition: transform .2s;
   display: block;
 }
-.toggleOn .toggleThumb { transform: translateX(20px); }
+.toggleOn .toggleThumb { transform: translateX(20px); background: var(--on-brand); }
 
 /* ── Language row ── */
 .langRow {
@@ -265,7 +265,7 @@
 .langActive {
   background: var(--brand) !important;
   border-color: var(--brand) !important;
-  color: #fff !important;
+  color: var(--on-brand) !important;
 }
 
 /* ── Logout ── */
@@ -310,7 +310,7 @@
 .loginBtn {
   padding: 12px 36px;
   background: var(--brand);
-  color: #fff;
+  color: var(--on-brand);
   border: none;
   border-radius: 12px;
   font-size: 15px;
