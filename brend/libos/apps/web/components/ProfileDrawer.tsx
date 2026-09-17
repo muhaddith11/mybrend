@@ -61,6 +61,8 @@ export function ProfileDrawer() {
   if (!showProfileDrawer) return null
 
   function handleLogout() {
+    const msg = lang === 'ru' ? 'Выйти из аккаунта?' : lang === 'en' ? 'Log out?' : 'Hisobdan chiqasizmi?'
+    if (!window.confirm(msg)) return
     logout()
     closeProfile()
   }
@@ -146,6 +148,13 @@ export function ProfileDrawer() {
                 <Link href="/wishlist" className={styles.menuItem} onClick={closeProfile}>
                   <span className={styles.menuIcon}>❤️</span>
                   <span className={styles.menuLabel}>{tr.wishlist}</span>
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+                <Link href="/help" className={styles.menuItem} onClick={closeProfile}>
+                  <span className={styles.menuIcon}>❓</span>
+                  <span className={styles.menuLabel}>{tr.help}</span>
                   <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
