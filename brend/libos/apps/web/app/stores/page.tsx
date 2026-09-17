@@ -58,7 +58,7 @@ export default function StoresPage() {
 
 function StoreCard({ store, tr }: { store: Store; tr: Record<string, string> }) {
   const bg = store.themeBg ?? '#EEF2FF'
-  const color = store.themeColor ?? '#2563EB'
+  const color = store.themeColor ?? '#1B1F4B'
 
   return (
     <Link href={`/store/${store.slug}`} className={styles.card}>

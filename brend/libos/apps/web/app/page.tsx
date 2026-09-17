@@ -142,11 +142,11 @@ const { data: featuredData, isLoading: featLoading } = useQuery({
               <div className={styles.heroBadge} style={{ position: 'relative', zIndex: 2, marginBottom: 12, background: 'rgba(255,255,255,.12)', backdropFilter: 'blur(8px)' }}>✨ ZYFF — Qo'qon</div>
               <h1 className={styles.heroAppTitle}>
                 {tr.heroAppL1}<br />
-                <span style={{ color: '#FBBF24', textShadow: '0 0 30px rgba(251,191,36,.5)' }}>{tr.heroAppHL}</span><br />
+                <span style={{ color: '#8FB0FF', textShadow: '0 0 30px rgba(143,176,255,.5)' }}>{tr.heroAppHL}</span><br />
                 {tr.heroAppL3}
               </h1>
               <p className={styles.heroAppSub}>{tr.heroAppSub2}</p>
-              <Link href="/stores" className={styles.heroBtn} style={{ position: 'relative', zIndex: 2, background: 'linear-gradient(135deg,#F59E0B,#EF4444)', color: '#fff', border: 'none', boxShadow: '0 4px 20px rgba(245,158,11,.45)' }}>
+              <Link href="/stores" className={styles.heroBtn} style={{ position: 'relative', zIndex: 2, background: '#3B6CFF', color: '#fff', border: 'none', boxShadow: '0 4px 20px rgba(59,108,255,.45)' }}>
                 {tr.heroAppCta}
               </Link>
               <div className={styles.heroBg} style={{ color: 'rgba(255,255,255,.025)' }}>Z</div>
@@ -430,7 +430,7 @@ function ProductCard({ product, colorIdx, tr, cur }: { product: Product; colorId
 function StoreCard({ store, colorIdx, tr }: { store: Store; colorIdx: number; tr: Record<string, string> }) {
   const bg = store.themeBg ?? CARD_COLORS[colorIdx % CARD_COLORS.length]
   const initial = store.name.charAt(0).toUpperCase()
-  const color = store.themeColor ?? '#2563EB'
+  const color = store.themeColor ?? '#1B1F4B'
 
   return (
     <Link href={`/store/${store.slug}`} className={styles.productCard}>
@@ -462,7 +462,7 @@ function StoreCard({ store, colorIdx, tr }: { store: Store; colorIdx: number; tr
 // ── Store List Card ───────────────────────────
 function StoreListCard({ store, tr }: { store: Store; tr: Record<string, string> }) {
   const bg = store.themeBg ?? '#EEF2FF'
-  const color = store.themeColor ?? '#2563EB'
+  const color = store.themeColor ?? '#1B1F4B'
 
   return (
     <Link href={`/store/${store.slug}`} className={styles.storeListCard}>

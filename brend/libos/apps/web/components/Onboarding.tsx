@@ -9,6 +9,7 @@ const KEY = 'zyff-onboarding-v1'
 type Slide = {
   bg: string
   accent: string
+  onAccent: string
   glow: string[]
   badge: string
   initial: string
@@ -16,11 +17,14 @@ type Slide = {
   sub: string
 }
 
+// 1-slayd — ZYFF o'zining Navy & Ko'k urg'usi (mobil bilan bir xil, apps/mobile/components/Onboarding.tsx).
+// 2-3-slaydlar — Asma/Boosner o'z brend rangi (oltin/qizil), ATAYLAB tegilmaydi.
 const SLIDES: Slide[] = [
   {
     bg: 'linear-gradient(135deg,#0F0C29 0%,#302B63 50%,#24243e 100%)',
-    accent: '#FBBF24',
-    glow: ['rgba(109,40,217,.55)', 'rgba(245,158,11,.4)', 'rgba(236,72,153,.35)'],
+    accent: '#3B6CFF',
+    onAccent: '#FFFFFF',
+    glow: ['rgba(109,40,217,.55)', 'rgba(59,108,255,.4)', 'rgba(236,72,153,.35)'],
     badge: '✨ ZYFF',
     initial: 'Z',
     title: "Shahardagi barcha kiyim do'konlari — bir joyda",
@@ -29,6 +33,7 @@ const SLIDES: Slide[] = [
   {
     bg: 'linear-gradient(135deg,#14110b 0%,#2a2113 55%,#1a1a2e 100%)',
     accent: '#D9B45B',
+    onAccent: '#0F0C29',
     glow: ['rgba(217,180,91,.45)', 'rgba(180,140,60,.3)', 'rgba(255,215,120,.25)'],
     badge: '👔 ASMA DESIGN',
     initial: 'A',
@@ -38,6 +43,7 @@ const SLIDES: Slide[] = [
   {
     bg: 'linear-gradient(135deg,#0a0a0a 0%,#2b0a0a 55%,#000 100%)',
     accent: '#EF4444',
+    onAccent: '#0F0C29',
     glow: ['rgba(239,68,46,.5)', 'rgba(255,77,46,.35)', 'rgba(255,160,120,.25)'],
     badge: '🔥 BOOSNER',
     initial: 'B',
@@ -154,7 +160,7 @@ export function Onboarding() {
           onClick={next}
           style={{
             width: '100%', maxWidth: 420, padding: '16px', borderRadius: 14,
-            background: s.accent, color: '#111', border: 'none',
+            background: s.accent, color: s.onAccent, border: 'none',
             fontSize: 16, fontWeight: 800, cursor: 'pointer', boxShadow: `0 8px 30px ${s.accent}55`,
           }}
         >
