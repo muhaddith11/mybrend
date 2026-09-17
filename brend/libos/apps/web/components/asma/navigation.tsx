@@ -5,7 +5,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, ShoppingBag, Heart, Search, User, ArrowRight, LogIn } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Menu, X, ShoppingBag, Heart, Bookmark, Search, User, ArrowRight, LogIn } from 'lucide-react'
+import { api } from '@libos/shared'
+import type { Store } from '@libos/shared'
 import { useStore, formatPrice } from '@/lib/asma/store'
 import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
@@ -38,6 +41,37 @@ export function Navigation() {
   const openCart = useCartStore((s) => s.openCart)
   const cartCount = useCartStore((s) => s.totalCount())
   const wishlistCount = useWishlistStore((s) => s.items.length)
+
+  // Do'konni sevimlilarga saqlash — mobil app bilan bir xil (FavoriteStore).
+  // Mahsulot "sevimli"si (Heart yuqorida) bilan chalkashtirmaslik uchun alohida ikonka (Bookmark).
+  const qc = useQueryClient()
+  const { data: thisStore } = useQuery({ queryKey: ['store', 'asma'], queryFn: () => api.stores.getBySlug('asma') })
+  const { data: favorites } = useQuery({
+    queryKey: ['favorites'],
+    queryFn: () => api.stores.favorites(),
+    enabled: isLoggedIn,
+  })
+  const isFavorited = !!thisStore && !!favorites?.stores.some((s) => s.id === thisStore.id)
+  const toggleFavorite = useMutation({
+    mutationFn: () => api.stores.toggleFavorite(thisStore!.id),
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: ['favorites'] })
+      const prev = qc.getQueryData<{ stores: Store[] }>(['favorites'])
+      qc.setQueryData<{ stores: Store[] }>(['favorites'], (old) => {
+        const list = old?.stores ?? []
+        const exists = list.some((s) => s.id === thisStore!.id)
+        return { stores: exists ? list.filter((s) => s.id !== thisStore!.id) : [...list, thisStore!] }
+      })
+      return { prev }
+    },
+    onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(['favorites'], ctx.prev) },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['favorites'] }),
+  })
+  const onFavoriteClick = () => {
+    if (!thisStore) return
+    if (!isLoggedIn) { openLogin(); return }
+    toggleFavorite.mutate()
+  }
 
   useEffect(() => {
     fetchSettings().then((s) => { if (s.logo) setLogo(s.logo) }).catch(() => {})
@@ -138,6 +172,14 @@ export function Navigation() {
                 aria-label="Qidirish"
               >
                 <Search className="w-5 h-5" />
+              </button>
+              <button
+                onClick={onFavoriteClick}
+                disabled={toggleFavorite.isPending}
+                className="flex items-center justify-center w-11 h-11 text-foreground/80 hover:text-primary transition-colors"
+                aria-label="Do'konni sevimlilarga saqlash"
+              >
+                <Bookmark className="w-5 h-5" fill={isFavorited ? 'currentColor' : 'none'} />
               </button>
               <Link
                 href="/store/asma/wishlist"

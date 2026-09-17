@@ -26,6 +26,20 @@
   flex-shrink: 0;
 }
 .headerInfo { flex: 1; }
+.favBtn {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,.16);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+}
+.favBtn:hover { background: rgba(255,255,255,.28); transform: scale(1.05); }
+.favBtn:disabled { opacity: .6; cursor: default; }
 .storeName { font-size: 28px; font-weight: 800; margin-bottom: .35rem; }
 .storeDesc { font-size: 15px; opacity: .85; margin-bottom: .4rem; line-height: 1.5; }
 .storeAddr { font-size: 13px; opacity: .75; }

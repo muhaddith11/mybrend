@@ -4,7 +4,10 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Heart, ShoppingBag, User, Menu, X, ChevronLeft } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Search, Heart, Bookmark, ShoppingBag, User, Menu, X, ChevronLeft } from 'lucide-react'
+import { api } from '@libos/shared'
+import type { Store } from '@libos/shared'
 import { useAuthStore } from '@/store/auth'
 import { useCartStore } from '@/store/cart'
 import { useWishlistStore } from '@/store/wishlist'
@@ -38,6 +41,36 @@ export function Navigation() {
   const openCart = useCartStore((s) => s.openCart)
   const count = useCartStore((s) => s.totalCount())
   const wishlistCount = useWishlistStore((s) => s.items.length)
+
+  // Do'konni sevimlilarga saqlash — mobil app bilan bir xil (FavoriteStore).
+  const qc = useQueryClient()
+  const { data: thisStore } = useQuery({ queryKey: ['store', 'onepro'], queryFn: () => api.stores.getBySlug('onepro') })
+  const { data: favorites } = useQuery({
+    queryKey: ['favorites'],
+    queryFn: () => api.stores.favorites(),
+    enabled: isLoggedIn,
+  })
+  const isFavorited = !!thisStore && !!favorites?.stores.some((s) => s.id === thisStore.id)
+  const toggleFavorite = useMutation({
+    mutationFn: () => api.stores.toggleFavorite(thisStore!.id),
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: ['favorites'] })
+      const prev = qc.getQueryData<{ stores: Store[] }>(['favorites'])
+      qc.setQueryData<{ stores: Store[] }>(['favorites'], (old) => {
+        const list = old?.stores ?? []
+        const exists = list.some((s) => s.id === thisStore!.id)
+        return { stores: exists ? list.filter((s) => s.id !== thisStore!.id) : [...list, thisStore!] }
+      })
+      return { prev }
+    },
+    onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(['favorites'], ctx.prev) },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['favorites'] }),
+  })
+  const onFavoriteClick = () => {
+    if (!thisStore) return
+    if (!isLoggedIn) { openLogin(); return }
+    toggleFavorite.mutate()
+  }
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -104,6 +137,9 @@ export function Navigation() {
             ) : (
               <button onClick={() => openLogin()} className="grid h-10 w-10 place-items-center transition-colors hover:bg-[var(--volt)]" aria-label="Kirish"><User className="h-5 w-5" /></button>
             )}
+            <button onClick={onFavoriteClick} disabled={toggleFavorite.isPending} className="grid h-10 w-10 place-items-center transition-colors hover:bg-[var(--volt)]" aria-label="Do'konni sevimlilarga saqlash">
+              <Bookmark className="h-5 w-5" fill={isFavorited ? 'currentColor' : 'none'} />
+            </button>
             <Link href={`${BASE}/wishlist`} className="relative grid h-10 w-10 place-items-center transition-colors hover:bg-[var(--volt)]" aria-label="Sevimlilar">
               <Heart className="h-5 w-5" /><Badge n={wishlistCount} />
             </Link>

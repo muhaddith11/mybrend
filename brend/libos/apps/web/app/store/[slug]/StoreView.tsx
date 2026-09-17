@@ -1,15 +1,25 @@
 'use client'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { api } from '@libos/shared'
 import type { Product, Store } from '@libos/shared'
 import { useProductModal } from '../../../store/productModal'
+import { useAuthStore } from '../../../store/auth'
+import { useLangStore } from '../../../store/lang'
+import { useT } from '../../../lib/i18n'
 import styles from './page.module.css'
 
 type StoreFull = Store & { products?: Product[] }
 
 export function StoreView({ slug, initialStore }: { slug: string; initialStore: StoreFull | null }) {
+  const router = useRouter()
+  const { isLoggedIn } = useAuthStore()
+  const lang = useLangStore(s => s.lang)
+  const tr = useT(lang)
+  const queryClient = useQueryClient()
+
   const { data: store, isLoading: storeLoading } = useQuery({
     queryKey: ['store', slug],
     queryFn: () => api.stores.getBySlug(slug),
@@ -22,6 +32,36 @@ export function StoreView({ slug, initialStore }: { slug: string; initialStore: 
     enabled: !!store?.id,
     initialData: initialStore?.products as Product[] | undefined,
   })
+
+  const { data: favorites } = useQuery({
+    queryKey: ['favorites'],
+    queryFn: () => api.stores.favorites(),
+    enabled: isLoggedIn,
+  })
+  const isFavorited = !!store && !!favorites?.stores.some(s => s.id === store.id)
+
+  // Optimistik: yurak darhol to'ladi/bo'shaydi, xato bo'lsa orqaga qaytadi
+  // (mobil app/store/[slug].tsx bilan bir xil xatti-harakat).
+  const toggleFavorite = useMutation({
+    mutationFn: () => api.stores.toggleFavorite(store!.id),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['favorites'] })
+      const prev = queryClient.getQueryData<{ stores: Store[] }>(['favorites'])
+      queryClient.setQueryData<{ stores: Store[] }>(['favorites'], old => {
+        const list = old?.stores ?? []
+        const exists = list.some(s => s.id === store!.id)
+        return { stores: exists ? list.filter(s => s.id !== store!.id) : [...list, store!] }
+      })
+      return { prev }
+    },
+    onError: (_e, _v, ctx) => { if (ctx?.prev) queryClient.setQueryData(['favorites'], ctx.prev) },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['favorites'] }),
+  })
+
+  const handleHeart = () => {
+    if (!isLoggedIn) { router.push('/'); return }
+    toggleFavorite.mutate()
+  }
 
   const openModal = useProductModal(s => s.open)
 
@@ -52,6 +92,17 @@ export function StoreView({ slug, initialStore }: { slug: string; initialStore: 
                 <p className={styles.storeAddr}>📍 {store.address}</p>
               )}
             </div>
+            <button
+              className={styles.favBtn}
+              onClick={handleHeart}
+              disabled={toggleFavorite.isPending}
+              aria-label={tr.mFavStores}
+              title={tr.mFavStores}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill={isFavorited ? '#fff' : 'none'} stroke="#fff" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>

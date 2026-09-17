@@ -1,9 +1,14 @@
 'use client'
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '@libos/shared'
 import { useWishlistStore } from '../../store/wishlist'
 import { useLangStore } from '../../store/lang'
 import { useCartStore } from '../../store/cart'
+import { useAuthStore } from '../../store/auth'
+import { StoreCard } from '../../components/StoreCard'
 import { useT } from '../../lib/i18n'
 import styles from './page.module.css'
 
@@ -11,15 +16,26 @@ function formatPrice(n: number) {
   return n.toLocaleString('ru-RU')
 }
 
+// Mobil "Sevimlilar" ekrani (app/(tabs)/favorites.tsx) bilan bir xil:
+// ikki tab — Do'konlar (server, login talab qiladi) va Mahsulotlar (local wishlist).
+type Tab = 'stores' | 'products'
+
 export default function WishlistPage() {
   const { items, remove, clear } = useWishlistStore()
   const addItem = useCartStore(s => s.addItem)
+  const { isLoggedIn, openLogin } = useAuthStore()
   const lang = useLangStore(s => s.lang)
   const tr = useT(lang)
   const cur = lang === 'ru' ? 'сум' : lang === 'en' ? 'UZS' : "so'm"
+  const [tab, setTab] = useState<Tab>('stores')
 
-  const title = lang === 'ru' ? 'Избранное' : lang === 'en' ? 'Favorites' : 'Sevimlilar'
-  const emptyText = lang === 'ru' ? 'Нет сохранённых товаров' : lang === 'en' ? 'No saved items' : 'Saqlangan mahsulot yo\'q'
+  const { data: favData, isLoading: favLoading } = useQuery({
+    queryKey: ['favorites'],
+    queryFn: () => api.stores.favorites(),
+    enabled: isLoggedIn,
+  })
+  const favoriteStores = favData?.stores ?? []
+
   const clearAll = lang === 'ru' ? 'Очистить всё' : lang === 'en' ? 'Clear all' : 'Hammasini tozalash'
   const addToCartLabel = lang === 'ru' ? 'В корзину' : lang === 'en' ? 'Add to cart' : 'Savatga'
   const removeLabel = lang === 'ru' ? 'Удалить' : lang === 'en' ? 'Remove' : 'O\'chirish'
@@ -28,26 +44,53 @@ export default function WishlistPage() {
     <div className={styles.page}>
       <div className="container">
         <div className={styles.head}>
-          <h1 className={styles.title}>
-            ❤️ {title}
-            {items.length > 0 && <span className={styles.count}>{items.length}</span>}
-          </h1>
-          {items.length > 0 && (
+          <h1 className={styles.title}>❤️ {tr.mFavorites}</h1>
+          {tab === 'products' && items.length > 0 && (
             <button className={styles.clearBtn} onClick={clear}>{clearAll}</button>
           )}
         </div>
 
-        {items.length === 0 ? (
+        <div className={styles.tabs}>
+          <button className={`${styles.tabBtn} ${tab === 'stores' ? styles.tabActive : ''}`} onClick={() => setTab('stores')}>
+            {tr.mStoresTab}
+          </button>
+          <button className={`${styles.tabBtn} ${tab === 'products' ? styles.tabActive : ''}`} onClick={() => setTab('products')}>
+            {tr.mProductsTab}{items.length > 0 ? ` (${items.length})` : ''}
+          </button>
+        </div>
+
+        {tab === 'stores' ? (
+          !isLoggedIn ? (
+            <div className={styles.empty}>
+              <div className={styles.emptyIcon}>🤍</div>
+              <p className={styles.emptyText}>{tr.mLoginToSeeFav}</p>
+              <button className={styles.shopBtn} onClick={openLogin}>{tr.login}</button>
+            </div>
+          ) : favLoading ? (
+            <p style={{ color: 'var(--text-2)', fontSize: 14 }}>{tr.mLoading}</p>
+          ) : favoriteStores.length === 0 ? (
+            <div className={styles.empty}>
+              <div className={styles.emptyIcon}>🤍</div>
+              <p className={styles.emptyText}>{tr.mNoFavStore}</p>
+              <p style={{ color: 'var(--text-3)', fontSize: 13 }}>{tr.mNoFavStoreSub}</p>
+            </div>
+          ) : (
+            <div className={styles.storesList}>
+              {favoriteStores.map(s => <StoreCard key={s.id} store={s} tr={tr} lang={lang} />)}
+            </div>
+          )
+        ) : items.length === 0 ? (
           <div className={styles.empty}>
             <div className={styles.emptyIcon}>🤍</div>
-            <p className={styles.emptyText}>{emptyText}</p>
+            <p className={styles.emptyText}>{tr.mNoFavProduct}</p>
+            <p style={{ color: 'var(--text-3)', fontSize: 13, marginBottom: 12 }}>{tr.mNoFavProductSub}</p>
             <Link href="/" className={styles.shopBtn}>{tr.catalog}</Link>
           </div>
         ) : (
           <div className={styles.grid}>
             {items.map(item => (
               <div key={item.productId} className={styles.card}>
-                <Link href={`/store/${item.storeSlug}`} className={styles.cardImgWrap} style={{ background: item.themeBg ?? '#EEF2FF' }}>
+                <Link href={`/product/${item.productId}`} className={styles.cardImgWrap} style={{ background: item.themeBg ?? '#EEF2FF' }}>
                   {item.image ? (
                     <Image src={item.image} alt={item.name} fill className={styles.cardImg} />
                   ) : (

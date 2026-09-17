@@ -20,17 +20,31 @@
   gap: 10px;
 }
 
-.count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--brand);
-  color: var(--on-brand);
-  font-size: 13px;
-  font-weight: 700;
-  border-radius: 20px;
-  padding: 2px 10px;
-  min-width: 26px;
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.tabBtn {
+  padding: 10px 4px;
+  margin-right: 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: pointer;
+  font-family: inherit;
+}
+.tabActive { color: var(--brand); border-bottom-color: var(--brand); }
+
+.storesList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 640px;
 }
 
 .clearBtn {
@@ -64,9 +78,12 @@
   padding: 12px 32px;
   background: var(--brand);
   color: var(--on-brand);
+  border: none;
   border-radius: 12px;
   font-size: 15px;
   font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
   text-decoration: none;
   transition: background .15s;
 }
