@@ -31,11 +31,15 @@ export const defaultSettings: StoreSettings = {
 
 /** Do'kon `slug`i uchun sozlamalar API funksiyalarini yaratadi. */
 export function createSettingsApi(slug: string) {
-  async function fetchSettings(): Promise<StoreSettings> {
+  // `redirectOn401`: default FALSE — bu funksiya ommaviy navbar'da (logotip
+  // uchun) HAM chaqiriladi, u yerda 401 oddiy holat (mehmon login qilmagan).
+  // Faqat haqiqiy admin sozlamalar sahifasi `true` bilan chaqirishi kerak —
+  // sessiya tugaganda login'ga qaytarish o'sha yerda to'g'ri xatti-harakat.
+  async function fetchSettings(redirectOn401 = false): Promise<StoreSettings> {
     try {
       // Autentifikatsiyalangan endpoint: karta raqami, karta egasi, QR va Telegram
       // chat ID faqat shu yerdan keladi. Ochiq `/stores/:slug` ularni bermaydi.
-      const res = await adminFetch(slug, '/admin/store')
+      const res = await adminFetch(slug, '/admin/store', {}, redirectOn401)
       if (!res.ok) return defaultSettings
       const store = await res.json()
       return {

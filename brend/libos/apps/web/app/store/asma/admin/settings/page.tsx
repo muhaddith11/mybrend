@@ -95,7 +95,9 @@ export default function AdminSettingsPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    fetchSettings()
+    // true: bu HAQIQIY admin sahifasi — sessiya tugagan bo'lsa login'ga qaytsin
+    // (ommaviy sahifalar esa standart false bilan chaqiradi, 401'da jim qoladi).
+    fetchSettings(true)
       .then(setForm)
       .catch(console.error)
       .finally(() => setLoading(false))
