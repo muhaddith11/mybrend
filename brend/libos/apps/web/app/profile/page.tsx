@@ -106,6 +106,17 @@ function ProfileContent() {
           <span>🚪</span> {tr.logout}
         </button>
       </div>
+
+      {/* Danger zone */}
+      <div className={styles.section}>
+        <Link href="/profile/delete-account" className={styles.menuItem}>
+          <span className={styles.menuIcon}>⚠️</span>
+          <span className={styles.menuLabel} style={{ color: '#EF4444' }}>{tr.mDeleteAccount}</span>
+          <svg className={styles.menuArrow} width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
+      </div>
     </div>
   )
 }

@@ -8,6 +8,7 @@ import type { Order } from '@libos/shared'
 import { useAuthStore } from '../../store/auth'
 import { useLangStore } from '../../store/lang'
 import { useT } from '../../lib/i18n'
+import { RateStore } from '../../components/RateStore'
 import styles from './page.module.css'
 
 // MUHIM: kalitlar backend OrderStatus enum'iga AYNAN mos kelishi shart
@@ -101,6 +102,12 @@ function OrderCard({ order }: { order: Order }) {
 
   return (
     <div className={styles.card}>
+      {/* Do'kon bahosi — buyurtma yetkazilgan va hali baholanmagan bo'lsa,
+          eng tepada (mobil bilan bir xil: mijoz "yetkazildi"dan keyin kiradi) */}
+      {order.status === 'DELIVERED' && !(order as any).review && (
+        <RateStore orderId={order.id} />
+      )}
+
       {/* Header */}
       <div className={styles.cardHead}>
         <div>

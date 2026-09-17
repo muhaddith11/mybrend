@@ -7,6 +7,8 @@ import { useAuthStore } from '../store/auth'
 import { useThemeStore } from '../store/theme'
 import { useLangStore, type Lang } from '../store/lang'
 import { useAvatarStore } from '../store/avatar'
+import { useCityStore } from '../store/city'
+import { CITIES, CITIES_WITH_STORES, cityLabel, findCity } from '../lib/cities'
 import { useT } from '../lib/i18n'
 import styles from './ProfileDrawer.module.css'
 
@@ -32,6 +34,8 @@ export function ProfileDrawer() {
   const { dark, toggle } = useThemeStore()
   const { lang, setLang } = useLangStore()
   const { emoji, setEmoji } = useAvatarStore()
+  const { city, setCity } = useCityStore()
+  const currentCity = findCity(city) ?? CITIES[0]
   const tr = useT(lang)
   const [showPicker, setShowPicker] = useState(false)
   const [showOwner, setShowOwner] = useState(false)
@@ -177,16 +181,35 @@ export function ProfileDrawer() {
                   </div>
                 </div>
 
-                {/* Shahar — mobilда city tanlovi navbarда yo'q, shu yerda ko'rsatamiz */}
+                {/* Shahar — Navbar'dagi haqiqiy city state bilan bir xil */}
                 <div className={styles.langRow}>
                   <span className={styles.menuIcon}>🏙️</span>
                   <span className={styles.menuLabel}>{tr.cityLabel}</span>
                   <div className={styles.langPills}>
-                    <button className={`${styles.langPill} ${styles.langActive}`}>📍 Qo&apos;qon</button>
+                    {CITIES.map(c => {
+                      const hasStores = CITIES_WITH_STORES.has(c.key)
+                      const selected = c.key === currentCity.key
+                      return (
+                        <button
+                          key={c.key}
+                          className={`${styles.langPill} ${selected ? styles.langActive : ''}`}
+                          disabled={!hasStores}
+                          onClick={() => hasStores && setCity(c.key)}
+                          style={!hasStores ? { opacity: 0.45, cursor: 'default' } : undefined}
+                        >
+                          📍 {cityLabel(c, lang)}
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
                 <div className={styles.citySoonHint}>{tr.otherCitiesSoon}</div>
               </div>
+
+              <Link href="/profile/delete-account" className={styles.menuItem} onClick={closeProfile}>
+                <span className={styles.menuIcon}>⚠️</span>
+                <span className={styles.menuLabel} style={{ color: '#EF4444' }}>{tr.mDeleteAccount}</span>
+              </Link>
 
               <button className={styles.logoutBtn} onClick={handleLogout}>
                 <span>🚪</span> {tr.logout}

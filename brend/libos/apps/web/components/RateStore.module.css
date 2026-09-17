@@ -1,0 +1,67 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 14px;
+}
+
+.thanksCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.thanks {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.sub {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.4;
+  margin-bottom: 16px;
+}
+
+.stars {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.starBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--text-3);
+  transition: color .15s, transform .1s;
+}
+.starBtn:hover { transform: scale(1.08); }
+.starActive { color: var(--highlight); }
+
+.btn {
+  width: 100%;
+  background: var(--brand);
+  color: var(--on-brand);
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s;
+}
+.btn:hover:not(:disabled) { background: var(--brand-dark); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
