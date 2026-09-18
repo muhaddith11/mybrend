@@ -46,3 +46,20 @@
   margin-top: .5rem;
 }
 .btn:hover { background: var(--brand-dark); }
+
+.list { align-self: stretch; display: flex; flex-direction: column; gap: 8px; margin-top: .5rem; }
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  text-decoration: none;
+  color: var(--text);
+  font-size: 14px;
+  transition: border-color .15s;
+}
+.item:hover { border-color: var(--brand); }
+.itemIcon { font-size: 18px; flex-shrink: 0; }
