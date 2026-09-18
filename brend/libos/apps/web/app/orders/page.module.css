@@ -13,6 +13,22 @@
 
 .loading { text-align: center; padding: 3rem; color: #aaa; }
 
+.payBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--brand);
+  color: var(--on-brand);
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background .15s;
+}
+.payBtn:hover { background: var(--brand-dark); }
+
 .center {
   text-align: center;
   padding: 6rem 1rem;

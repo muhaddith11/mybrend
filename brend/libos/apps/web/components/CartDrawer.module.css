@@ -99,6 +99,7 @@
 .itemName { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .variants { font-size: 12px; color: var(--text-3); margin-top: 2px; }
 .price { font-size: 14px; font-weight: 600; color: var(--brand); margin-top: 4px; }
+.soldOut { font-size: 13px; font-weight: 600; color: #EF4444; margin-top: 4px; }
 
 .qtyRow {
   display: flex;

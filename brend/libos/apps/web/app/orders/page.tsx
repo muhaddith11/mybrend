@@ -48,6 +48,13 @@ function OrdersContent() {
     queryKey: ['my-orders'],
     queryFn: () => api.orders.myOrders(),
     enabled: isLoggedIn,
+    // Faol buyurtma bo'lsa 10s'da yangilanadi (mobil app/orders/[id].tsx bilan
+    // bir xil) — hammasi yetkazilgan/bekor bo'lsa to'xtaydi.
+    refetchInterval: (query) => {
+      const list = query.state.data?.orders ?? []
+      const active = list.some((o: Order) => o.status !== 'DELIVERED' && o.status !== 'CANCELLED')
+      return active ? 10000 : false
+    },
   })
 
   const orders: Order[] = data?.orders ?? []
@@ -106,6 +113,15 @@ function OrderCard({ order }: { order: Order }) {
           eng tepada (mobil bilan bir xil: mijoz "yetkazildi"dan keyin kiradi) */}
       {order.status === 'DELIVERED' && !(order as any).review && (
         <RateStore orderId={order.id} />
+      )}
+
+      {/* Bot orqali to'lov hali tugallanmagan (checkout Telegram'ni ochib
+          bermagan bo'lishi mumkin) — mijoz to'lovni shu yerdan davom ettiradi,
+          aks holda buyurtma to'lovsiz osilib qolardi (mobil bilan bir xil). */}
+      {!!order.botUrl && (
+        <a href={order.botUrl} target="_blank" rel="noopener noreferrer" className={styles.payBtn}>
+          ✈️ {tr.mPayViaBot}
+        </a>
       )}
 
       {/* Header */}

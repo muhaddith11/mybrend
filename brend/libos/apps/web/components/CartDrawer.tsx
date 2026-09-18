@@ -2,10 +2,12 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useCartStore } from '../store/cart'
+import { useCartPrices } from '../lib/useCartPrices'
 import styles from './CartDrawer.module.css'
 
 export function CartDrawer() {
   const { isOpen, closeCart, items, removeItem, updateQty, totalPrice, itemsByStore } = useCartStore()
+  useCartPrices()
   const byStore = itemsByStore()
   const storeIds = Object.keys(byStore)
 
@@ -36,7 +38,7 @@ export function CartDrawer() {
           ) : (
             storeIds.map(storeId => {
               const group = byStore[storeId]
-              const subtotal = group.reduce((s, i) => s + i.price * i.quantity, 0)
+              const subtotal = group.reduce((s, i) => s + (i.unavailable ? 0 : i.price * i.quantity), 0)
               return (
               <div key={storeId} className={styles.storeGroup}>
                 <p className={styles.storeName}>
@@ -56,7 +58,11 @@ export function CartDrawer() {
                       {(item.size || item.color) && (
                         <p className={styles.variants}>{[item.size, item.color].filter(Boolean).join(' · ')}</p>
                       )}
-                      <p className={styles.price}>{(item.price * item.quantity).toLocaleString()} so'm</p>
+                      {item.unavailable ? (
+                        <p className={styles.soldOut}>Tugagan</p>
+                      ) : (
+                        <p className={styles.price}>{(item.price * item.quantity).toLocaleString()} so'm</p>
+                      )}
                     </div>
                     <div className={styles.qtyRow}>
                       <button onClick={() => updateQty(item.productId, item.quantity - 1, item.size, item.color)}>−</button>

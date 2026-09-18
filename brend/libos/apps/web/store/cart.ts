@@ -13,6 +13,10 @@ export interface CartItem {
   size?: string
   color?: string
   quantity: number
+  // Server bilan sinxronlashda (syncCatalog) mahsulot endi sotuvda bo'lmasa
+  // belgilanadi — mobil store/cart.ts bilan bir xil (checkout va jami summa
+  // bunday mahsulotni hisobga olmaydi).
+  unavailable?: boolean
 }
 
 interface CartStore {
@@ -27,6 +31,11 @@ interface CartStore {
   totalCount: () => number
   totalPrice: () => number
   itemsByStore: () => Record<string, CartItem[]>
+  // Savat qurilmada saqlanadi va qo'shilgan paytdagi narxni eslab qoladi — do'kon
+  // narxni o'zgartirsa yoki mahsulot tugasa, eski/noto'g'ri narx ko'rsatilib
+  // qolardi (mijoz bir summani ko'rib, boshqasini to'lardi). Bu funksiya server
+  // narxi bilan moslaydi — mobil lib/useCartPrices.ts bilan bir xil maqsad.
+  syncCatalog: (fresh: Record<string, { price: number; inStock: boolean }>) => void
 }
 
 function key(productId: string, size?: string, color?: string) {
@@ -63,7 +72,9 @@ export const useCartStore = create<CartStore>()(
 
       clearStore: (storeId) => set(state => ({ items: state.items.filter(i => i.storeId !== storeId) })),
       totalCount: () => get().items.reduce((s, i) => s + i.quantity, 0),
-      totalPrice: () => get().items.reduce((s, i) => s + i.price * i.quantity, 0),
+      // Tugagan mahsulot jami summaga kirmaydi — checkout ham xuddi shunday
+      // filtrlaydi, ikki joyda boshqa-boshqa raqam ko'rinmasin.
+      totalPrice: () => get().items.reduce((s, i) => s + (i.unavailable ? 0 : i.price * i.quantity), 0),
       itemsByStore: () => {
         const r: Record<string, CartItem[]> = {}
         for (const item of get().items) {
@@ -72,6 +83,13 @@ export const useCartStore = create<CartStore>()(
         }
         return r
       },
+      syncCatalog: (fresh) => set(state => ({
+        items: state.items.map(i => {
+          const p = fresh[i.productId]
+          if (!p) return { ...i, unavailable: true }
+          return { ...i, price: p.price, unavailable: !p.inStock }
+        }),
+      })),
     }),
     { name: 'libos-cart' }
   )

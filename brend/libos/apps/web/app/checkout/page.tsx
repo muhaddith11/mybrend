@@ -7,6 +7,7 @@ import { useCartStore } from '../../store/cart'
 import { useAuthStore } from '../../store/auth'
 import { useLangStore } from '../../store/lang'
 import { useT } from '../../lib/i18n'
+import { useCartPrices } from '../../lib/useCartPrices'
 import { api } from '@libos/shared'
 import {
   AddressForm,
@@ -31,6 +32,7 @@ function CheckoutInner() {
   const searchParams = useSearchParams()
   const targetStore = searchParams.get('store')
   const { items, clearStore } = useCartStore()
+  useCartPrices()
   const { isLoggedIn, openLogin } = useAuthStore()
   const lang = useLangStore(s => s.lang)
   const tr = useT(lang)
@@ -118,7 +120,10 @@ function CheckoutInner() {
       // savdo qiladi, shuning uchun savatdagi har do'kon uchun bittadan buyurtma.
       const paymentUrls: string[] = []
       for (const storeId of activeStoreIds) {
-        const storeItems = byStore[storeId]
+        // Tugagan mahsulot buyurtmaga qo'shilmaydi (mobil app/checkout.tsx bilan
+        // bir xil — useCartPrices() shu holatni serverdan aniqlagan edi).
+        const storeItems = byStore[storeId].filter(i => !i.unavailable)
+        if (storeItems.length === 0) continue
         const orderItems = storeItems.map(i => ({
           productId: i.productId,
           quantity: i.quantity,
@@ -162,12 +167,17 @@ function CheckoutInner() {
   }
 
   const DELIVERY_FEE = delivery === 'DELIVERY' ? 15000 : 0
-  // Faqat tanlangan do'kon(lar) summasi (umumiy savat emas).
+  // Faqat tanlangan do'kon(lar) summasi (umumiy savat emas). Tugagan mahsulot
+  // hisobga kirmaydi — checkout/savat/buyurtma bir xil raqamni ko'rsatishi uchun.
   const activeItemsTotal = activeStoreIds.reduce(
-    (sum, id) => sum + (byStore[id] ?? []).reduce((s, i) => s + i.price * i.quantity, 0),
+    (sum, id) => sum + (byStore[id] ?? []).reduce((s, i) => s + (i.unavailable ? 0 : i.price * i.quantity), 0),
     0,
   )
   const total = activeItemsTotal + DELIVERY_FEE
+  const droppedCount = activeStoreIds.reduce(
+    (n, id) => n + (byStore[id] ?? []).filter(i => i.unavailable).length,
+    0,
+  )
 
   return (
     <div className="container" style={{ padding: '2rem 1rem 5rem' }}>
@@ -248,6 +258,7 @@ function CheckoutInner() {
             />
           </section>
 
+          {droppedCount > 0 && <p className={styles.error}>{tr.mUnavailableSkipped}</p>}
           {error && <p className={styles.error}>{error}</p>}
         </div>
 
@@ -259,13 +270,17 @@ function CheckoutInner() {
             <div key={sid} className={styles.storeSection}>
               <p className={styles.storeName}>{byStore[sid][0].storeName}</p>
               {byStore[sid].map(item => (
-                <div key={`${item.productId}-${item.size}-${item.color}`} className={styles.summaryItem}>
+                <div key={`${item.productId}-${item.size}-${item.color}`} className={styles.summaryItem} style={item.unavailable ? { opacity: 0.5 } : undefined}>
                   <span className={styles.summaryName}>{item.name}</span>
                   {(item.size || item.color) && (
                     <span className={styles.summaryVariant}>{[item.size, item.color].filter(Boolean).join(', ')}</span>
                   )}
                   <span className={styles.summaryQty}>×{item.quantity}</span>
-                  <span className={styles.summaryPrice}>{(item.price * item.quantity).toLocaleString()} {tr.som}</span>
+                  {item.unavailable ? (
+                    <span className={styles.summaryPrice} style={{ color: '#EF4444' }}>Tugagan</span>
+                  ) : (
+                    <span className={styles.summaryPrice}>{(item.price * item.quantity).toLocaleString()} {tr.som}</span>
+                  )}
                 </div>
               ))}
             </div>

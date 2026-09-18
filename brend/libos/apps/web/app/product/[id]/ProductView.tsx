@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { api } from '@libos/shared'
 import type { Product, Store } from '@libos/shared'
 import { useCartStore } from '../../../store/cart'
+import { useWishlistStore } from '../../../store/wishlist'
 import { useLangStore } from '../../../store/lang'
 import { useT } from '../../../lib/i18n'
 import styles from './page.module.css'
@@ -14,7 +15,10 @@ type ProductFull = Product & { store?: Store }
 
 export function ProductView({ id, initialProduct }: { id: string; initialProduct: ProductFull | null }) {
   const addItem = useCartStore(s => s.addItem)
-  const tr = useT(useLangStore(s => s.lang))
+  const lang = useLangStore(s => s.lang)
+  const tr = useT(lang)
+  const toggleWishlist = useWishlistStore(s => s.toggle)
+  const inWishlist = useWishlistStore(s => s.has(id))
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
@@ -26,6 +30,7 @@ export function ProductView({ id, initialProduct }: { id: string; initialProduct
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [selectedColor, setSelectedColor] = useState<string | null>(null)
   const [added, setAdded] = useState(false)
+  const [selectErr, setSelectErr] = useState('')
 
   if (isLoading) return <div className={styles.loading}>{tr.loading}</div>
   if (!product) return <div className={styles.notFound}>{tr.prNotFound}</div>
@@ -33,13 +38,47 @@ export function ProductView({ id, initialProduct }: { id: string; initialProduct
   const store = product.store
   const theme = store?.themeColor ?? '#534AB7'
   const images: string[] = product.images ?? []
+  const inStock = product.inStock ?? true
 
-  // Unique sizes & colors from variants
-  const sizes = [...new Set((product.variants ?? []).map((v: any) => v.size).filter(Boolean))]
-  const colors = [...new Set((product.variants ?? []).map((v: any) => v.color).filter(Boolean))]
+  // O'lcham/rang avval tekis massivdan (sizes/colors — hozirgi admin panellar
+  // shu yerga yozadi), bo'lmasa eski `variants`dan (mobil app/product/[id].tsx
+  // bilan bir xil mantiq — avval faqat variants'dan o'qilardi, ko'p mahsulotda
+  // sizes/colors bo'lsa ham ko'rinmasdi).
+  const sizes: string[] = (product as any).sizes?.length
+    ? (product as any).sizes
+    : [...new Set((product.variants ?? []).map((v: any) => v.size).filter(Boolean))]
+  const colors: string[] = (product as any).colors?.length
+    ? (product as any).colors
+    : [...new Set((product.variants ?? []).map((v: any) => v.color).filter(Boolean))]
+
+  function handleToggleWishlist() {
+    if (!product) return
+    toggleWishlist({
+      productId: product.id,
+      name: product.nameUz || product.name,
+      price: product.price,
+      originalPrice: product.originalPrice,
+      image: images[0],
+      storeId: store?.id ?? '',
+      storeName: store?.name ?? '',
+      storeSlug: store?.slug ?? '',
+      themeBg: store?.themeBg,
+    })
+  }
 
   function handleAddToCart() {
     if (!product) return
+    // O'lcham/rang bor bo'lsa — tanlanmasdan savatga qo'shib bo'lmaydi
+    // (mobil bilan bir xil — avval web'da bu tekshiruv yo'q edi).
+    if (sizes.length > 0 && !selectedSize) {
+      setSelectErr(lang === 'ru' ? 'Выберите размер' : lang === 'en' ? 'Select a size' : "O'lchamni tanlang")
+      return
+    }
+    if (colors.length > 0 && !selectedColor) {
+      setSelectErr(lang === 'ru' ? 'Выберите цвет' : lang === 'en' ? 'Select a color' : 'Rangni tanlang')
+      return
+    }
+    setSelectErr('')
     addItem({
       productId: product.id,
       name: product.name,
@@ -93,15 +132,31 @@ export function ProductView({ id, initialProduct }: { id: string; initialProduct
 
         {/* Details */}
         <div className={styles.details}>
-          {store && (
-            <Link href={`/store/${store.slug}`} className={styles.storeLink} style={{ color: theme }}>
-              ← {store.name}
-            </Link>
-          )}
+          <div className={styles.topRow}>
+            {store && (
+              <Link href={`/store/${store.slug}`} className={styles.storeLink} style={{ color: theme }}>
+                ← {store.name}
+              </Link>
+            )}
+            <button
+              className={`${styles.heartBtn} ${inWishlist ? styles.heartActive : ''}`}
+              onClick={handleToggleWishlist}
+              aria-label={tr.wishlist}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill={inWishlist ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </button>
+          </div>
           <h1 className={styles.name}>{product.name}</h1>
-          <p className={styles.price} style={{ color: theme }}>
-            {product.price.toLocaleString()} {tr.som}
-          </p>
+          <div className={styles.priceRow}>
+            <p className={styles.price} style={{ color: theme }}>
+              {product.price.toLocaleString()} {tr.som}
+            </p>
+            {!!product.originalPrice && product.originalPrice > product.price && (
+              <p className={styles.priceOld}>{product.originalPrice.toLocaleString()} {tr.som}</p>
+            )}
+          </div>
 
           {product.description && (
             <p className={styles.desc}>{product.description}</p>
@@ -117,7 +172,7 @@ export function ProductView({ id, initialProduct }: { id: string; initialProduct
                     key={s}
                     className={`${styles.variantBtn} ${selectedSize === s ? styles.variantActive : ''}`}
                     style={selectedSize === s ? { borderColor: theme, background: theme, color: '#fff' } : {}}
-                    onClick={() => setSelectedSize(s === selectedSize ? null : s)}
+                    onClick={() => { setSelectedSize(s === selectedSize ? null : s); setSelectErr('') }}
                   >
                     {s}
                   </button>
@@ -136,7 +191,7 @@ export function ProductView({ id, initialProduct }: { id: string; initialProduct
                     key={c}
                     className={`${styles.variantBtn} ${selectedColor === c ? styles.variantActive : ''}`}
                     style={selectedColor === c ? { borderColor: theme, background: theme, color: '#fff' } : {}}
-                    onClick={() => setSelectedColor(c === selectedColor ? null : c)}
+                    onClick={() => { setSelectedColor(c === selectedColor ? null : c); setSelectErr('') }}
                   >
                     {c}
                   </button>
@@ -147,17 +202,19 @@ export function ProductView({ id, initialProduct }: { id: string; initialProduct
 
           {/* Stock */}
           <p className={styles.stock}>
-            {(product.inStock ?? true)
+            {inStock
               ? <span className={styles.inStock}>{tr.prInStock}</span>
               : <span className={styles.outStock}>{tr.prSoldOut}</span>}
           </p>
+
+          {!!selectErr && <p className={styles.selectErr}>{selectErr}</p>}
 
           {/* Add to cart */}
           <button
             className={styles.addBtn}
             style={{ background: theme }}
             onClick={handleAddToCart}
-            disabled={product.inStock === false}
+            disabled={!inStock}
           >
             {added ? `✓ ${tr.addedToCart}` : `🛍 ${tr.addToCart}`}
           </button>
